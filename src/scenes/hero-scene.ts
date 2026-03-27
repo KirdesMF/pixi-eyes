@@ -22,6 +22,12 @@ interface HeroSceneOptions {
   initialClickRepulseEase: ClickRepulseEaseName;
   initialStaggerSeconds: number;
   initialShadowOpacity: number;
+  initialDropShadowColor: number;
+  initialDropShadowOpacity: number;
+  initialDropShadowBlur: number;
+  initialDropShadowSpread: number;
+  initialRoundInnerShadowColor: number;
+  initialCatInnerShadowColor: number;
   initialIrisColor: number;
   initialCatEyeColor: number;
   initialRoundTranslateStrength: number;
@@ -91,6 +97,12 @@ export const createHeroScene = async ({
   initialClickRepulseEase,
   initialStaggerSeconds,
   initialShadowOpacity,
+  initialDropShadowColor,
+  initialDropShadowOpacity,
+  initialDropShadowBlur,
+  initialDropShadowSpread,
+  initialRoundInnerShadowColor,
+  initialCatInnerShadowColor,
   initialIrisColor,
   initialCatEyeColor,
   initialRoundTranslateStrength,
@@ -166,6 +178,12 @@ export const createHeroScene = async ({
     clickRepulseEase: initialClickRepulseEase,
     staggerSeconds: initialStaggerSeconds,
     shadowOpacity: initialShadowOpacity,
+    dropShadowColor: initialDropShadowColor,
+    dropShadowOpacity: initialDropShadowOpacity,
+    dropShadowBlur: initialDropShadowBlur,
+    dropShadowSpread: initialDropShadowSpread,
+    roundInnerShadowColor: initialRoundInnerShadowColor,
+    catInnerShadowColor: initialCatInnerShadowColor,
     irisColor: initialIrisColor,
     catEyeColor: initialCatEyeColor,
     roundTranslateStrength: initialRoundTranslateStrength,
@@ -314,6 +332,12 @@ export const createHeroScene = async ({
       clickRepulseEase?: ClickRepulseEaseName;
       staggerSeconds?: number;
       shadowOpacity?: number;
+      dropShadowColor?: number;
+      dropShadowOpacity?: number;
+      dropShadowBlur?: number;
+      dropShadowSpread?: number;
+      roundInnerShadowColor?: number;
+      catInnerShadowColor?: number;
       irisColor?: number;
       catEyeColor?: number;
       roundTranslateStrength?: number;

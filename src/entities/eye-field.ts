@@ -1,4 +1,12 @@
-import { Container, Graphics, GraphicsContext, Rectangle, Sprite, type Renderer } from "pixi.js";
+import {
+  BlurFilter,
+  Container,
+  Graphics,
+  GraphicsContext,
+  Rectangle,
+  Sprite,
+  type Renderer,
+} from "pixi.js";
 
 export interface EyeFieldMetrics {
   visibleCount: number;
@@ -66,6 +74,12 @@ interface EyeFieldConfig {
   clickRepulseEase?: ClickRepulseEaseName;
   staggerSeconds?: number;
   shadowOpacity?: number;
+  dropShadowColor?: number;
+  dropShadowOpacity?: number;
+  dropShadowBlur?: number;
+  dropShadowSpread?: number;
+  roundInnerShadowColor?: number;
+  catInnerShadowColor?: number;
   irisColor?: number;
   catEyeColor?: number;
   roundTranslateStrength?: number;
@@ -129,6 +143,7 @@ interface SharedContexts {
 }
 
 interface SharedTextures {
+  dropShadowTexture: ReturnType<Renderer["generateTexture"]>;
   scleraFillTexture: ReturnType<Renderer["generateTexture"]>;
   scleraOutlineTexture: ReturnType<Renderer["generateTexture"]>;
   scleraShadowTexture: ReturnType<Renderer["generateTexture"]>;
@@ -139,6 +154,7 @@ interface SharedTextures {
 interface EyeInstance {
   type: EyeType;
   root: Container;
+  dropShadow: Sprite;
   eyeFill: Sprite;
   eyeOutline: Sprite;
   eyeShadow: Sprite;
@@ -160,6 +176,7 @@ interface EyeInstance {
   y: number;
   radius: number;
   scale: number;
+  renderScale: number;
   lowDetail: boolean;
   updateInterval: number;
   updateAccumulator: number;
@@ -188,6 +205,15 @@ interface EyeInstance {
   fallVelocityY: number;
   fallRotationDegrees: number;
   fallAngularVelocity: number;
+  fallSquash: number;
+  fallSettleActive: boolean;
+  fallSettleElapsed: number;
+  fallSettleDuration: number;
+  fallSettleStartOffsetX: number;
+  fallSettleTargetOffsetX: number;
+  fallSettleStartRotationDegrees: number;
+  fallSettleTargetRotationDegrees: number;
+  fallSettleComplete: boolean;
   blinkDelayMix: number;
   blinkCycleOffset: number;
   focusDelayMix: number;
@@ -224,6 +250,7 @@ interface EyeFieldRuntime {
   targetMouseX: number;
   targetMouseY: number;
   pointerActive: boolean;
+  scrollFallResumePointerActive: boolean;
   elapsed: number;
   trackingBlend: number;
   sharedAttentionDelay: number;
@@ -238,8 +265,15 @@ interface EyeFieldRuntime {
   scrollFallBlend: number;
   scrollFallTarget: number;
   scrollFallElapsed: number;
+  scrollReturnElapsed: number;
   scrollFallBlendSpeed: number;
   shadowOpacity: number;
+  dropShadowColor: number;
+  dropShadowOpacity: number;
+  dropShadowBlur: number;
+  dropShadowSpread: number;
+  roundInnerShadowColor: number;
+  catInnerShadowColor: number;
   irisColor: number;
   catEyeColor: number;
   roundTranslateStrength: number;
@@ -289,17 +323,18 @@ const DEFAULT_SPIRAL_STEP_DEGREES = 137.5;
 const DEFAULT_RADIAL_EXPONENT = 0.5;
 const DEFAULT_EYE_SPIRAL_OFFSET = 0.73;
 const DEFAULT_CLUSTER_RADIUS = 200;
-const DEFAULT_MIN_EYE_SIZE = 30;
-const DEFAULT_MAX_EYE_SIZE = 70;
+const DEFAULT_MIN_EYE_SIZE = 10;
+const DEFAULT_MAX_EYE_SIZE = 90;
 const DEFAULT_CAT_MIX = 0.35;
 const DEFAULT_CAT_MORPH_RADIUS = 120;
 const DEFAULT_STAGGER_SECONDS = 0.002;
 const DEFAULT_RANDOMIZE_STAGGER = false;
+const SCALE_IN_DURATION = 0.28;
 const DEFAULT_PARALLAX_STRENGTH = 12;
-const DEFAULT_REPULSION_RADIUS = 80;
+const DEFAULT_REPULSION_RADIUS = 90;
 const DEFAULT_REPULSION_STRENGTH = 1;
 const DEFAULT_REPULSION_RETURN_SPEED = 10;
-const DEFAULT_CLICK_REPULSE_EASE: ClickRepulseEaseName = "smoothstep";
+const DEFAULT_CLICK_REPULSE_EASE: ClickRepulseEaseName = "out-elastic";
 const DEFAULT_SMALL_EYE_LOOK_SPEED = 16;
 const DEFAULT_LARGE_EYE_LOOK_SPEED = 8;
 const DEFAULT_TRACKING_BLEND_SPEED = 12;
@@ -315,59 +350,72 @@ const SCROLL_FALL_GRAVITY = 2600;
 const SCROLL_FALL_INITIAL_DRIFT = 84;
 const SCROLL_FALL_INITIAL_SPIN_DEGREES = 110;
 const SCROLL_FALL_AIR_DAMPING = 1.9;
+const SCROLL_FALL_SMALL_EYE_BOUNCE_RESTITUTION = 0.56;
+const SCROLL_FALL_LARGE_EYE_BOUNCE_RESTITUTION = 0.18;
+const SCROLL_FALL_SMALL_EYE_BOUNCE_CUTOFF = 52;
+const SCROLL_FALL_LARGE_EYE_BOUNCE_CUTOFF = 168;
 const SCROLL_FALL_GROUND_DAMPING = 10;
-const SCROLL_FALL_BOUNCE_RESTITUTION = 0.18;
-const SCROLL_FALL_BOUNCE_CUTOFF = 120;
 const SCROLL_FALL_RETURN_POSITION_SPEED = 7.4;
 const SCROLL_FALL_RETURN_ROTATION_SPEED = 9.2;
 const SCROLL_FALL_RETURN_VELOCITY_SPEED = 6.2;
+const SCROLL_FALL_RETURN_DELAY_MAX = 0.24;
+const SCROLL_FALL_SQUASH_MAX = 0.22;
+const SCROLL_FALL_STRETCH_MAX = 0.12;
+const SCROLL_FALL_SQUASH_IMPACT_SPEED = 900;
+const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
 const DEFAULT_SMALL_EYE_UPDATE_FPS = 24;
 const DEFAULT_LARGE_EYE_UPDATE_FPS = 60;
 const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
-const DEFAULT_CLICK_REPULSE_RADIUS = 220;
-const DEFAULT_CLICK_REPULSE_STRENGTH = 60;
+const DEFAULT_CLICK_REPULSE_RADIUS = 400;
+const DEFAULT_CLICK_REPULSE_STRENGTH = 40;
 const CLICK_WAVE_SPEED = 520;
 const CLICK_WAVE_WIDTH = 90;
 const DEFAULT_FOCUS_MIN_DELAY = 1.4;
 const DEFAULT_FOCUS_MAX_DELAY = 3.8;
 const DEFAULT_FOCUS_UP_DURATION = 0.24;
 const DEFAULT_FOCUS_DOWN_DURATION = 0.38;
-const DEFAULT_FOCUS_SCALE = 1.22;
+const DEFAULT_FOCUS_SCALE = 1.35;
 const DEFAULT_FOCUS_EASE_UP: FocusEaseName = "out-cubic";
 const DEFAULT_FOCUS_EASE_DOWN: FocusEaseName = "in-out-sine";
-const DEFAULT_CAT_BLINK_MIN_DELAY = 1.8;
-const DEFAULT_CAT_BLINK_MAX_DELAY = 4.6;
-const DEFAULT_CAT_BLINK_IN_DURATION = 0.08;
-const DEFAULT_CAT_BLINK_HOLD_DURATION = 0.03;
-const DEFAULT_CAT_BLINK_OUT_DURATION = 0.12;
-const DEFAULT_CAT_BLINK_SIDE_DELAY = 0.03;
+const DEFAULT_CAT_BLINK_MIN_DELAY = 5;
+const DEFAULT_CAT_BLINK_MAX_DELAY = 8;
+const DEFAULT_CAT_BLINK_IN_DURATION = 0.25;
+const DEFAULT_CAT_BLINK_HOLD_DURATION = 0.06;
+const DEFAULT_CAT_BLINK_OUT_DURATION = 0.25;
+const DEFAULT_CAT_BLINK_SIDE_DELAY = 0.1;
 const DEFAULT_CAT_BLINK_EASE_IN: FocusEaseName = "out-cubic";
 const DEFAULT_CAT_BLINK_EASE_OUT: FocusEaseName = "in-out-sine";
-const DEFAULT_CAT_BLINK_SIDE_COLOR = 0x0b0b0d;
+const DEFAULT_CAT_BLINK_SIDE_COLOR = 0x000000;
 const DEFAULT_CAT_BLINK_BOTTOM_COLOR = 0x111113;
 const DEFAULT_CAT_BLINK_SIDE_OPACITY = 1;
-const DEFAULT_CAT_BLINK_BOTTOM_OPACITY = 0.46;
-const DEFAULT_CAT_BLINK_SIDE_STROKE_COLOR = 0x2a2a2f;
-const DEFAULT_CAT_BLINK_BOTTOM_STROKE_COLOR = 0x2a2a2f;
-const DEFAULT_CAT_BLINK_SIDE_STROKE_OPACITY = 0.26;
+const DEFAULT_CAT_BLINK_BOTTOM_OPACITY = 0.66;
+const DEFAULT_CAT_BLINK_SIDE_STROKE_COLOR = 0x66dc1a;
+const DEFAULT_CAT_BLINK_BOTTOM_STROKE_COLOR = 0x66dc1a;
+const DEFAULT_CAT_BLINK_SIDE_STROKE_OPACITY = 0.6;
 const DEFAULT_CAT_BLINK_BOTTOM_STROKE_OPACITY = 0.26;
-const DEFAULT_CAT_BLINK_SIDE_STROKE_WIDTH = 1;
-const DEFAULT_CAT_BLINK_BOTTOM_STROKE_WIDTH = 1;
-const DEFAULT_IRIS_COLOR = 0x8a46be;
-const DEFAULT_CAT_EYE_COLOR = 0x53d500;
-const DEFAULT_SHADOW_OPACITY = 0.72;
-const DEFAULT_ROUND_TRANSLATE_STRENGTH = 0.35;
-const DEFAULT_CAT_TRANSLATE_STRENGTH = 0.35;
-const DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE = 1;
-const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_X = 0;
-const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_Y = 0;
+const DEFAULT_CAT_BLINK_SIDE_STROKE_WIDTH = 4;
+const DEFAULT_CAT_BLINK_BOTTOM_STROKE_WIDTH = 2;
+const DEFAULT_IRIS_COLOR = 0xab53ee;
+const DEFAULT_CAT_EYE_COLOR = 0x66e01a;
+const DEFAULT_SHADOW_OPACITY = 0.4;
+const DEFAULT_DROP_SHADOW_COLOR = 0x4a4545;
+const DEFAULT_DROP_SHADOW_OPACITY = 0.4;
+const DEFAULT_DROP_SHADOW_BLUR = 1.2;
+const DEFAULT_DROP_SHADOW_SPREAD = 0.7;
+const DEFAULT_ROUND_INNER_SHADOW_COLOR = 0xa8abad;
+const DEFAULT_CAT_INNER_SHADOW_COLOR = 0x3d8a0a;
+const DEFAULT_ROUND_TRANSLATE_STRENGTH = 0.9;
+const DEFAULT_CAT_TRANSLATE_STRENGTH = 0.75;
+const DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE = 0.45;
+const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_X = 10;
+const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_Y = -12.5;
 const DEFAULT_ROUND_GLOBE_HIGHLIGHT_ROTATION_DEGREES = 41.25;
-const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY = 0.8;
-const DEFAULT_CAT_GLOBE_HIGHLIGHT_ROTATION_DEGREES = 24;
-const DEFAULT_CAT_GLOBE_HIGHLIGHT_SCALE = 0.68;
-const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_X_FACTOR = 0.3;
-const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_Y_FACTOR = -0.28;
-const DEFAULT_CAT_GLOBE_HIGHLIGHT_OPACITY = 0.95;
+const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY = 0.7;
+const DEFAULT_CAT_GLOBE_HIGHLIGHT_ROTATION_DEGREES = 34;
+const DEFAULT_CAT_GLOBE_HIGHLIGHT_SCALE = 0.47;
+const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_X_FACTOR = 0.37;
+const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_Y_FACTOR = -0.62;
+const DEFAULT_CAT_GLOBE_HIGHLIGHT_OPACITY = 0.7;
 const SHADOW_EDGE_OFFSET_DEGREES = 68;
 const SHADOW_BOTTOM_X = 0;
 const SHADOW_BOTTOM_Y = 1;
@@ -381,6 +429,7 @@ const SHADOW_BOTTOM_LEFT_CONTROL_Y = 1;
 const SCLERA_RADIUS = 24;
 const GLOBE_TEXTURE_PADDING = 4;
 const GLOBE_TEXTURE_RESOLUTION = 4;
+const DROP_SHADOW_TEXTURE_PADDING = 18;
 const IRIS_RADIUS = 16;
 const PUPIL_RADIUS = 8.5;
 const HIGHLIGHT_RADIUS = 2.2;
@@ -787,7 +836,7 @@ const createSharedContexts = (): SharedContexts => {
       shadowLeft.y * SCLERA_RADIUS,
     )
     .closePath()
-    .fill({ color: 0xcfd9e2, alpha: 1 });
+    .fill({ color: 0xffffff, alpha: 1 });
 
   const roundGlobeHighlightContext = new GraphicsContext()
     .moveTo(0.69, -7.64)
@@ -850,14 +899,15 @@ const createSharedContexts = (): SharedContexts => {
 const generateTextureFromContext = (
   renderer: Renderer,
   context: GraphicsContext,
-  options?: { antialias?: boolean },
+  options?: { antialias?: boolean; padding?: number },
 ) => {
   const target = new Graphics(context);
+  const padding = options?.padding ?? GLOBE_TEXTURE_PADDING;
   const textureFrame = new Rectangle(
-    -(SCLERA_RADIUS + GLOBE_TEXTURE_PADDING),
-    -(SCLERA_RADIUS + GLOBE_TEXTURE_PADDING),
-    (SCLERA_RADIUS + GLOBE_TEXTURE_PADDING) * 2,
-    (SCLERA_RADIUS + GLOBE_TEXTURE_PADDING) * 2,
+    -(SCLERA_RADIUS + padding),
+    -(SCLERA_RADIUS + padding),
+    (SCLERA_RADIUS + padding) * 2,
+    (SCLERA_RADIUS + padding) * 2,
   );
   const texture = renderer.generateTexture({
     target,
@@ -876,7 +926,51 @@ const generateTextureFromContext = (
   return texture;
 };
 
-const createSharedTextures = (renderer: Renderer, contexts: SharedContexts): SharedTextures => ({
+const createDropShadowTexture = (renderer: Renderer, blur: number) => {
+  const blurStrength = Math.max(blur, 0);
+  const padding = Math.max(DROP_SHADOW_TEXTURE_PADDING, blurStrength * 3 + 12);
+  const target = new Container();
+  const source = new Graphics().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
+
+  if (blurStrength > 0.01) {
+    source.filters = [
+      new BlurFilter({
+        strength: blurStrength,
+        quality: blurStrength > 8 ? 4 : 3,
+        kernelSize: blurStrength > 10 ? 9 : 7,
+      }),
+    ];
+  }
+
+  target.addChild(source);
+  const texture = renderer.generateTexture({
+    target,
+    frame: new Rectangle(
+      -(SCLERA_RADIUS + padding),
+      -(SCLERA_RADIUS + padding),
+      (SCLERA_RADIUS + padding) * 2,
+      (SCLERA_RADIUS + padding) * 2,
+    ),
+    resolution: Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION),
+    antialias: true,
+    clearColor: [0, 0, 0, 0],
+    textureSourceOptions: {
+      scaleMode: "linear",
+      autoGenerateMipmaps: true,
+    },
+  });
+
+  target.destroy({ children: true });
+
+  return texture;
+};
+
+const createSharedTextures = (
+  renderer: Renderer,
+  contexts: SharedContexts,
+  dropShadowBlur: number,
+): SharedTextures => ({
+  dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur),
   scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext),
   scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext),
   scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext),
@@ -894,10 +988,12 @@ const createEyeInstance = (
   x: number,
   y: number,
   radius: number,
+  maxRadius: number,
   count: number,
   index: number,
 ) => {
   const root = new Container();
+  const dropShadow = new Sprite(textures.dropShadowTexture);
   const eyeFill = new Sprite(textures.scleraFillTexture);
   const irisClipMask = new Graphics(contexts.scleraMaskContext);
   const blinkClipMask = new Graphics(contexts.scleraMaskContext);
@@ -947,6 +1043,7 @@ const createEyeInstance = (
   blinkBottom.zIndex = 0;
   blinkLeft.zIndex = 1;
   blinkRight.zIndex = 1;
+  dropShadow.anchor.set(0.5);
   eyeFill.anchor.set(0.5);
   eyeOutline.anchor.set(0.5);
   eyeShadow.anchor.set(0.5);
@@ -986,6 +1083,7 @@ const createEyeInstance = (
   blinkGroup.mask = blinkClipMask;
 
   root.addChild(
+    dropShadow,
     eyeFill,
     irisClipMask,
     irisGroup,
@@ -996,14 +1094,15 @@ const createEyeInstance = (
     eyeOutline,
   );
 
-  const maxSize = DEFAULT_MAX_EYE_SIZE;
-  const scale = Math.max(radius / Math.max(maxSize, 0.001), 0.001);
-  root.zIndex = scale;
+  const scale = Math.max(radius / Math.max(maxRadius, 0.001), 0.001);
+  const renderScale = Math.max(radius / SCLERA_RADIUS, 0.001);
+  root.zIndex = renderScale;
   root.alpha = 1;
 
   return {
     type,
     root,
+    dropShadow,
     eyeFill,
     eyeOutline,
     eyeShadow,
@@ -1025,6 +1124,7 @@ const createEyeInstance = (
     y,
     radius,
     scale,
+    renderScale,
     lowDetail: lowDetailEnabled(scale),
     updateInterval: eyeUpdateInterval(scale),
     updateAccumulator: 0,
@@ -1053,6 +1153,15 @@ const createEyeInstance = (
     fallVelocityY: 0,
     fallRotationDegrees: 0,
     fallAngularVelocity: 0,
+    fallSquash: 0,
+    fallSettleActive: false,
+    fallSettleElapsed: 0,
+    fallSettleDuration: 0,
+    fallSettleStartOffsetX: 0,
+    fallSettleTargetOffsetX: 0,
+    fallSettleStartRotationDegrees: 0,
+    fallSettleTargetRotationDegrees: 0,
+    fallSettleComplete: false,
     blinkDelayMix: hash01(index * 12.731 + count * 0.73),
     blinkCycleOffset: hash01(index * 23.913 + count * 1.91),
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
@@ -1270,6 +1379,12 @@ const eyeVariantMetrics = (type: EyeType) => {
 };
 
 const applyStaticEyeSettings = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
+  eye.dropShadow.tint = runtime.dropShadowColor;
+  eye.dropShadow.alpha = runtime.dropShadowOpacity;
+  eye.dropShadow.position.set(0, 0);
+  eye.dropShadow.scale.set(0.92 + runtime.dropShadowSpread * 0.12);
+  eye.eyeShadow.tint =
+    eye.type === "cat" ? runtime.catInnerShadowColor : runtime.roundInnerShadowColor;
   eye.eyeShadow.alpha = runtime.shadowOpacity;
   eye.eyeFill.tint = eye.type === "cat" ? runtime.catEyeColor : 0xffffff;
   eye.iris.tint = runtime.irisColor;
@@ -1287,14 +1402,27 @@ const applyStaticEyeSettings = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   eye.irisGroup.mask = eye.irisClipMask;
 };
 
-const setScaleInAnimationProgress = (eye: EyeInstance, elapsed: number) => {
-  if (eye.scaleInFinished) {
-    return;
-  }
-
-  const progress = clamp((elapsed - eye.delay) / 0.28, 0, 1);
-  eye.root.scale.set(eye.scale * smoothstep(progress));
+const resolveScaleInProgress = (eye: EyeInstance, elapsed: number) => {
+  const progress = clamp((elapsed - eye.delay) / SCALE_IN_DURATION, 0, 1);
   eye.scaleInFinished = progress >= 0.999;
+
+  return smoothstep(progress);
+};
+
+const renderedEyeRadius = (eye: EyeInstance) => SCLERA_RADIUS * Math.max(eye.renderScale, 0.001);
+
+const scrollFallFloorOffset = (eye: EyeInstance, worldBounds: Rectangle) =>
+  Math.max(
+    worldBounds.height * 0.5 - eye.y - renderedEyeRadius(eye) - SCROLL_FALL_BOTTOM_PADDING,
+    0,
+  );
+
+const clampScrollFallOffsetX = (eye: EyeInstance, worldBounds: Rectangle, offsetX: number) => {
+  const radius = renderedEyeRadius(eye);
+  const minOffsetX = radius - worldBounds.width * 0.5 - eye.x;
+  const maxOffsetX = worldBounds.width * 0.5 - radius - eye.x;
+
+  return clamp(offsetX, minOffsetX, maxOffsetX);
 };
 
 const resetScrollFallState = (eye: EyeInstance) => {
@@ -1305,6 +1433,15 @@ const resetScrollFallState = (eye: EyeInstance) => {
   eye.fallVelocityY = 0;
   eye.fallRotationDegrees = 0;
   eye.fallAngularVelocity = 0;
+  eye.fallSquash = 0;
+  eye.fallSettleActive = false;
+  eye.fallSettleElapsed = 0;
+  eye.fallSettleDuration = 0;
+  eye.fallSettleStartOffsetX = 0;
+  eye.fallSettleTargetOffsetX = 0;
+  eye.fallSettleStartRotationDegrees = 0;
+  eye.fallSettleTargetRotationDegrees = 0;
+  eye.fallSettleComplete = false;
 };
 
 const startScrollFall = (eye: EyeInstance) => {
@@ -1323,18 +1460,13 @@ const startScrollFall = (eye: EyeInstance) => {
   );
 
   eye.fallStarted = true;
+  eye.fallSettleActive = false;
+  eye.fallSettleComplete = false;
   eye.fallVelocityX = driftDirection * driftSpeed;
   eye.fallVelocityY = 0;
   eye.fallAngularVelocity = rotationDirection * spinSpeed;
+  eye.fallSquash = 0;
 };
-
-const renderedEyeRadius = (eye: EyeInstance) => SCLERA_RADIUS * Math.max(eye.root.scale.x, 0.001);
-
-const scrollFallFloorOffset = (eye: EyeInstance, worldBounds: Rectangle) =>
-  Math.max(
-    worldBounds.height * 0.5 - eye.y - renderedEyeRadius(eye) - SCROLL_FALL_BOTTOM_PADDING,
-    0,
-  );
 
 const updateScrollFallState = (
   eye: EyeInstance,
@@ -1342,16 +1474,88 @@ const updateScrollFallState = (
   worldBounds: Rectangle,
   dtSeconds: number,
 ) => {
-  if (runtime.scrollFallTarget > 0.5) {
-    const fallDelay = eye.fallDelayMix * SCROLL_FALL_DELAY_MAX;
-    if (!eye.fallStarted) {
-      if (runtime.scrollFallElapsed < fallDelay) {
-        return;
-      }
+  const sizeMix = clamp(eye.scale, 0, 1);
+  const bounceRestitution = lerp(
+    SCROLL_FALL_SMALL_EYE_BOUNCE_RESTITUTION,
+    SCROLL_FALL_LARGE_EYE_BOUNCE_RESTITUTION,
+    sizeMix,
+  );
+  const bounceCutoff = lerp(
+    SCROLL_FALL_SMALL_EYE_BOUNCE_CUTOFF,
+    SCROLL_FALL_LARGE_EYE_BOUNCE_CUTOFF,
+    sizeMix,
+  );
+  const squashTarget =
+    runtime.scrollFallTarget > 0.5 && eye.fallVelocityY < -40
+      ? -clamp(-eye.fallVelocityY / SCROLL_FALL_SQUASH_IMPACT_SPEED, 0, SCROLL_FALL_STRETCH_MAX)
+      : 0;
+  eye.fallSquash = smoothTowards(
+    eye.fallSquash,
+    squashTarget,
+    SCROLL_FALL_SQUASH_RETURN_SPEED,
+    dtSeconds,
+  );
 
-      startScrollFall(eye);
+  if (runtime.scrollFallTarget <= 0.5) {
+    eye.fallStarted = false;
+    eye.fallSettleActive = false;
+    eye.fallSettleComplete = false;
+    const returnDelay = eye.fallDelayMix * SCROLL_FALL_RETURN_DELAY_MAX;
+    if (runtime.scrollReturnElapsed < returnDelay) {
+      return;
     }
 
+    eye.fallVelocityX = smoothTowards(
+      eye.fallVelocityX,
+      0,
+      SCROLL_FALL_RETURN_VELOCITY_SPEED,
+      dtSeconds,
+    );
+    eye.fallVelocityY = smoothTowards(
+      eye.fallVelocityY,
+      0,
+      SCROLL_FALL_RETURN_VELOCITY_SPEED,
+      dtSeconds,
+    );
+    eye.fallAngularVelocity = smoothTowards(
+      eye.fallAngularVelocity,
+      0,
+      SCROLL_FALL_RETURN_ROTATION_SPEED,
+      dtSeconds,
+    );
+    eye.fallOffsetX = smoothTowards(
+      eye.fallOffsetX,
+      0,
+      SCROLL_FALL_RETURN_POSITION_SPEED,
+      dtSeconds,
+    );
+    eye.fallOffsetY = smoothTowards(
+      eye.fallOffsetY,
+      0,
+      SCROLL_FALL_RETURN_POSITION_SPEED,
+      dtSeconds,
+    );
+    eye.fallRotationDegrees = smoothTowards(
+      eye.fallRotationDegrees,
+      0,
+      SCROLL_FALL_RETURN_ROTATION_SPEED,
+      dtSeconds,
+    );
+
+    return;
+  }
+
+  const fallDelay = eye.fallDelayMix * SCROLL_FALL_DELAY_MAX;
+  if (!eye.fallStarted) {
+    if (runtime.scrollFallElapsed < fallDelay) {
+      return;
+    }
+
+    startScrollFall(eye);
+  }
+
+  const floorOffset = scrollFallFloorOffset(eye, worldBounds);
+  if (!eye.fallSettleActive && !eye.fallSettleComplete) {
     eye.fallVelocityY += SCROLL_FALL_GRAVITY * dtSeconds;
     eye.fallVelocityX = smoothTowards(eye.fallVelocityX, 0, SCROLL_FALL_AIR_DAMPING, dtSeconds);
     eye.fallAngularVelocity = smoothTowards(
@@ -1360,35 +1564,39 @@ const updateScrollFallState = (
       SCROLL_FALL_AIR_DAMPING,
       dtSeconds,
     );
-    eye.fallOffsetX += eye.fallVelocityX * dtSeconds;
+    eye.fallOffsetX = clampScrollFallOffsetX(
+      eye,
+      worldBounds,
+      eye.fallOffsetX + eye.fallVelocityX * dtSeconds,
+    );
     eye.fallOffsetY += eye.fallVelocityY * dtSeconds;
     eye.fallRotationDegrees += eye.fallAngularVelocity * dtSeconds;
 
-    const fallFloor = scrollFallFloorOffset(eye, worldBounds);
-    if (eye.fallOffsetY < fallFloor) {
+    if (eye.fallOffsetY < floorOffset) {
       return;
     }
 
-    eye.fallOffsetY = fallFloor;
-    if (eye.fallVelocityY > SCROLL_FALL_BOUNCE_CUTOFF) {
-      eye.fallVelocityY *= -SCROLL_FALL_BOUNCE_RESTITUTION;
-      eye.fallVelocityX = smoothTowards(
-        eye.fallVelocityX,
+    eye.fallOffsetY = floorOffset;
+    if (eye.fallVelocityY > bounceCutoff) {
+      const impactSquash = clamp(
+        eye.fallVelocityY / SCROLL_FALL_SQUASH_IMPACT_SPEED,
         0,
-        SCROLL_FALL_GROUND_DAMPING,
-        dtSeconds,
+        SCROLL_FALL_SQUASH_MAX,
       );
-      eye.fallAngularVelocity = smoothTowards(
-        eye.fallAngularVelocity,
-        0,
-        SCROLL_FALL_GROUND_DAMPING * 0.7,
-        dtSeconds,
-      );
+      eye.fallSquash = Math.max(eye.fallSquash, impactSquash);
+      eye.fallVelocityY *= -bounceRestitution;
+      eye.fallVelocityX *= 0.65;
+      eye.fallAngularVelocity *= 0.45;
       return;
     }
 
+    eye.fallSettleComplete = true;
+  }
+
+  if (!eye.fallSettleActive) {
+    eye.fallOffsetY = floorOffset;
+    eye.fallVelocityX = 0;
     eye.fallVelocityY = 0;
-    eye.fallVelocityX = smoothTowards(eye.fallVelocityX, 0, SCROLL_FALL_GROUND_DAMPING, dtSeconds);
     eye.fallAngularVelocity = smoothTowards(
       eye.fallAngularVelocity,
       0,
@@ -1397,49 +1605,22 @@ const updateScrollFallState = (
     );
     return;
   }
-
-  eye.fallStarted = false;
-  eye.fallVelocityX = smoothTowards(
-    eye.fallVelocityX,
-    0,
-    SCROLL_FALL_RETURN_VELOCITY_SPEED,
-    dtSeconds,
-  );
-  eye.fallVelocityY = smoothTowards(
-    eye.fallVelocityY,
-    0,
-    SCROLL_FALL_RETURN_VELOCITY_SPEED,
-    dtSeconds,
-  );
-  eye.fallAngularVelocity = smoothTowards(
-    eye.fallAngularVelocity,
-    0,
-    SCROLL_FALL_RETURN_ROTATION_SPEED,
-    dtSeconds,
-  );
-  eye.fallOffsetX = smoothTowards(eye.fallOffsetX, 0, SCROLL_FALL_RETURN_POSITION_SPEED, dtSeconds);
-  eye.fallOffsetY = smoothTowards(eye.fallOffsetY, 0, SCROLL_FALL_RETURN_POSITION_SPEED, dtSeconds);
-  eye.fallRotationDegrees = smoothTowards(
-    eye.fallRotationDegrees,
-    0,
-    SCROLL_FALL_RETURN_ROTATION_SPEED,
-    dtSeconds,
-  );
 };
-
-const scrollFallEyeIsActive = (eye: EyeInstance) =>
-  eye.fallStarted ||
-  Math.abs(eye.fallOffsetX) > 0.02 ||
-  Math.abs(eye.fallOffsetY) > 0.02 ||
-  Math.abs(eye.fallVelocityX) > 2 ||
-  Math.abs(eye.fallVelocityY) > 2 ||
-  Math.abs(eye.fallRotationDegrees) > 0.05 ||
-  Math.abs(eye.fallAngularVelocity) > 1;
 
 const scrollFallIsActive = (runtime: EyeFieldRuntime) =>
   runtime.scrollFallTarget > 0.5 ||
   runtime.scrollFallBlend > 0.0001 ||
-  runtime.eyes.some((eye) => scrollFallEyeIsActive(eye));
+  runtime.eyes.some(
+    (eye) =>
+      eye.fallStarted ||
+      Math.abs(eye.fallOffsetX) > 0.02 ||
+      Math.abs(eye.fallOffsetY) > 0.02 ||
+      Math.abs(eye.fallVelocityX) > 2 ||
+      Math.abs(eye.fallVelocityY) > 2 ||
+      Math.abs(eye.fallRotationDegrees) > 0.05 ||
+      Math.abs(eye.fallAngularVelocity) > 1 ||
+      Math.abs(eye.fallSquash) > 0.001,
+  );
 
 const applyCatBlinkAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   const bottomProgress = eye.type === "cat" ? clamp(eye.catBlinkBottom, 0, 1) : 0;
@@ -1603,6 +1784,7 @@ const createRuntime = (count: number): EyeFieldRuntime => ({
   targetMouseX: 0,
   targetMouseY: 0,
   pointerActive: false,
+  scrollFallResumePointerActive: false,
   elapsed: 0,
   trackingBlend: 0,
   sharedAttentionDelay: DEFAULT_SHARED_ATTENTION_DELAY,
@@ -1617,8 +1799,15 @@ const createRuntime = (count: number): EyeFieldRuntime => ({
   scrollFallBlend: 0,
   scrollFallTarget: 0,
   scrollFallElapsed: 0,
+  scrollReturnElapsed: Number.POSITIVE_INFINITY,
   scrollFallBlendSpeed: DEFAULT_SCROLL_FALL_BLEND_SPEED,
   shadowOpacity: DEFAULT_SHADOW_OPACITY,
+  dropShadowColor: DEFAULT_DROP_SHADOW_COLOR,
+  dropShadowOpacity: DEFAULT_DROP_SHADOW_OPACITY,
+  dropShadowBlur: DEFAULT_DROP_SHADOW_BLUR,
+  dropShadowSpread: DEFAULT_DROP_SHADOW_SPREAD,
+  roundInnerShadowColor: DEFAULT_ROUND_INNER_SHADOW_COLOR,
+  catInnerShadowColor: DEFAULT_CAT_INNER_SHADOW_COLOR,
   irisColor: DEFAULT_IRIS_COLOR,
   catEyeColor: DEFAULT_CAT_EYE_COLOR,
   roundTranslateStrength: DEFAULT_ROUND_TRANSLATE_STRENGTH,
@@ -1665,20 +1854,34 @@ const createRuntime = (count: number): EyeFieldRuntime => ({
 
 export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions) => {
   const root = new Container();
-  const contexts = createSharedContexts();
-  const textures = createSharedTextures(renderer, contexts);
   const runtime = createRuntime(count);
+  const contexts = createSharedContexts();
+  let textures = createSharedTextures(renderer, contexts, runtime.dropShadowBlur);
+
+  const refreshDropShadowTexture = () => {
+    const previousTexture = textures.dropShadowTexture;
+    textures = {
+      ...textures,
+      dropShadowTexture: createDropShadowTexture(renderer, runtime.dropShadowBlur),
+    };
+    runtime.eyes.forEach((eye) => {
+      eye.dropShadow.texture = textures.dropShadowTexture;
+    });
+    previousTexture.destroy(true);
+  };
 
   const rebuildEyes = () => {
     runtime.eyes.forEach((eye) => eye.root.destroy({ children: true }));
     runtime.eyes = [];
     root.removeChildren();
+    const minEyeRadius = runtime.minEyeSize * 0.5;
+    const maxEyeRadius = runtime.maxEyeSize * 0.5;
 
     const positions = packCircles(
       runtime.count,
       runtime.clusterRadius,
-      runtime.minEyeSize,
-      runtime.maxEyeSize,
+      minEyeRadius,
+      maxEyeRadius,
       runtime.packAttempts,
       runtime.spiralStepDegrees,
       runtime.radialExponent,
@@ -1694,6 +1897,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         position.x,
         position.y,
         position.r,
+        maxEyeRadius,
         positions.length,
         index + 1,
       );
@@ -1706,13 +1910,13 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       applyStaticEyeSettings(eye, runtime);
       runtime.eyes.push(eye);
       root.addChild(eye.root);
-      setScaleInAnimationProgress(eye, runtime.elapsed);
+      eye.root.scale.set(eye.renderScale * resolveScaleInProgress(eye, runtime.elapsed));
     });
     root.sortChildren();
   };
 
   const layout = (width: number, height: number) => {
-    runtime.clusterRadius = Math.max(Math.min(width, height) * 0.42, runtime.maxEyeSize + 40);
+    runtime.clusterRadius = Math.max(Math.min(width, height) * 0.42, runtime.maxEyeSize * 0.5 + 40);
     root.position.set(width * 0.5, height * 0.5);
     rebuildEyes();
   };
@@ -1733,6 +1937,12 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     clickRepulseEase,
     staggerSeconds,
     shadowOpacity,
+    dropShadowColor,
+    dropShadowOpacity,
+    dropShadowBlur,
+    dropShadowSpread,
+    roundInnerShadowColor,
+    catInnerShadowColor,
     irisColor,
     catEyeColor,
     roundTranslateStrength,
@@ -1775,6 +1985,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     focusEaseDown,
   }: EyeFieldConfig) => {
     let shouldRebuild = false;
+    let shouldRefreshDropShadowTexture = false;
 
     if (typeof catMix === "number") {
       const nextCatMix = clamp(catMix, 0, 1);
@@ -1831,6 +2042,34 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (typeof shadowOpacity === "number") {
       runtime.shadowOpacity = clamp(shadowOpacity, 0, 1);
+    }
+
+    if (typeof dropShadowColor === "number" && Number.isFinite(dropShadowColor)) {
+      runtime.dropShadowColor = dropShadowColor;
+    }
+
+    if (typeof dropShadowOpacity === "number") {
+      runtime.dropShadowOpacity = clamp(dropShadowOpacity, 0, 1);
+    }
+
+    if (typeof dropShadowBlur === "number") {
+      const nextDropShadowBlur = Math.max(dropShadowBlur, 0);
+      if (nextDropShadowBlur !== runtime.dropShadowBlur) {
+        runtime.dropShadowBlur = nextDropShadowBlur;
+        shouldRefreshDropShadowTexture = true;
+      }
+    }
+
+    if (typeof dropShadowSpread === "number") {
+      runtime.dropShadowSpread = Math.max(dropShadowSpread, 0);
+    }
+
+    if (typeof roundInnerShadowColor === "number" && Number.isFinite(roundInnerShadowColor)) {
+      runtime.roundInnerShadowColor = roundInnerShadowColor;
+    }
+
+    if (typeof catInnerShadowColor === "number" && Number.isFinite(catInnerShadowColor)) {
+      runtime.catInnerShadowColor = catInnerShadowColor;
     }
 
     if (typeof irisColor === "number" && Number.isFinite(irisColor)) {
@@ -2006,6 +2245,12 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (
       typeof shadowOpacity === "number" ||
+      typeof dropShadowColor === "number" ||
+      typeof dropShadowOpacity === "number" ||
+      typeof dropShadowBlur === "number" ||
+      typeof dropShadowSpread === "number" ||
+      typeof roundInnerShadowColor === "number" ||
+      typeof catInnerShadowColor === "number" ||
       typeof irisColor === "number" ||
       typeof catEyeColor === "number" ||
       typeof roundHighlightScale === "number" ||
@@ -2033,6 +2278,10 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         applyStaticEyeSettings(eye, runtime);
         applyCatBlinkAppearance(eye, runtime);
       });
+    }
+
+    if (shouldRefreshDropShadowTexture) {
+      refreshDropShadowTexture();
     }
 
     if (shouldRebuild) {
@@ -2110,15 +2359,16 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     runtime.scrollFallTarget = nextTarget;
     runtime.scrollFallElapsed = 0;
-
+    runtime.scrollReturnElapsed = nextTarget <= 0.5 ? 0 : Number.POSITIVE_INFINITY;
+    runtime.waves.length = 0;
     if (isActive) {
+      runtime.scrollFallResumePointerActive = runtime.pointerActive;
       runtime.pointerActive = false;
-      runtime.targetMouseX = 0;
-      runtime.targetMouseY = 0;
-      runtime.waves.length = 0;
       runtime.eyes.forEach((eye) => {
         resetScrollFallState(eye);
       });
+    } else {
+      runtime.pointerActive = runtime.scrollFallResumePointerActive;
     }
   };
 
@@ -2188,6 +2438,10 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     );
     runtime.scrollFallElapsed =
       runtime.scrollFallTarget > 0.5 ? runtime.scrollFallElapsed + dtSeconds : 0;
+    runtime.scrollReturnElapsed =
+      runtime.scrollFallTarget <= 0.5
+        ? runtime.scrollReturnElapsed + dtSeconds
+        : Number.POSITIVE_INFINITY;
     for (let waveIndex = runtime.waves.length - 1; waveIndex >= 0; waveIndex -= 1) {
       const wave = runtime.waves[waveIndex];
       wave.elapsed += dtSeconds;
@@ -2229,6 +2483,16 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
       eye.updateAccumulator = 0;
       const eyeSeconds = dtSeconds;
+      const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
+      updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
+      const squashScaleX =
+        eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
+      const squashScaleY =
+        eye.fallSquash >= 0 ? 1 - eye.fallSquash * 0.75 : 1 - eye.fallSquash * 0.5;
+      eye.root.scale.set(
+        eye.renderScale * introScaleProgress * squashScaleX,
+        eye.renderScale * introScaleProgress * squashScaleY,
+      );
 
       const interactionOffset = totalOffset(eye);
       const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX;
@@ -2439,9 +2703,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         }
       }
 
-      setScaleInAnimationProgress(eye, runtime.elapsed);
       applyPupilAppearance(eye, runtime);
-      updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
       const offset = totalOffset(eye);
       const drawX = root.position.x + eye.x + offset.x + eye.fallOffsetX;
       const drawY = root.position.y + eye.y + offset.y + eye.fallOffsetY;
@@ -2516,6 +2778,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       }
 
       root.destroy({ children: true });
+      textures.dropShadowTexture.destroy(true);
       textures.scleraFillTexture.destroy(true);
       textures.scleraOutlineTexture.destroy(true);
       textures.scleraShadowTexture.destroy(true);

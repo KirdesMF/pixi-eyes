@@ -53,6 +53,12 @@ interface StoredSettings {
   clickRepulseEase: ClickRepulseEaseName;
   staggerSeconds: number;
   shadowOpacity: number;
+  dropShadowColor: string;
+  dropShadowOpacity: number;
+  dropShadowBlur: number;
+  dropShadowSpread: number;
+  roundInnerShadowColor: string;
+  catInnerShadowColor: string;
   irisColor: string;
   catEyeColor: string;
   roundTranslateStrength: number;
@@ -95,6 +101,67 @@ interface StoredSettings {
   focusEaseUp: FocusEaseName;
   focusEaseDown: FocusEaseName;
 }
+
+const DEFAULT_SETTINGS: StoredSettings = {
+  count: 400,
+  minEyeSize: 10,
+  maxEyeSize: 90,
+  catMix: 0.35,
+  catMorphRadius: 120,
+  repulsionRadius: 90,
+  clickRepulseRadius: 400,
+  clickRepulseStrength: 40,
+  clickRepulseEase: "out-elastic",
+  staggerSeconds: 0.002,
+  shadowOpacity: 0.4,
+  roundInnerShadowColor: "#a8abad",
+  catInnerShadowColor: "#3d8a0a",
+  dropShadowColor: "#4a4545",
+  dropShadowOpacity: 0.4,
+  dropShadowBlur: 1.2,
+  dropShadowSpread: 0.7,
+  irisColor: "#ab53ee",
+  catEyeColor: "#66e01a",
+  roundTranslateStrength: 0.9,
+  catTranslateStrength: 0.75,
+  roundHighlightScale: 0.45,
+  roundHighlightOffsetX: 10,
+  roundHighlightOffsetY: -12.5,
+  roundHighlightRotationDegrees: 41.25,
+  roundHighlightOpacity: 0.7,
+  catHighlightScale: 0.47,
+  catHighlightOffsetX: 0.37,
+  catHighlightOffsetY: -0.62,
+  catHighlightRotationDegrees: 34,
+  catHighlightOpacity: 0.7,
+  catPupilHighlightMorphScale: 4,
+  catBlinkSideColor: "#000000",
+  catBlinkSideOpacity: 1,
+  catBlinkSideStrokeColor: "#66dc1a",
+  catBlinkSideStrokeWidth: 4,
+  catBlinkSideStrokeOpacity: 0.6,
+  catBlinkBottomColor: "#111113",
+  catBlinkBottomOpacity: 0.66,
+  catBlinkBottomStrokeColor: "#66dc1a",
+  catBlinkBottomStrokeWidth: 2,
+  catBlinkBottomStrokeOpacity: 0.26,
+  catBlinkMinDelay: 5,
+  catBlinkMaxDelay: 8,
+  catBlinkInDuration: 0.25,
+  catBlinkHoldDuration: 0.06,
+  catBlinkOutDuration: 0.25,
+  catBlinkSideDelay: 0.1,
+  catBlinkEaseIn: "out-cubic",
+  catBlinkEaseOut: "in-out-sine",
+  backgroundColor: "#ffffff",
+  focusScale: 1.35,
+  focusUpDuration: 0.24,
+  focusDownDuration: 0.38,
+  focusMinDelay: 1.4,
+  focusMaxDelay: 3.8,
+  focusEaseUp: "out-cubic",
+  focusEaseDown: "in-out-sine",
+};
 
 const numberControl = (
   id: string,
@@ -185,81 +252,211 @@ appNode.innerHTML = `
           <div class="grid flex-1 content-start gap-4 overflow-y-auto pr-1">
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Field</p>
-            ${numberControl("instance-count", "Instances", 240, 24, 800, 8)}
-            ${numberControl("min-eye-size", "Min Eye", 30, 10, 90, 1)}
-            ${numberControl("max-eye-size", "Max Eye", 70, 20, 140, 1)}
-            ${numberControl("cat-mix", "Cat Mix", 0.35, 0, 1, 0.01)}
-            ${numberControl("repulsion-radius", "Repulsion", 80, 0, 220, 1)}
-            ${numberControl("click-repulse-radius", "Click Radius", 220, 0, 420, 1)}
-            ${numberControl("click-repulse-strength", "Click Strength", 60, 0, 220, 1)}
+            ${numberControl("instance-count", "Instances", DEFAULT_SETTINGS.count, 24, 800, 8)}
+            ${numberControl("min-eye-size", "Min Eye", DEFAULT_SETTINGS.minEyeSize, 10, 90, 1)}
+            ${numberControl("max-eye-size", "Max Eye", DEFAULT_SETTINGS.maxEyeSize, 20, 140, 1)}
+            ${numberControl("cat-mix", "Cat Mix", DEFAULT_SETTINGS.catMix, 0, 1, 0.01)}
+            ${numberControl("repulsion-radius", "Repulsion", DEFAULT_SETTINGS.repulsionRadius, 0, 220, 1)}
+            ${numberControl(
+              "click-repulse-radius",
+              "Click Radius",
+              DEFAULT_SETTINGS.clickRepulseRadius,
+              0,
+              420,
+              1,
+            )}
+            ${numberControl(
+              "click-repulse-strength",
+              "Click Strength",
+              DEFAULT_SETTINGS.clickRepulseStrength,
+              0,
+              220,
+              1,
+            )}
             ${selectControl(
               "click-repulse-ease",
               "Click Ease",
-              "smoothstep",
+              DEFAULT_SETTINGS.clickRepulseEase,
               CLICK_REPULSE_EASE_OPTIONS,
             )}
-            ${numberControl("stagger-seconds", "Stagger", 0.002, 0, 0.1, 0.001)}
+            ${numberControl("stagger-seconds", "Stagger", DEFAULT_SETTINGS.staggerSeconds, 0, 0.1, 0.001)}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Appearance</p>
-            ${numberControl("shadow-opacity", "Shadow", 0.72, 0, 1, 0.01)}
-            ${colorControl("iris-color", "Round Iris", "#8a46be")}
-            ${colorControl("cat-eye-color", "Cat Eye", "#53d500")}
-            ${colorControl("background-color", "Canvas BG", "#ffffff")}
+            ${numberControl("shadow-opacity", "Inner Shadow", DEFAULT_SETTINGS.shadowOpacity, 0, 1, 0.01)}
+            ${colorControl(
+              "round-inner-shadow-color",
+              "Round Shadow",
+              DEFAULT_SETTINGS.roundInnerShadowColor,
+            )}
+            ${colorControl("cat-inner-shadow-color", "Cat Shadow", DEFAULT_SETTINGS.catInnerShadowColor)}
+            ${colorControl("drop-shadow-color", "Drop Color", DEFAULT_SETTINGS.dropShadowColor)}
+            ${numberControl(
+              "drop-shadow-opacity",
+              "Drop Opacity",
+              DEFAULT_SETTINGS.dropShadowOpacity,
+              0,
+              1,
+              0.01,
+            )}
+            ${numberControl("drop-shadow-blur", "Drop Blur", DEFAULT_SETTINGS.dropShadowBlur, 0, 20, 0.1)}
+            ${numberControl(
+              "drop-shadow-spread",
+              "Drop Spread",
+              DEFAULT_SETTINGS.dropShadowSpread,
+              0,
+              10,
+              0.1,
+            )}
+            ${colorControl("iris-color", "Round Iris", DEFAULT_SETTINGS.irisColor)}
+            ${colorControl("cat-eye-color", "Cat Eye", DEFAULT_SETTINGS.catEyeColor)}
+            ${colorControl("background-color", "Canvas BG", DEFAULT_SETTINGS.backgroundColor)}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Motion</p>
-            ${numberControl("round-translate-strength", "Round Move", 0.35, 0, 1, 0.01)}
-            ${numberControl("cat-translate-strength", "Cat Move", 0.35, 0, 1, 0.01)}
-            ${numberControl("cat-morph-radius", "Cat Morph", 120, 0, 260, 1)}
+            ${numberControl(
+              "round-translate-strength",
+              "Round Move",
+              DEFAULT_SETTINGS.roundTranslateStrength,
+              0,
+              1,
+              0.01,
+            )}
+            ${numberControl(
+              "cat-translate-strength",
+              "Cat Move",
+              DEFAULT_SETTINGS.catTranslateStrength,
+              0,
+              1,
+              0.01,
+            )}
+            ${numberControl("cat-morph-radius", "Cat Morph", DEFAULT_SETTINGS.catMorphRadius, 0, 260, 1)}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Round Light</p>
-            ${numberControl("round-highlight-scale", "Scale", 1, 0, 2, 0.01)}
-            ${numberControl("round-highlight-offset-x", "Offset X", 0, -100, 100, 0.5)}
-            ${numberControl("round-highlight-offset-y", "Offset Y", 0, -100, 100, 0.5)}
-            ${numberControl("round-highlight-rotation", "Rotation", 41.25, -180, 180, 1)}
-            ${numberControl("round-highlight-opacity", "Opacity", 0.8, 0, 1, 0.01)}
+            ${numberControl("round-highlight-scale", "Scale", DEFAULT_SETTINGS.roundHighlightScale, 0, 2, 0.01)}
+            ${numberControl(
+              "round-highlight-offset-x",
+              "Offset X",
+              DEFAULT_SETTINGS.roundHighlightOffsetX,
+              -100,
+              100,
+              0.5,
+            )}
+            ${numberControl(
+              "round-highlight-offset-y",
+              "Offset Y",
+              DEFAULT_SETTINGS.roundHighlightOffsetY,
+              -100,
+              100,
+              0.5,
+            )}
+            ${numberControl(
+              "round-highlight-rotation",
+              "Rotation",
+              DEFAULT_SETTINGS.roundHighlightRotationDegrees,
+              -180,
+              180,
+              1,
+            )}
+            ${numberControl("round-highlight-opacity", "Opacity", DEFAULT_SETTINGS.roundHighlightOpacity, 0, 1, 0.01)}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Cat Light</p>
-            ${numberControl("cat-highlight-scale", "Scale", 0.68, 0, 2, 0.01)}
-            ${numberControl("cat-highlight-offset-x", "Offset X", 0.3, -1, 1, 0.01)}
-            ${numberControl("cat-highlight-offset-y", "Offset Y", -0.28, -1, 1, 0.01)}
-            ${numberControl("cat-highlight-rotation", "Rotation", 24, -180, 180, 1)}
-            ${numberControl("cat-highlight-opacity", "Opacity", 0.95, 0, 1, 0.01)}
-            ${numberControl("cat-pupil-highlight-morph-scale", "Dot Morph", 4, 1, 8, 0.01)}
+            ${numberControl("cat-highlight-scale", "Scale", DEFAULT_SETTINGS.catHighlightScale, 0, 2, 0.01)}
+            ${numberControl("cat-highlight-offset-x", "Offset X", DEFAULT_SETTINGS.catHighlightOffsetX, -1, 1, 0.01)}
+            ${numberControl("cat-highlight-offset-y", "Offset Y", DEFAULT_SETTINGS.catHighlightOffsetY, -1, 1, 0.01)}
+            ${numberControl(
+              "cat-highlight-rotation",
+              "Rotation",
+              DEFAULT_SETTINGS.catHighlightRotationDegrees,
+              -180,
+              180,
+              1,
+            )}
+            ${numberControl("cat-highlight-opacity", "Opacity", DEFAULT_SETTINGS.catHighlightOpacity, 0, 1, 0.01)}
+            ${numberControl(
+              "cat-pupil-highlight-morph-scale",
+              "Dot Morph",
+              DEFAULT_SETTINGS.catPupilHighlightMorphScale,
+              1,
+              8,
+              0.01,
+            )}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Cat Blink</p>
-            ${colorControl("cat-blink-side-color", "Side Fill", "#0b0b0d")}
-            ${numberControl("cat-blink-side-opacity", "Side Opacity", 1, 0, 1, 0.01)}
-            ${colorControl("cat-blink-side-stroke-color", "Side Stroke", "#2a2a2f")}
-            ${numberControl("cat-blink-side-stroke-width", "Side Stroke W", 1, 0, 8, 0.1)}
-            ${numberControl("cat-blink-side-stroke-opacity", "Side Stroke O", 0.26, 0, 1, 0.01)}
-            ${colorControl("cat-blink-bottom-color", "Full Fill", "#111113")}
-            ${numberControl("cat-blink-bottom-opacity", "Full Opacity", 0.46, 0, 1, 0.01)}
-            ${colorControl("cat-blink-bottom-stroke-color", "Full Stroke", "#2a2a2f")}
-            ${numberControl("cat-blink-bottom-stroke-width", "Full Stroke W", 1, 0, 8, 0.1)}
-            ${numberControl("cat-blink-bottom-stroke-opacity", "Full Stroke O", 0.26, 0, 1, 0.01)}
-            ${numberControl("cat-blink-in-duration", "In", 0.08, 0.01, 2, 0.01)}
-            ${numberControl("cat-blink-hold-duration", "Hold", 0.03, 0, 2, 0.01)}
-            ${numberControl("cat-blink-out-duration", "Out", 0.12, 0.01, 2, 0.01)}
-            ${numberControl("cat-blink-side-delay", "Side Delay", 0.03, 0, 1, 0.01)}
-            ${numberControl("cat-blink-min-delay", "Delay Min", 1.8, 0, 8, 0.1)}
-            ${numberControl("cat-blink-max-delay", "Delay Max", 4.6, 0, 8, 0.1)}
-            ${selectControl("cat-blink-ease-in", "Ease In", "out-cubic", EASE_OPTIONS)}
-            ${selectControl("cat-blink-ease-out", "Ease Out", "in-out-sine", EASE_OPTIONS)}
+            ${colorControl("cat-blink-side-color", "Side Fill", DEFAULT_SETTINGS.catBlinkSideColor)}
+            ${numberControl("cat-blink-side-opacity", "Side Opacity", DEFAULT_SETTINGS.catBlinkSideOpacity, 0, 1, 0.01)}
+            ${colorControl(
+              "cat-blink-side-stroke-color",
+              "Side Stroke",
+              DEFAULT_SETTINGS.catBlinkSideStrokeColor,
+            )}
+            ${numberControl(
+              "cat-blink-side-stroke-width",
+              "Side Stroke W",
+              DEFAULT_SETTINGS.catBlinkSideStrokeWidth,
+              0,
+              8,
+              0.1,
+            )}
+            ${numberControl(
+              "cat-blink-side-stroke-opacity",
+              "Side Stroke O",
+              DEFAULT_SETTINGS.catBlinkSideStrokeOpacity,
+              0,
+              1,
+              0.01,
+            )}
+            ${colorControl("cat-blink-bottom-color", "Full Fill", DEFAULT_SETTINGS.catBlinkBottomColor)}
+            ${numberControl(
+              "cat-blink-bottom-opacity",
+              "Full Opacity",
+              DEFAULT_SETTINGS.catBlinkBottomOpacity,
+              0,
+              1,
+              0.01,
+            )}
+            ${colorControl(
+              "cat-blink-bottom-stroke-color",
+              "Full Stroke",
+              DEFAULT_SETTINGS.catBlinkBottomStrokeColor,
+            )}
+            ${numberControl(
+              "cat-blink-bottom-stroke-width",
+              "Full Stroke W",
+              DEFAULT_SETTINGS.catBlinkBottomStrokeWidth,
+              0,
+              8,
+              0.1,
+            )}
+            ${numberControl(
+              "cat-blink-bottom-stroke-opacity",
+              "Full Stroke O",
+              DEFAULT_SETTINGS.catBlinkBottomStrokeOpacity,
+              0,
+              1,
+              0.01,
+            )}
+            ${numberControl("cat-blink-in-duration", "In", DEFAULT_SETTINGS.catBlinkInDuration, 0.01, 2, 0.01)}
+            ${numberControl("cat-blink-hold-duration", "Hold", DEFAULT_SETTINGS.catBlinkHoldDuration, 0, 2, 0.01)}
+            ${numberControl("cat-blink-out-duration", "Out", DEFAULT_SETTINGS.catBlinkOutDuration, 0.01, 2, 0.01)}
+            ${numberControl("cat-blink-side-delay", "Side Delay", DEFAULT_SETTINGS.catBlinkSideDelay, 0, 1, 0.01)}
+            ${numberControl("cat-blink-min-delay", "Delay Min", DEFAULT_SETTINGS.catBlinkMinDelay, 0, 8, 0.1)}
+            ${numberControl("cat-blink-max-delay", "Delay Max", DEFAULT_SETTINGS.catBlinkMaxDelay, 0, 8, 0.1)}
+            ${selectControl("cat-blink-ease-in", "Ease In", DEFAULT_SETTINGS.catBlinkEaseIn, EASE_OPTIONS)}
+            ${selectControl("cat-blink-ease-out", "Ease Out", DEFAULT_SETTINGS.catBlinkEaseOut, EASE_OPTIONS)}
           </div>
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Focus</p>
-            ${numberControl("focus-scale", "Scale", 1.22, 1, 2, 0.01)}
-            ${numberControl("focus-up-duration", "Up", 0.24, 0.01, 2, 0.01)}
-            ${numberControl("focus-down-duration", "Down", 0.38, 0.01, 2, 0.01)}
-            ${numberControl("focus-min-delay", "Delay Min", 1.4, 0, 8, 0.1)}
-            ${numberControl("focus-max-delay", "Delay Max", 3.8, 0, 8, 0.1)}
-            ${selectControl("focus-ease-up", "Ease Up", "out-cubic", EASE_OPTIONS)}
-            ${selectControl("focus-ease-down", "Ease Down", "in-out-sine", EASE_OPTIONS)}
+            ${numberControl("focus-scale", "Scale", DEFAULT_SETTINGS.focusScale, 1, 2, 0.01)}
+            ${numberControl("focus-up-duration", "Up", DEFAULT_SETTINGS.focusUpDuration, 0.01, 2, 0.01)}
+            ${numberControl("focus-down-duration", "Down", DEFAULT_SETTINGS.focusDownDuration, 0.01, 2, 0.01)}
+            ${numberControl("focus-min-delay", "Delay Min", DEFAULT_SETTINGS.focusMinDelay, 0, 8, 0.1)}
+            ${numberControl("focus-max-delay", "Delay Max", DEFAULT_SETTINGS.focusMaxDelay, 0, 8, 0.1)}
+            ${selectControl("focus-ease-up", "Ease Up", DEFAULT_SETTINGS.focusEaseUp, EASE_OPTIONS)}
+            ${selectControl("focus-ease-down", "Ease Down", DEFAULT_SETTINGS.focusEaseDown, EASE_OPTIONS)}
           </div>
           </div>
         </div>
@@ -287,6 +484,15 @@ const clickRepulseStrengthInput =
 const clickRepulseEaseInput = document.querySelector<HTMLSelectElement>("#click-repulse-ease");
 const staggerSecondsInput = document.querySelector<HTMLInputElement>("#stagger-seconds");
 const shadowOpacityInput = document.querySelector<HTMLInputElement>("#shadow-opacity");
+const roundInnerShadowColorInput = document.querySelector<HTMLInputElement>(
+  "#round-inner-shadow-color",
+);
+const catInnerShadowColorInput =
+  document.querySelector<HTMLInputElement>("#cat-inner-shadow-color");
+const dropShadowColorInput = document.querySelector<HTMLInputElement>("#drop-shadow-color");
+const dropShadowOpacityInput = document.querySelector<HTMLInputElement>("#drop-shadow-opacity");
+const dropShadowBlurInput = document.querySelector<HTMLInputElement>("#drop-shadow-blur");
+const dropShadowSpreadInput = document.querySelector<HTMLInputElement>("#drop-shadow-spread");
 const irisColorInput = document.querySelector<HTMLInputElement>("#iris-color");
 const catEyeColorInput = document.querySelector<HTMLInputElement>("#cat-eye-color");
 const roundTranslateStrengthInput = document.querySelector<HTMLInputElement>(
@@ -382,6 +588,12 @@ if (
   !clickRepulseEaseInput ||
   !staggerSecondsInput ||
   !shadowOpacityInput ||
+  !roundInnerShadowColorInput ||
+  !catInnerShadowColorInput ||
+  !dropShadowColorInput ||
+  !dropShadowOpacityInput ||
+  !dropShadowBlurInput ||
+  !dropShadowSpreadInput ||
   !irisColorInput ||
   !catEyeColorInput ||
   !roundTranslateStrengthInput ||
@@ -524,7 +736,7 @@ const bindNumberInput = (
 
 const bindColorInput = (input: HTMLInputElement, apply: (value: string) => void) => {
   const commit = () => {
-    const nextValue = sanitizeHexColor(input.value, "#ffffff");
+    const nextValue = sanitizeHexColor(input.value, DEFAULT_SETTINGS.backgroundColor);
     input.value = nextValue;
     apply(nextValue);
   };
@@ -556,10 +768,25 @@ applyStoredNumber(clickRepulseRadiusInput, storedSettings.clickRepulseRadius);
 applyStoredNumber(clickRepulseStrengthInput, storedSettings.clickRepulseStrength);
 clickRepulseEaseInput.value = sanitizeClickRepulseEase(
   storedSettings.clickRepulseEase,
-  "smoothstep",
+  DEFAULT_SETTINGS.clickRepulseEase,
 );
 applyStoredNumber(staggerSecondsInput, storedSettings.staggerSeconds, 3);
 applyStoredNumber(shadowOpacityInput, storedSettings.shadowOpacity, 2);
+roundInnerShadowColorInput.value = sanitizeHexColor(
+  storedSettings.roundInnerShadowColor,
+  DEFAULT_SETTINGS.roundInnerShadowColor,
+);
+catInnerShadowColorInput.value = sanitizeHexColor(
+  storedSettings.catInnerShadowColor,
+  DEFAULT_SETTINGS.catInnerShadowColor,
+);
+dropShadowColorInput.value = sanitizeHexColor(
+  storedSettings.dropShadowColor,
+  DEFAULT_SETTINGS.dropShadowColor,
+);
+applyStoredNumber(dropShadowOpacityInput, storedSettings.dropShadowOpacity, 2);
+applyStoredNumber(dropShadowBlurInput, storedSettings.dropShadowBlur, 1);
+applyStoredNumber(dropShadowSpreadInput, storedSettings.dropShadowSpread, 1);
 applyStoredNumber(focusScaleInput, storedSettings.focusScale, 2);
 applyStoredNumber(focusUpDurationInput, storedSettings.focusUpDuration, 2);
 applyStoredNumber(focusDownDurationInput, storedSettings.focusDownDuration, 2);
@@ -578,19 +805,25 @@ applyStoredNumber(catHighlightOffsetYInput, storedSettings.catHighlightOffsetY, 
 applyStoredNumber(catHighlightRotationInput, storedSettings.catHighlightRotationDegrees, 2);
 applyStoredNumber(catHighlightOpacityInput, storedSettings.catHighlightOpacity, 2);
 applyStoredNumber(catPupilHighlightMorphScaleInput, storedSettings.catPupilHighlightMorphScale, 2);
-catBlinkSideColorInput.value = sanitizeHexColor(storedSettings.catBlinkSideColor, "#0b0b0d");
+catBlinkSideColorInput.value = sanitizeHexColor(
+  storedSettings.catBlinkSideColor,
+  DEFAULT_SETTINGS.catBlinkSideColor,
+);
 applyStoredNumber(catBlinkSideOpacityInput, storedSettings.catBlinkSideOpacity, 2);
 catBlinkSideStrokeColorInput.value = sanitizeHexColor(
   storedSettings.catBlinkSideStrokeColor,
-  "#2a2a2f",
+  DEFAULT_SETTINGS.catBlinkSideStrokeColor,
 );
 applyStoredNumber(catBlinkSideStrokeWidthInput, storedSettings.catBlinkSideStrokeWidth, 1);
 applyStoredNumber(catBlinkSideStrokeOpacityInput, storedSettings.catBlinkSideStrokeOpacity, 2);
-catBlinkBottomColorInput.value = sanitizeHexColor(storedSettings.catBlinkBottomColor, "#111113");
+catBlinkBottomColorInput.value = sanitizeHexColor(
+  storedSettings.catBlinkBottomColor,
+  DEFAULT_SETTINGS.catBlinkBottomColor,
+);
 applyStoredNumber(catBlinkBottomOpacityInput, storedSettings.catBlinkBottomOpacity, 2);
 catBlinkBottomStrokeColorInput.value = sanitizeHexColor(
   storedSettings.catBlinkBottomStrokeColor,
-  "#2a2a2f",
+  DEFAULT_SETTINGS.catBlinkBottomStrokeColor,
 );
 applyStoredNumber(catBlinkBottomStrokeWidthInput, storedSettings.catBlinkBottomStrokeWidth, 1);
 applyStoredNumber(catBlinkBottomStrokeOpacityInput, storedSettings.catBlinkBottomStrokeOpacity, 2);
@@ -600,13 +833,28 @@ applyStoredNumber(catBlinkOutDurationInput, storedSettings.catBlinkOutDuration, 
 applyStoredNumber(catBlinkSideDelayInput, storedSettings.catBlinkSideDelay, 2);
 applyStoredNumber(catBlinkMinDelayInput, storedSettings.catBlinkMinDelay, 1);
 applyStoredNumber(catBlinkMaxDelayInput, storedSettings.catBlinkMaxDelay, 1);
-irisColorInput.value = sanitizeHexColor(storedSettings.irisColor, "#8a46be");
-catEyeColorInput.value = sanitizeHexColor(storedSettings.catEyeColor, "#53d500");
-backgroundColorInput.value = sanitizeHexColor(storedSettings.backgroundColor, "#ffffff");
-catBlinkEaseInInput.value = sanitizeFocusEase(storedSettings.catBlinkEaseIn, "out-cubic");
-catBlinkEaseOutInput.value = sanitizeFocusEase(storedSettings.catBlinkEaseOut, "in-out-sine");
-focusEaseUpInput.value = sanitizeFocusEase(storedSettings.focusEaseUp, "out-cubic");
-focusEaseDownInput.value = sanitizeFocusEase(storedSettings.focusEaseDown, "in-out-sine");
+irisColorInput.value = sanitizeHexColor(storedSettings.irisColor, DEFAULT_SETTINGS.irisColor);
+catEyeColorInput.value = sanitizeHexColor(storedSettings.catEyeColor, DEFAULT_SETTINGS.catEyeColor);
+backgroundColorInput.value = sanitizeHexColor(
+  storedSettings.backgroundColor,
+  DEFAULT_SETTINGS.backgroundColor,
+);
+catBlinkEaseInInput.value = sanitizeFocusEase(
+  storedSettings.catBlinkEaseIn,
+  DEFAULT_SETTINGS.catBlinkEaseIn,
+);
+catBlinkEaseOutInput.value = sanitizeFocusEase(
+  storedSettings.catBlinkEaseOut,
+  DEFAULT_SETTINGS.catBlinkEaseOut,
+);
+focusEaseUpInput.value = sanitizeFocusEase(
+  storedSettings.focusEaseUp,
+  DEFAULT_SETTINGS.focusEaseUp,
+);
+focusEaseDownInput.value = sanitizeFocusEase(
+  storedSettings.focusEaseDown,
+  DEFAULT_SETTINGS.focusEaseDown,
+);
 
 const initialCount = clampInput(countInput, 24, 800);
 const initialMinEyeSize = clampInput(minEyeSizeInput, 10, 90);
@@ -616,9 +864,27 @@ const initialCatMorphRadius = clampInput(catMorphRadiusInput, 0, 260);
 const initialRepulsionRadius = clampInput(repulsionRadiusInput, 0, 220);
 const initialClickRepulseRadius = clampInput(clickRepulseRadiusInput, 0, 420);
 const initialClickRepulseStrength = clampInput(clickRepulseStrengthInput, 0, 220);
-const initialClickRepulseEase = sanitizeClickRepulseEase(clickRepulseEaseInput.value, "smoothstep");
+const initialClickRepulseEase = sanitizeClickRepulseEase(
+  clickRepulseEaseInput.value,
+  DEFAULT_SETTINGS.clickRepulseEase,
+);
 const initialStaggerSeconds = clampInput(staggerSecondsInput, 0, 0.1, 3);
 const initialShadowOpacity = clampInput(shadowOpacityInput, 0, 1, 2);
+const initialRoundInnerShadowColor = sanitizeHexColor(
+  roundInnerShadowColorInput.value,
+  DEFAULT_SETTINGS.roundInnerShadowColor,
+);
+const initialCatInnerShadowColor = sanitizeHexColor(
+  catInnerShadowColorInput.value,
+  DEFAULT_SETTINGS.catInnerShadowColor,
+);
+const initialDropShadowColor = sanitizeHexColor(
+  dropShadowColorInput.value,
+  DEFAULT_SETTINGS.dropShadowColor,
+);
+const initialDropShadowOpacity = clampInput(dropShadowOpacityInput, 0, 1, 2);
+const initialDropShadowBlur = clampInput(dropShadowBlurInput, 0, 20, 1);
+const initialDropShadowSpread = clampInput(dropShadowSpreadInput, 0, 10, 1);
 const initialFocusScale = clampInput(focusScaleInput, 1, 2, 2);
 const initialFocusUpDuration = clampInput(focusUpDurationInput, 0.01, 2, 2);
 const initialFocusDownDuration = clampInput(focusDownDurationInput, 0.01, 2, 2);
@@ -637,19 +903,25 @@ const initialCatHighlightOffsetY = clampInput(catHighlightOffsetYInput, -1, 1, 2
 const initialCatHighlightRotationDegrees = clampInput(catHighlightRotationInput, -180, 180, 2);
 const initialCatHighlightOpacity = clampInput(catHighlightOpacityInput, 0, 1, 2);
 const initialCatPupilHighlightMorphScale = clampInput(catPupilHighlightMorphScaleInput, 1, 8, 2);
-const initialCatBlinkSideColor = sanitizeHexColor(catBlinkSideColorInput.value, "#0b0b0d");
+const initialCatBlinkSideColor = sanitizeHexColor(
+  catBlinkSideColorInput.value,
+  DEFAULT_SETTINGS.catBlinkSideColor,
+);
 const initialCatBlinkSideOpacity = clampInput(catBlinkSideOpacityInput, 0, 1, 2);
 const initialCatBlinkSideStrokeColor = sanitizeHexColor(
   catBlinkSideStrokeColorInput.value,
-  "#2a2a2f",
+  DEFAULT_SETTINGS.catBlinkSideStrokeColor,
 );
 const initialCatBlinkSideStrokeWidth = clampInput(catBlinkSideStrokeWidthInput, 0, 8, 1);
 const initialCatBlinkSideStrokeOpacity = clampInput(catBlinkSideStrokeOpacityInput, 0, 1, 2);
-const initialCatBlinkBottomColor = sanitizeHexColor(catBlinkBottomColorInput.value, "#111113");
+const initialCatBlinkBottomColor = sanitizeHexColor(
+  catBlinkBottomColorInput.value,
+  DEFAULT_SETTINGS.catBlinkBottomColor,
+);
 const initialCatBlinkBottomOpacity = clampInput(catBlinkBottomOpacityInput, 0, 1, 2);
 const initialCatBlinkBottomStrokeColor = sanitizeHexColor(
   catBlinkBottomStrokeColorInput.value,
-  "#2a2a2f",
+  DEFAULT_SETTINGS.catBlinkBottomStrokeColor,
 );
 const initialCatBlinkBottomStrokeWidth = clampInput(catBlinkBottomStrokeWidthInput, 0, 8, 1);
 const initialCatBlinkBottomStrokeOpacity = clampInput(catBlinkBottomStrokeOpacityInput, 0, 1, 2);
@@ -659,13 +931,25 @@ const initialCatBlinkOutDuration = clampInput(catBlinkOutDurationInput, 0.01, 2,
 const initialCatBlinkSideDelay = clampInput(catBlinkSideDelayInput, 0, 1, 2);
 const initialCatBlinkMinDelay = clampInput(catBlinkMinDelayInput, 0, 8, 1);
 const initialCatBlinkMaxDelay = clampInput(catBlinkMaxDelayInput, 0, 8, 1);
-const initialIrisColor = sanitizeHexColor(irisColorInput.value, "#8a46be");
-const initialCatEyeColor = sanitizeHexColor(catEyeColorInput.value, "#53d500");
-const initialBackgroundColor = sanitizeHexColor(backgroundColorInput.value, "#ffffff");
-const initialCatBlinkEaseIn = sanitizeFocusEase(catBlinkEaseInInput.value, "out-cubic");
-const initialCatBlinkEaseOut = sanitizeFocusEase(catBlinkEaseOutInput.value, "in-out-sine");
-const initialFocusEaseUp = sanitizeFocusEase(focusEaseUpInput.value, "out-cubic");
-const initialFocusEaseDown = sanitizeFocusEase(focusEaseDownInput.value, "in-out-sine");
+const initialIrisColor = sanitizeHexColor(irisColorInput.value, DEFAULT_SETTINGS.irisColor);
+const initialCatEyeColor = sanitizeHexColor(catEyeColorInput.value, DEFAULT_SETTINGS.catEyeColor);
+const initialBackgroundColor = sanitizeHexColor(
+  backgroundColorInput.value,
+  DEFAULT_SETTINGS.backgroundColor,
+);
+const initialCatBlinkEaseIn = sanitizeFocusEase(
+  catBlinkEaseInInput.value,
+  DEFAULT_SETTINGS.catBlinkEaseIn,
+);
+const initialCatBlinkEaseOut = sanitizeFocusEase(
+  catBlinkEaseOutInput.value,
+  DEFAULT_SETTINGS.catBlinkEaseOut,
+);
+const initialFocusEaseUp = sanitizeFocusEase(focusEaseUpInput.value, DEFAULT_SETTINGS.focusEaseUp);
+const initialFocusEaseDown = sanitizeFocusEase(
+  focusEaseDownInput.value,
+  DEFAULT_SETTINGS.focusEaseDown,
+);
 const safeInitialMinEyeSize = Math.min(initialMinEyeSize, initialMaxEyeSize);
 const safeInitialMaxEyeSize = Math.max(initialMinEyeSize, initialMaxEyeSize);
 const safeInitialCatBlinkMinDelay = Math.min(initialCatBlinkMinDelay, initialCatBlinkMaxDelay);
@@ -678,6 +962,12 @@ maxEyeSizeInput.value = String(safeInitialMaxEyeSize);
 catMixInput.value = initialCatMix.toFixed(2);
 catMorphRadiusInput.value = String(initialCatMorphRadius);
 clickRepulseEaseInput.value = initialClickRepulseEase;
+roundInnerShadowColorInput.value = initialRoundInnerShadowColor;
+catInnerShadowColorInput.value = initialCatInnerShadowColor;
+dropShadowColorInput.value = initialDropShadowColor;
+dropShadowOpacityInput.value = initialDropShadowOpacity.toFixed(2);
+dropShadowBlurInput.value = initialDropShadowBlur.toFixed(1);
+dropShadowSpreadInput.value = initialDropShadowSpread.toFixed(1);
 catBlinkMinDelayInput.value = safeInitialCatBlinkMinDelay.toFixed(1);
 catBlinkMaxDelayInput.value = safeInitialCatBlinkMaxDelay.toFixed(1);
 focusMinDelayInput.value = safeInitialFocusMinDelay.toFixed(1);
@@ -729,6 +1019,12 @@ let settingsState: StoredSettings = {
   clickRepulseEase: initialClickRepulseEase,
   staggerSeconds: initialStaggerSeconds,
   shadowOpacity: initialShadowOpacity,
+  roundInnerShadowColor: initialRoundInnerShadowColor,
+  catInnerShadowColor: initialCatInnerShadowColor,
+  dropShadowColor: initialDropShadowColor,
+  dropShadowOpacity: initialDropShadowOpacity,
+  dropShadowBlur: initialDropShadowBlur,
+  dropShadowSpread: initialDropShadowSpread,
   irisColor: initialIrisColor,
   catEyeColor: initialCatEyeColor,
   roundTranslateStrength: initialRoundTranslateStrength,
@@ -830,6 +1126,12 @@ const scene = await createHeroScene({
   initialClickRepulseEase,
   initialStaggerSeconds,
   initialShadowOpacity,
+  initialRoundInnerShadowColor: hexToNumber(initialRoundInnerShadowColor),
+  initialCatInnerShadowColor: hexToNumber(initialCatInnerShadowColor),
+  initialDropShadowColor: hexToNumber(initialDropShadowColor),
+  initialDropShadowOpacity,
+  initialDropShadowBlur,
+  initialDropShadowSpread,
   initialIrisColor: hexToNumber(initialIrisColor),
   initialCatEyeColor: hexToNumber(initialCatEyeColor),
   initialRoundTranslateStrength,
@@ -979,7 +1281,7 @@ bindNumberInput(clickRepulseStrengthInput, {
 
 bindSelectInput(
   clickRepulseEaseInput,
-  (value) => sanitizeClickRepulseEase(value, "smoothstep"),
+  (value) => sanitizeClickRepulseEase(value, DEFAULT_SETTINGS.clickRepulseEase),
   (nextClickRepulseEase) => {
     updateStoredSettings({ clickRepulseEase: nextClickRepulseEase });
     scene.setConfig({ clickRepulseEase: nextClickRepulseEase });
@@ -1003,6 +1305,51 @@ bindNumberInput(shadowOpacityInput, {
   apply: (nextShadowOpacity) => {
     updateStoredSettings({ shadowOpacity: nextShadowOpacity });
     scene.setConfig({ shadowOpacity: nextShadowOpacity });
+  },
+});
+
+bindColorInput(roundInnerShadowColorInput, (nextRoundInnerShadowColor) => {
+  updateStoredSettings({ roundInnerShadowColor: nextRoundInnerShadowColor });
+  scene.setConfig({ roundInnerShadowColor: hexToNumber(nextRoundInnerShadowColor) });
+});
+
+bindColorInput(catInnerShadowColorInput, (nextCatInnerShadowColor) => {
+  updateStoredSettings({ catInnerShadowColor: nextCatInnerShadowColor });
+  scene.setConfig({ catInnerShadowColor: hexToNumber(nextCatInnerShadowColor) });
+});
+
+bindColorInput(dropShadowColorInput, (nextDropShadowColor) => {
+  updateStoredSettings({ dropShadowColor: nextDropShadowColor });
+  scene.setConfig({ dropShadowColor: hexToNumber(nextDropShadowColor) });
+});
+
+bindNumberInput(dropShadowOpacityInput, {
+  min: 0,
+  max: 1,
+  fractionDigits: 2,
+  apply: (nextDropShadowOpacity) => {
+    updateStoredSettings({ dropShadowOpacity: nextDropShadowOpacity });
+    scene.setConfig({ dropShadowOpacity: nextDropShadowOpacity });
+  },
+});
+
+bindNumberInput(dropShadowBlurInput, {
+  min: 0,
+  max: 20,
+  fractionDigits: 1,
+  apply: (nextDropShadowBlur) => {
+    updateStoredSettings({ dropShadowBlur: nextDropShadowBlur });
+    scene.setConfig({ dropShadowBlur: nextDropShadowBlur });
+  },
+});
+
+bindNumberInput(dropShadowSpreadInput, {
+  min: 0,
+  max: 10,
+  fractionDigits: 1,
+  apply: (nextDropShadowSpread) => {
+    updateStoredSettings({ dropShadowSpread: nextDropShadowSpread });
+    scene.setConfig({ dropShadowSpread: nextDropShadowSpread });
   },
 });
 
@@ -1306,7 +1653,7 @@ bindNumberInput(catBlinkMaxDelayInput, {
 
 bindSelectInput(
   catBlinkEaseInInput,
-  (value) => sanitizeFocusEase(value, "out-cubic"),
+  (value) => sanitizeFocusEase(value, DEFAULT_SETTINGS.catBlinkEaseIn),
   (nextCatBlinkEaseIn) => {
     updateStoredSettings({ catBlinkEaseIn: nextCatBlinkEaseIn });
     scene.setConfig({ catBlinkEaseIn: nextCatBlinkEaseIn });
@@ -1315,7 +1662,7 @@ bindSelectInput(
 
 bindSelectInput(
   catBlinkEaseOutInput,
-  (value) => sanitizeFocusEase(value, "in-out-sine"),
+  (value) => sanitizeFocusEase(value, DEFAULT_SETTINGS.catBlinkEaseOut),
   (nextCatBlinkEaseOut) => {
     updateStoredSettings({ catBlinkEaseOut: nextCatBlinkEaseOut });
     scene.setConfig({ catBlinkEaseOut: nextCatBlinkEaseOut });
@@ -1397,7 +1744,7 @@ bindNumberInput(focusMaxDelayInput, {
 
 bindSelectInput(
   focusEaseUpInput,
-  (value) => sanitizeFocusEase(value, "out-cubic"),
+  (value) => sanitizeFocusEase(value, DEFAULT_SETTINGS.focusEaseUp),
   (nextFocusEaseUp) => {
     updateStoredSettings({ focusEaseUp: nextFocusEaseUp });
     scene.setConfig({ focusEaseUp: nextFocusEaseUp });
@@ -1406,7 +1753,7 @@ bindSelectInput(
 
 bindSelectInput(
   focusEaseDownInput,
-  (value) => sanitizeFocusEase(value, "in-out-sine"),
+  (value) => sanitizeFocusEase(value, DEFAULT_SETTINGS.focusEaseDown),
   (nextFocusEaseDown) => {
     updateStoredSettings({ focusEaseDown: nextFocusEaseDown });
     scene.setConfig({ focusEaseDown: nextFocusEaseDown });
