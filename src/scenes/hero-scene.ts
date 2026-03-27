@@ -16,6 +16,8 @@ interface HeroSceneOptions {
   initialLayoutShape: LayoutShapeName;
   initialLayoutTransitionDuration: number;
   initialLayoutTransitionEase: FocusEaseName;
+  initialScrollFallEnterTopFactor: number;
+  initialScrollFallExitTopFactor: number;
   initialMinEyeSize: number;
   initialMaxEyeSize: number;
   initialCatMix: number;
@@ -77,9 +79,6 @@ interface HeroSceneOptions {
   onMetrics: (metrics: MetricsSnapshot) => void;
 }
 
-const SCROLL_FALL_ENTER_TOP_FACTOR = 0.04;
-const SCROLL_FALL_EXIT_TOP_FACTOR = 0.18;
-
 const drawBackdrop = (
   backdrop: Graphics,
   width: number,
@@ -94,6 +93,8 @@ export const createHeroScene = async ({
   initialLayoutShape,
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
+  initialScrollFallEnterTopFactor,
+  initialScrollFallExitTopFactor,
   initialMinEyeSize,
   initialMaxEyeSize,
   initialCatMix,
@@ -173,6 +174,8 @@ export const createHeroScene = async ({
   const backdrop = new Graphics();
   let backgroundColor = initialBackgroundColor;
   let isScrollFallActive = false;
+  let scrollFallEnterTopFactor = initialScrollFallEnterTopFactor;
+  let scrollFallExitTopFactor = initialScrollFallExitTopFactor;
   const eyeField = createEyeField({ count: initialCount, renderer: app.renderer, worldBounds });
   eyeField.setConfig({
     layoutShape: initialLayoutShape,
@@ -291,8 +294,8 @@ export const createHeroScene = async ({
         return;
       }
 
-      const enterTop = -window.innerHeight * SCROLL_FALL_ENTER_TOP_FACTOR;
-      const exitTop = -window.innerHeight * SCROLL_FALL_EXIT_TOP_FACTOR;
+      const enterTop = -window.innerHeight * scrollFallEnterTopFactor;
+      const exitTop = -window.innerHeight * scrollFallExitTopFactor;
       const top = entry.boundingClientRect.top;
 
       if (!isScrollFallActive && top <= exitTop) {
@@ -332,6 +335,8 @@ export const createHeroScene = async ({
       eyeField.layout(worldBounds.width, worldBounds.height);
     },
     setConfig: (config: {
+      scrollFallEnterTopFactor?: number;
+      scrollFallExitTopFactor?: number;
       layoutShape?: LayoutShapeName;
       layoutTransitionDuration?: number;
       layoutTransitionEase?: FocusEaseName;
@@ -393,6 +398,17 @@ export const createHeroScene = async ({
       focusEaseUp?: FocusEaseName;
       focusEaseDown?: FocusEaseName;
     }) => {
+      const nextEnterTopFactor =
+        typeof config.scrollFallEnterTopFactor === "number"
+          ? Math.max(config.scrollFallEnterTopFactor, 0)
+          : scrollFallEnterTopFactor;
+      const nextExitTopFactor =
+        typeof config.scrollFallExitTopFactor === "number"
+          ? Math.max(config.scrollFallExitTopFactor, 0)
+          : scrollFallExitTopFactor;
+      scrollFallEnterTopFactor = Math.min(nextEnterTopFactor, nextExitTopFactor);
+      scrollFallExitTopFactor = Math.max(nextEnterTopFactor, nextExitTopFactor);
+
       if (typeof config.backgroundColor === "number") {
         backgroundColor = config.backgroundColor;
         drawBackdrop(backdrop, worldBounds.width, worldBounds.height, backgroundColor);

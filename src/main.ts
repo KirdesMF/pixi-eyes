@@ -51,6 +51,8 @@ interface StoredSettings {
   layoutShape: LayoutShapeName;
   layoutTransitionDuration: number;
   layoutTransitionEase: FocusEaseName;
+  scrollFallEnterTopFactor: number;
+  scrollFallExitTopFactor: number;
   minEyeSize: number;
   maxEyeSize: number;
   catMix: number;
@@ -115,6 +117,8 @@ const DEFAULT_SETTINGS: StoredSettings = {
   layoutShape: "circle",
   layoutTransitionDuration: 0.8,
   layoutTransitionEase: "out-cubic",
+  scrollFallEnterTopFactor: 0.04,
+  scrollFallExitTopFactor: 0.18,
   minEyeSize: 10,
   maxEyeSize: 90,
   catMix: 0.35,
@@ -267,6 +271,22 @@ appNode.innerHTML = `
             ${selectControl("layout-shape", "Shape", DEFAULT_SETTINGS.layoutShape, LAYOUT_SHAPE_OPTIONS)}
             ${numberControl("layout-transition-duration", "Shape Move", DEFAULT_SETTINGS.layoutTransitionDuration, 0, 2.5, 0.05)}
             ${selectControl("layout-transition-ease", "Shape Ease", DEFAULT_SETTINGS.layoutTransitionEase, EASE_OPTIONS)}
+            ${numberControl(
+              "scroll-fall-exit-top-factor",
+              "Fall Start",
+              DEFAULT_SETTINGS.scrollFallExitTopFactor,
+              0,
+              0.5,
+              0.01,
+            )}
+            ${numberControl(
+              "scroll-fall-enter-top-factor",
+              "Return Start",
+              DEFAULT_SETTINGS.scrollFallEnterTopFactor,
+              0,
+              0.5,
+              0.01,
+            )}
             ${numberControl("min-eye-size", "Min Eye", DEFAULT_SETTINGS.minEyeSize, 10, 90, 1)}
             ${numberControl("max-eye-size", "Max Eye", DEFAULT_SETTINGS.maxEyeSize, 20, 140, 1)}
             ${numberControl("cat-mix", "Cat Mix", DEFAULT_SETTINGS.catMix, 0, 1, 0.01)}
@@ -493,6 +513,12 @@ const layoutTransitionDurationInput = document.querySelector<HTMLInputElement>(
 );
 const layoutTransitionEaseInput =
   document.querySelector<HTMLSelectElement>("#layout-transition-ease");
+const scrollFallExitTopFactorInput = document.querySelector<HTMLInputElement>(
+  "#scroll-fall-exit-top-factor",
+);
+const scrollFallEnterTopFactorInput = document.querySelector<HTMLInputElement>(
+  "#scroll-fall-enter-top-factor",
+);
 const minEyeSizeInput = document.querySelector<HTMLInputElement>("#min-eye-size");
 const maxEyeSizeInput = document.querySelector<HTMLInputElement>("#max-eye-size");
 const catMixInput = document.querySelector<HTMLInputElement>("#cat-mix");
@@ -601,6 +627,8 @@ if (
   !layoutShapeInput ||
   !layoutTransitionDurationInput ||
   !layoutTransitionEaseInput ||
+  !scrollFallExitTopFactorInput ||
+  !scrollFallEnterTopFactorInput ||
   !minEyeSizeInput ||
   !maxEyeSizeInput ||
   !catMixInput ||
@@ -798,6 +826,8 @@ layoutTransitionEaseInput.value = sanitizeFocusEase(
   storedSettings.layoutTransitionEase,
   DEFAULT_SETTINGS.layoutTransitionEase,
 );
+applyStoredNumber(scrollFallExitTopFactorInput, storedSettings.scrollFallExitTopFactor, 2);
+applyStoredNumber(scrollFallEnterTopFactorInput, storedSettings.scrollFallEnterTopFactor, 2);
 applyStoredNumber(minEyeSizeInput, storedSettings.minEyeSize);
 applyStoredNumber(maxEyeSizeInput, storedSettings.maxEyeSize);
 applyStoredNumber(catMixInput, storedSettings.catMix, 2);
@@ -905,6 +935,8 @@ const initialLayoutTransitionEase = sanitizeFocusEase(
   layoutTransitionEaseInput.value,
   DEFAULT_SETTINGS.layoutTransitionEase,
 );
+const initialScrollFallExitTopFactor = clampInput(scrollFallExitTopFactorInput, 0, 0.5, 2);
+const initialScrollFallEnterTopFactor = clampInput(scrollFallEnterTopFactorInput, 0, 0.5, 2);
 const initialMinEyeSize = clampInput(minEyeSizeInput, 10, 90);
 const initialMaxEyeSize = clampInput(maxEyeSizeInput, 20, 140);
 const initialCatMix = clampInput(catMixInput, 0, 1, 2);
@@ -1000,6 +1032,14 @@ const initialFocusEaseDown = sanitizeFocusEase(
 );
 const safeInitialMinEyeSize = Math.min(initialMinEyeSize, initialMaxEyeSize);
 const safeInitialMaxEyeSize = Math.max(initialMinEyeSize, initialMaxEyeSize);
+const safeInitialScrollFallEnterTopFactor = Math.min(
+  initialScrollFallEnterTopFactor,
+  initialScrollFallExitTopFactor,
+);
+const safeInitialScrollFallExitTopFactor = Math.max(
+  initialScrollFallEnterTopFactor,
+  initialScrollFallExitTopFactor,
+);
 const safeInitialCatBlinkMinDelay = Math.min(initialCatBlinkMinDelay, initialCatBlinkMaxDelay);
 const safeInitialCatBlinkMaxDelay = Math.max(initialCatBlinkMinDelay, initialCatBlinkMaxDelay);
 const safeInitialFocusMinDelay = Math.min(initialFocusMinDelay, initialFocusMaxDelay);
@@ -1010,6 +1050,8 @@ maxEyeSizeInput.value = String(safeInitialMaxEyeSize);
 layoutShapeInput.value = initialLayoutShape;
 layoutTransitionDurationInput.value = initialLayoutTransitionDuration.toFixed(2);
 layoutTransitionEaseInput.value = initialLayoutTransitionEase;
+scrollFallExitTopFactorInput.value = safeInitialScrollFallExitTopFactor.toFixed(2);
+scrollFallEnterTopFactorInput.value = safeInitialScrollFallEnterTopFactor.toFixed(2);
 catMixInput.value = initialCatMix.toFixed(2);
 catMorphRadiusInput.value = String(initialCatMorphRadius);
 clickRepulseEaseInput.value = initialClickRepulseEase;
@@ -1063,6 +1105,8 @@ let settingsState: StoredSettings = {
   layoutShape: initialLayoutShape,
   layoutTransitionDuration: initialLayoutTransitionDuration,
   layoutTransitionEase: initialLayoutTransitionEase,
+  scrollFallEnterTopFactor: safeInitialScrollFallEnterTopFactor,
+  scrollFallExitTopFactor: safeInitialScrollFallExitTopFactor,
   minEyeSize: safeInitialMinEyeSize,
   maxEyeSize: safeInitialMaxEyeSize,
   catMix: initialCatMix,
@@ -1173,6 +1217,8 @@ const scene = await createHeroScene({
   initialLayoutShape,
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
+  initialScrollFallEnterTopFactor: safeInitialScrollFallEnterTopFactor,
+  initialScrollFallExitTopFactor: safeInitialScrollFallExitTopFactor,
   initialMinEyeSize: safeInitialMinEyeSize,
   initialMaxEyeSize: safeInitialMaxEyeSize,
   initialCatMix,
@@ -1281,6 +1327,44 @@ bindSelectInput(
     scene.setConfig({ layoutTransitionEase: nextLayoutTransitionEase });
   },
 );
+
+const syncScrollFallThresholdControls = () => {
+  const enterValue = clampInput(scrollFallEnterTopFactorInput, 0, 0.5, 2);
+  const exitValue = clampInput(scrollFallExitTopFactorInput, 0, 0.5, 2);
+  const safeEnter = Math.min(enterValue, exitValue);
+  const safeExit = Math.max(enterValue, exitValue);
+
+  if (safeEnter !== enterValue) {
+    scrollFallEnterTopFactorInput.value = safeEnter.toFixed(2);
+  }
+
+  if (safeExit !== exitValue) {
+    scrollFallExitTopFactorInput.value = safeExit.toFixed(2);
+  }
+
+  updateStoredSettings({
+    scrollFallEnterTopFactor: safeEnter,
+    scrollFallExitTopFactor: safeExit,
+  });
+  scene.setConfig({
+    scrollFallEnterTopFactor: safeEnter,
+    scrollFallExitTopFactor: safeExit,
+  });
+};
+
+bindNumberInput(scrollFallExitTopFactorInput, {
+  min: 0,
+  max: 0.5,
+  fractionDigits: 2,
+  apply: syncScrollFallThresholdControls,
+});
+
+bindNumberInput(scrollFallEnterTopFactorInput, {
+  min: 0,
+  max: 0.5,
+  fractionDigits: 2,
+  apply: syncScrollFallThresholdControls,
+});
 
 const syncEyeSizeControls = () => {
   const minValue = clampInput(minEyeSizeInput, 10, 90);
