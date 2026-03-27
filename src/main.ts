@@ -1,5 +1,5 @@
 import "./style.css";
-import type { ClickRepulseEaseName, FocusEaseName } from "./entities/eye-field";
+import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./entities/eye-field";
 import { createHeroScene } from "./scenes/hero-scene";
 
 const appNode = document.querySelector<HTMLDivElement>("#app");
@@ -40,9 +40,17 @@ const CLICK_REPULSE_EASE_OPTIONS: Array<{ label: string; value: ClickRepulseEase
   { label: "In Out Back", value: "in-out-back" },
   { label: "Out Elastic", value: "out-elastic" },
 ];
+const LAYOUT_SHAPE_OPTIONS: Array<{ label: string; value: LayoutShapeName }> = [
+  { label: "Circle", value: "circle" },
+  { label: "Square", value: "square" },
+  { label: "Triangle", value: "triangle" },
+];
 
 interface StoredSettings {
   count: number;
+  layoutShape: LayoutShapeName;
+  layoutTransitionDuration: number;
+  layoutTransitionEase: FocusEaseName;
   minEyeSize: number;
   maxEyeSize: number;
   catMix: number;
@@ -104,6 +112,9 @@ interface StoredSettings {
 
 const DEFAULT_SETTINGS: StoredSettings = {
   count: 400,
+  layoutShape: "circle",
+  layoutTransitionDuration: 0.8,
+  layoutTransitionEase: "out-cubic",
   minEyeSize: 10,
   maxEyeSize: 90,
   catMix: 0.35,
@@ -253,6 +264,9 @@ appNode.innerHTML = `
           <div class="grid gap-2">
             <p class="${SECTION_LABEL_CLASS}">Field</p>
             ${numberControl("instance-count", "Instances", DEFAULT_SETTINGS.count, 24, 800, 8)}
+            ${selectControl("layout-shape", "Shape", DEFAULT_SETTINGS.layoutShape, LAYOUT_SHAPE_OPTIONS)}
+            ${numberControl("layout-transition-duration", "Shape Move", DEFAULT_SETTINGS.layoutTransitionDuration, 0, 2.5, 0.05)}
+            ${selectControl("layout-transition-ease", "Shape Ease", DEFAULT_SETTINGS.layoutTransitionEase, EASE_OPTIONS)}
             ${numberControl("min-eye-size", "Min Eye", DEFAULT_SETTINGS.minEyeSize, 10, 90, 1)}
             ${numberControl("max-eye-size", "Max Eye", DEFAULT_SETTINGS.maxEyeSize, 20, 140, 1)}
             ${numberControl("cat-mix", "Cat Mix", DEFAULT_SETTINGS.catMix, 0, 1, 0.01)}
@@ -473,6 +487,12 @@ appNode.innerHTML = `
 `;
 
 const countInput = document.querySelector<HTMLInputElement>("#instance-count");
+const layoutShapeInput = document.querySelector<HTMLSelectElement>("#layout-shape");
+const layoutTransitionDurationInput = document.querySelector<HTMLInputElement>(
+  "#layout-transition-duration",
+);
+const layoutTransitionEaseInput =
+  document.querySelector<HTMLSelectElement>("#layout-transition-ease");
 const minEyeSizeInput = document.querySelector<HTMLInputElement>("#min-eye-size");
 const maxEyeSizeInput = document.querySelector<HTMLInputElement>("#max-eye-size");
 const catMixInput = document.querySelector<HTMLInputElement>("#cat-mix");
@@ -578,6 +598,9 @@ const mountNode = document.querySelector<HTMLDivElement>("#pixi-stage");
 
 if (
   !countInput ||
+  !layoutShapeInput ||
+  !layoutTransitionDurationInput ||
+  !layoutTransitionEaseInput ||
   !minEyeSizeInput ||
   !maxEyeSizeInput ||
   !catMixInput ||
@@ -690,6 +713,13 @@ const hexToNumber = (value: string) => Number.parseInt(value.slice(1), 16);
 
 const sanitizeFocusEase = (value: string | undefined, fallback: FocusEaseName): FocusEaseName =>
   EASE_OPTIONS.some((option) => option.value === value) ? (value as FocusEaseName) : fallback;
+const sanitizeLayoutShape = (
+  value: string | undefined,
+  fallback: LayoutShapeName,
+): LayoutShapeName =>
+  LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value)
+    ? (value as LayoutShapeName)
+    : fallback;
 const sanitizeClickRepulseEase = (
   value: string | undefined,
   fallback: ClickRepulseEaseName,
@@ -759,6 +789,15 @@ const bindSelectInput = <T extends string>(
 
 const storedSettings = readStoredSettings();
 applyStoredNumber(countInput, storedSettings.count);
+layoutShapeInput.value = sanitizeLayoutShape(
+  storedSettings.layoutShape,
+  DEFAULT_SETTINGS.layoutShape,
+);
+applyStoredNumber(layoutTransitionDurationInput, storedSettings.layoutTransitionDuration, 2);
+layoutTransitionEaseInput.value = sanitizeFocusEase(
+  storedSettings.layoutTransitionEase,
+  DEFAULT_SETTINGS.layoutTransitionEase,
+);
 applyStoredNumber(minEyeSizeInput, storedSettings.minEyeSize);
 applyStoredNumber(maxEyeSizeInput, storedSettings.maxEyeSize);
 applyStoredNumber(catMixInput, storedSettings.catMix, 2);
@@ -857,6 +896,15 @@ focusEaseDownInput.value = sanitizeFocusEase(
 );
 
 const initialCount = clampInput(countInput, 24, 800);
+const initialLayoutShape = sanitizeLayoutShape(
+  layoutShapeInput.value,
+  DEFAULT_SETTINGS.layoutShape,
+);
+const initialLayoutTransitionDuration = clampInput(layoutTransitionDurationInput, 0, 2.5, 2);
+const initialLayoutTransitionEase = sanitizeFocusEase(
+  layoutTransitionEaseInput.value,
+  DEFAULT_SETTINGS.layoutTransitionEase,
+);
 const initialMinEyeSize = clampInput(minEyeSizeInput, 10, 90);
 const initialMaxEyeSize = clampInput(maxEyeSizeInput, 20, 140);
 const initialCatMix = clampInput(catMixInput, 0, 1, 2);
@@ -959,6 +1007,9 @@ const safeInitialFocusMaxDelay = Math.max(initialFocusMinDelay, initialFocusMaxD
 
 minEyeSizeInput.value = String(safeInitialMinEyeSize);
 maxEyeSizeInput.value = String(safeInitialMaxEyeSize);
+layoutShapeInput.value = initialLayoutShape;
+layoutTransitionDurationInput.value = initialLayoutTransitionDuration.toFixed(2);
+layoutTransitionEaseInput.value = initialLayoutTransitionEase;
 catMixInput.value = initialCatMix.toFixed(2);
 catMorphRadiusInput.value = String(initialCatMorphRadius);
 clickRepulseEaseInput.value = initialClickRepulseEase;
@@ -1009,6 +1060,9 @@ focusEaseDownInput.value = initialFocusEaseDown;
 
 let settingsState: StoredSettings = {
   count: initialCount,
+  layoutShape: initialLayoutShape,
+  layoutTransitionDuration: initialLayoutTransitionDuration,
+  layoutTransitionEase: initialLayoutTransitionEase,
   minEyeSize: safeInitialMinEyeSize,
   maxEyeSize: safeInitialMaxEyeSize,
   catMix: initialCatMix,
@@ -1116,6 +1170,9 @@ const downloadSettingsJson = () => {
 
 const scene = await createHeroScene({
   initialCount,
+  initialLayoutShape,
+  initialLayoutTransitionDuration,
+  initialLayoutTransitionEase,
   initialMinEyeSize: safeInitialMinEyeSize,
   initialMaxEyeSize: safeInitialMaxEyeSize,
   initialCatMix,
@@ -1196,6 +1253,34 @@ bindNumberInput(countInput, {
     scene.setCount(nextCount);
   },
 });
+
+bindSelectInput(
+  layoutShapeInput,
+  (value) => sanitizeLayoutShape(value, DEFAULT_SETTINGS.layoutShape),
+  (nextLayoutShape) => {
+    updateStoredSettings({ layoutShape: nextLayoutShape });
+    scene.setConfig({ layoutShape: nextLayoutShape });
+  },
+);
+
+bindNumberInput(layoutTransitionDurationInput, {
+  min: 0,
+  max: 2.5,
+  fractionDigits: 2,
+  apply: (nextLayoutTransitionDuration) => {
+    updateStoredSettings({ layoutTransitionDuration: nextLayoutTransitionDuration });
+    scene.setConfig({ layoutTransitionDuration: nextLayoutTransitionDuration });
+  },
+});
+
+bindSelectInput(
+  layoutTransitionEaseInput,
+  (value) => sanitizeFocusEase(value, DEFAULT_SETTINGS.layoutTransitionEase),
+  (nextLayoutTransitionEase) => {
+    updateStoredSettings({ layoutTransitionEase: nextLayoutTransitionEase });
+    scene.setConfig({ layoutTransitionEase: nextLayoutTransitionEase });
+  },
+);
 
 const syncEyeSizeControls = () => {
   const minValue = clampInput(minEyeSizeInput, 10, 90);

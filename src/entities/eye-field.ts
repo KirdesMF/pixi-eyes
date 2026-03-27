@@ -13,6 +13,7 @@ export interface EyeFieldMetrics {
 }
 
 export type EyeType = "round" | "cat";
+export type LayoutShapeName = "circle" | "square" | "triangle";
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
 export type ClickRepulseEaseName =
   | "smoothstep"
@@ -38,6 +39,9 @@ interface EyeFieldOptions {
 }
 
 interface EyeFieldConfig {
+  layoutShape?: LayoutShapeName;
+  layoutTransitionDuration?: number;
+  layoutTransitionEase?: FocusEaseName;
   minEyeSize?: number;
   maxEyeSize?: number;
   catMix?: number;
@@ -148,10 +152,22 @@ interface EyeInstance {
   highlight: Graphics;
   x: number;
   y: number;
+  layoutStartX: number;
+  layoutStartY: number;
+  targetX: number;
+  targetY: number;
+  layoutTransitionElapsed: number;
+  layoutTransitionActive: boolean;
   radius: number;
   scale: number;
   renderScale: number;
   lowDetail: boolean;
+  appearanceUpdateInterval: number;
+  appearanceAccumulator: number;
+  needsAppearanceRefresh: boolean;
+  lastDrawnCatMorph: number;
+  lastDrawnCatBlinkBottom: number;
+  lastDrawnCatBlinkSide: number;
   delay: number;
   scaleInFinished: boolean;
   parallaxX: number;
@@ -189,6 +205,9 @@ interface EyeInstance {
 interface EyeFieldRuntime {
   count: number;
   clusterRadius: number;
+  layoutShape: LayoutShapeName;
+  layoutTransitionDuration: number;
+  layoutTransitionEase: FocusEaseName;
   minEyeSize: number;
   maxEyeSize: number;
   catMix: number;
@@ -287,6 +306,9 @@ const DEFAULT_SPIRAL_STEP_DEGREES = 137.5;
 const DEFAULT_RADIAL_EXPONENT = 0.5;
 const DEFAULT_EYE_SPIRAL_OFFSET = 0.73;
 const DEFAULT_CLUSTER_RADIUS = 200;
+const DEFAULT_LAYOUT_SHAPE: LayoutShapeName = "circle";
+const DEFAULT_LAYOUT_TRANSITION_DURATION = 0.8;
+const DEFAULT_LAYOUT_TRANSITION_EASE: FocusEaseName = "out-cubic";
 const DEFAULT_MIN_EYE_SIZE = 10;
 const DEFAULT_MAX_EYE_SIZE = 90;
 const DEFAULT_CAT_MIX = 0.35;
@@ -327,6 +349,8 @@ const SCROLL_FALL_SQUASH_MAX = 0.22;
 const SCROLL_FALL_STRETCH_MAX = 0.12;
 const SCROLL_FALL_SQUASH_IMPACT_SPEED = 900;
 const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
+const DEFAULT_SMALL_EYE_APPEARANCE_FPS = 24;
+const DEFAULT_LARGE_EYE_APPEARANCE_FPS = 60;
 const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
 const DEFAULT_CLICK_REPULSE_RADIUS = 400;
 const DEFAULT_CLICK_REPULSE_STRENGTH = 40;
@@ -378,6 +402,7 @@ const DEFAULT_CAT_GLOBE_HIGHLIGHT_SCALE = 0.47;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_X_FACTOR = 0.37;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_Y_FACTOR = -0.62;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OPACITY = 0.7;
+const TRIANGLE_LAYOUT_HALF_BASE_FACTOR = Math.sqrt(3) * 0.5;
 const SHADOW_EDGE_OFFSET_DEGREES = 68;
 const SHADOW_BOTTOM_X = 0;
 const SHADOW_BOTTOM_Y = 1;
@@ -544,11 +569,24 @@ const sampleSharedAttentionDelay = (runtime: EyeFieldRuntime) => {
   );
 };
 
-const sampleEyeSharedAttentionLook = (runtime: EyeFieldRuntime, eye: EyeInstance) => {
+const sampleEyeSharedAttentionLook = (
+  runtime: EyeFieldRuntime,
+  eye: EyeInstance,
+  mode: "scattered" | "unified",
+) => {
   const baseAngle =
     Math.abs(runtime.sharedAttentionX) > 0.001 || Math.abs(runtime.sharedAttentionY) > 0.001
       ? Math.atan2(runtime.sharedAttentionY, runtime.sharedAttentionX)
       : eye.focusCycleOffset * Math.PI * 2;
+  const baseMagnitude = Math.hypot(runtime.sharedAttentionX, runtime.sharedAttentionY);
+
+  if (mode === "unified") {
+    return {
+      x: Math.cos(baseAngle) * baseMagnitude,
+      y: Math.sin(baseAngle) * baseMagnitude,
+    };
+  }
+
   const eyeSeed =
     runtime.sharedAttentionX * 0.173 +
     runtime.sharedAttentionY * 0.191 +
@@ -591,7 +629,77 @@ const clampMagnitude = (x: number, y: number, maxLength: number) => {
   return { x: x * scale, y: y * scale };
 };
 
+const eyeAppearanceUpdateInterval = (scale: number) => {
+  const t = clamp(scale, 0, 1);
+  const fps =
+    DEFAULT_SMALL_EYE_APPEARANCE_FPS +
+    (DEFAULT_LARGE_EYE_APPEARANCE_FPS - DEFAULT_SMALL_EYE_APPEARANCE_FPS) * t;
+  return 1 / Math.max(fps, 1);
+};
+
 const lowDetailEnabled = (scale: number) => scale < clamp(DEFAULT_LOW_DETAIL_SCALE_THRESHOLD, 0, 1);
+
+const cross2d = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
+
+const triangleLayoutVertices = (extent: number) => {
+  const halfBase = extent * TRIANGLE_LAYOUT_HALF_BASE_FACTOR;
+  return [
+    { x: 0, y: -extent },
+    { x: halfBase, y: extent * 0.5 },
+    { x: -halfBase, y: extent * 0.5 },
+  ] as const;
+};
+
+const raySegmentDistance = (
+  dx: number,
+  dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+) => {
+  const edgeX = bx - ax;
+  const edgeY = by - ay;
+  const denominator = cross2d(dx, dy, edgeX, edgeY);
+  if (Math.abs(denominator) <= 0.000001) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const distance = cross2d(ax, ay, edgeX, edgeY) / denominator;
+  const edgeT = cross2d(ax, ay, dx, dy) / denominator;
+  if (distance >= 0 && edgeT >= 0 && edgeT <= 1) {
+    return distance;
+  }
+
+  return Number.POSITIVE_INFINITY;
+};
+
+const shapeBoundaryDistance = (shape: LayoutShapeName, angle: number, extent: number) => {
+  const safeExtent = Math.max(extent, 0.001);
+  if (shape === "circle") {
+    return safeExtent;
+  }
+
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  if (shape === "square") {
+    return safeExtent / Math.max(Math.abs(directionX), Math.abs(directionY), 0.0001);
+  }
+
+  const vertices = triangleLayoutVertices(safeExtent);
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let index = 0; index < vertices.length; index += 1) {
+    const start = vertices[index];
+    const end = vertices[(index + 1) % vertices.length];
+    const distance = raySegmentDistance(directionX, directionY, start.x, start.y, end.x, end.y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+    }
+  }
+
+  return Number.isFinite(bestDistance) ? bestDistance : safeExtent;
+};
 
 const staggerDelay = (index: number, count: number, staggerSeconds: number, randomize: boolean) => {
   const step = Math.max(staggerSeconds, 0);
@@ -1076,10 +1184,22 @@ const createEyeInstance = (
     highlight,
     x,
     y,
+    layoutStartX: x,
+    layoutStartY: y,
+    targetX: x,
+    targetY: y,
+    layoutTransitionElapsed: 0,
+    layoutTransitionActive: false,
     radius,
     scale,
     renderScale,
     lowDetail: lowDetailEnabled(scale),
+    appearanceUpdateInterval: eyeAppearanceUpdateInterval(scale),
+    appearanceAccumulator: 0,
+    needsAppearanceRefresh: true,
+    lastDrawnCatMorph: 0,
+    lastDrawnCatBlinkBottom: 0,
+    lastDrawnCatBlinkSide: 0,
     delay: staggerDelay(index, count, 0, DEFAULT_RANDOMIZE_STAGGER),
     scaleInFinished: false,
     parallaxX: 0,
@@ -1122,29 +1242,34 @@ const resolveRadiusMix = (value: number) =>
       ? 0.48 + (value - 0.34) * 0.35
       : 0.78 + (value - 0.72) * 0.78;
 
-const packCircles = (
-  count: number,
+const resolvePackedRadii = (count: number, minRadius: number, maxRadius: number) => {
+  const safeMinRadius = Math.max(Math.min(minRadius, maxRadius), 0);
+  const safeMaxRadius = Math.max(Math.max(minRadius, maxRadius), 0);
+
+  return Array.from({ length: count }, (_, index) => {
+    const tierMix = count <= 1 ? 1 : index / Math.max(count - 1, 1);
+    const radiusT = resolveRadiusMix(tierMix);
+    return safeMinRadius + (safeMaxRadius - safeMinRadius) * clamp(radiusT, 0, 1);
+  });
+};
+
+const packEyePositions = (
+  radii: number[],
   clusterRadius: number,
-  minRadius: number,
-  maxRadius: number,
   attempts: number,
   spiralStepDegrees: number,
   radialExponent: number,
   eyeSpiralOffset: number,
+  shape: LayoutShapeName,
 ) => {
   const placed: Array<{ x: number; y: number; r: number }> = [];
   const safeClusterRadius = Math.max(clusterRadius, 0);
-  const safeMinRadius = Math.max(Math.min(minRadius, maxRadius), 0);
-  const safeMaxRadius = Math.max(Math.max(minRadius, maxRadius), 0);
   const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 512));
   const spiralStep = (spiralStepDegrees * Math.PI) / 180;
   const safeRadialExponent = Math.max(radialExponent, 0.01);
 
-  for (let i = 1; i <= count; i += 1) {
-    const tierMix = count <= 1 ? 1 : (i - 1) / Math.max(count - 1, 1);
-    const radiusT = resolveRadiusMix(tierMix);
-    const radius = safeMinRadius + (safeMaxRadius - safeMinRadius) * clamp(radiusT, 0, 1);
-    const maxDistance = Math.max(0, safeClusterRadius - radius);
+  for (let i = 0; i < radii.length; i += 1) {
+    const radius = radii[i];
     let bestX = 0;
     let bestY = 0;
     let bestClearance = Number.NEGATIVE_INFINITY;
@@ -1152,7 +1277,9 @@ const packCircles = (
 
     for (let attempt = 0; attempt <= maxAttempts; attempt += 1) {
       const t = attempt / maxAttempts;
-      const angle = i * eyeSpiralOffset + attempt * spiralStep;
+      const angle = (i + 1) * eyeSpiralOffset + attempt * spiralStep;
+      const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
+      const maxDistance = Math.max(0, boundaryDistance - radius);
       const distance = maxDistance * t ** safeRadialExponent;
       const candidateX = Math.cos(angle) * distance;
       const candidateY = Math.sin(angle) * distance;
@@ -1193,6 +1320,50 @@ const packCircles = (
   }
 
   return placed;
+};
+
+const startLayoutTransition = (
+  eye: EyeInstance,
+  nextX: number,
+  nextY: number,
+  duration: number,
+) => {
+  eye.targetX = nextX;
+  eye.targetY = nextY;
+
+  if (duration <= 0.001 || (Math.abs(eye.x - nextX) <= 0.001 && Math.abs(eye.y - nextY) <= 0.001)) {
+    eye.x = nextX;
+    eye.y = nextY;
+    eye.layoutStartX = nextX;
+    eye.layoutStartY = nextY;
+    eye.layoutTransitionElapsed = duration;
+    eye.layoutTransitionActive = false;
+    return;
+  }
+
+  eye.layoutStartX = eye.x;
+  eye.layoutStartY = eye.y;
+  eye.layoutTransitionElapsed = 0;
+  eye.layoutTransitionActive = true;
+};
+
+const updateLayoutTransition = (eye: EyeInstance, runtime: EyeFieldRuntime, dtSeconds: number) => {
+  if (!eye.layoutTransitionActive) {
+    return;
+  }
+
+  const duration = Math.max(runtime.layoutTransitionDuration, 0.001);
+  eye.layoutTransitionElapsed = Math.min(eye.layoutTransitionElapsed + dtSeconds, duration);
+  const progress = clamp(eye.layoutTransitionElapsed / duration, 0, 1);
+  const easedProgress = applyFocusEase(runtime.layoutTransitionEase, progress);
+  eye.x = lerp(eye.layoutStartX, eye.targetX, easedProgress);
+  eye.y = lerp(eye.layoutStartY, eye.targetY, easedProgress);
+
+  if (progress >= 0.999) {
+    eye.x = eye.targetX;
+    eye.y = eye.targetY;
+    eye.layoutTransitionActive = false;
+  }
 };
 
 const parallaxOffset = (runtime: EyeFieldRuntime, eye: EyeInstance) => {
@@ -1543,6 +1714,10 @@ const updateScrollFallState = (
 const applyCatBlinkAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   const bottomProgress = eye.type === "cat" ? clamp(eye.catBlinkBottom, 0, 1) : 0;
   const sideProgress = eye.type === "cat" ? clamp(eye.catBlinkSide, 0, 1) : 0;
+  const shouldRedrawBottom =
+    eye.needsAppearanceRefresh || Math.abs(bottomProgress - eye.lastDrawnCatBlinkBottom) > 0.002;
+  const shouldRedrawSide =
+    eye.needsAppearanceRefresh || Math.abs(sideProgress - eye.lastDrawnCatBlinkSide) > 0.002;
 
   eye.blinkClipMask.position.set(0, 0);
   eye.blinkClipMask.scale.set(1);
@@ -1551,27 +1726,35 @@ const applyCatBlinkAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => 
   eye.blinkGroup.scale.set(1);
   eye.blinkGroup.rotation = 0;
   eye.blinkGroup.visible = eye.type === "cat" && (bottomProgress > 0.0001 || sideProgress > 0.0001);
-  drawCatBlinkBottomLid(eye.blinkBottom, bottomProgress, {
-    fillColor: runtime.catBlinkBottomColor,
-    fillOpacity: runtime.catBlinkBottomOpacity,
-    strokeColor: runtime.catBlinkBottomStrokeColor,
-    strokeOpacity: runtime.catBlinkBottomStrokeOpacity,
-    strokeWidth: runtime.catBlinkBottomStrokeWidth,
-  });
-  drawCatBlinkSideLid(eye.blinkLeft, sideProgress, "left", {
-    fillColor: runtime.catBlinkSideColor,
-    fillOpacity: runtime.catBlinkSideOpacity,
-    strokeColor: runtime.catBlinkSideStrokeColor,
-    strokeOpacity: runtime.catBlinkSideStrokeOpacity,
-    strokeWidth: runtime.catBlinkSideStrokeWidth,
-  });
-  drawCatBlinkSideLid(eye.blinkRight, sideProgress, "right", {
-    fillColor: runtime.catBlinkSideColor,
-    fillOpacity: runtime.catBlinkSideOpacity,
-    strokeColor: runtime.catBlinkSideStrokeColor,
-    strokeOpacity: runtime.catBlinkSideStrokeOpacity,
-    strokeWidth: runtime.catBlinkSideStrokeWidth,
-  });
+  if (shouldRedrawBottom) {
+    drawCatBlinkBottomLid(eye.blinkBottom, bottomProgress, {
+      fillColor: runtime.catBlinkBottomColor,
+      fillOpacity: runtime.catBlinkBottomOpacity,
+      strokeColor: runtime.catBlinkBottomStrokeColor,
+      strokeOpacity: runtime.catBlinkBottomStrokeOpacity,
+      strokeWidth: runtime.catBlinkBottomStrokeWidth,
+    });
+    eye.lastDrawnCatBlinkBottom = bottomProgress;
+  }
+
+  if (shouldRedrawSide) {
+    drawCatBlinkSideLid(eye.blinkLeft, sideProgress, "left", {
+      fillColor: runtime.catBlinkSideColor,
+      fillOpacity: runtime.catBlinkSideOpacity,
+      strokeColor: runtime.catBlinkSideStrokeColor,
+      strokeOpacity: runtime.catBlinkSideStrokeOpacity,
+      strokeWidth: runtime.catBlinkSideStrokeWidth,
+    });
+    drawCatBlinkSideLid(eye.blinkRight, sideProgress, "right", {
+      fillColor: runtime.catBlinkSideColor,
+      fillOpacity: runtime.catBlinkSideOpacity,
+      strokeColor: runtime.catBlinkSideStrokeColor,
+      strokeOpacity: runtime.catBlinkSideStrokeOpacity,
+      strokeWidth: runtime.catBlinkSideStrokeWidth,
+    });
+    eye.lastDrawnCatBlinkSide = sideProgress;
+  }
+
   eye.blinkBottom.position.set(0, 0);
   eye.blinkBottom.scale.set(1);
   eye.blinkBottom.rotation = 0;
@@ -1648,8 +1831,12 @@ const applyPupilAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   eye.irisShadow.rotation = rotation;
   eye.pupilGroup.position.set(0, 0);
   eye.pupil.position.set(pupilX, pupilY);
-  if (eye.type === "cat") {
+  if (
+    eye.type === "cat" &&
+    (eye.needsAppearanceRefresh || Math.abs(eye.catMorph - eye.lastDrawnCatMorph) > 0.002)
+  ) {
     drawCatPupil(eye.pupil, eye.catMorph);
+    eye.lastDrawnCatMorph = eye.catMorph;
   }
   eye.pupil.scale.set(
     eye.type === "cat" ? 1 : eye.currentScaleX * eye.focusPulseScale,
@@ -1671,11 +1858,15 @@ const applyPupilAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
       : pupilY - PUPIL_RADIUS * 0.4,
   );
   applyCatBlinkAppearance(eye, runtime);
+  eye.needsAppearanceRefresh = false;
 };
 
 const createRuntime = (count: number): EyeFieldRuntime => ({
   count,
   clusterRadius: DEFAULT_CLUSTER_RADIUS,
+  layoutShape: DEFAULT_LAYOUT_SHAPE,
+  layoutTransitionDuration: DEFAULT_LAYOUT_TRANSITION_DURATION,
+  layoutTransitionEase: DEFAULT_LAYOUT_TRANSITION_EASE,
   minEyeSize: DEFAULT_MIN_EYE_SIZE,
   maxEyeSize: DEFAULT_MAX_EYE_SIZE,
   catMix: DEFAULT_CAT_MIX,
@@ -1793,16 +1984,16 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     root.removeChildren();
     const minEyeRadius = runtime.minEyeSize * 0.5;
     const maxEyeRadius = runtime.maxEyeSize * 0.5;
+    const radii = resolvePackedRadii(runtime.count, minEyeRadius, maxEyeRadius);
 
-    const positions = packCircles(
-      runtime.count,
+    const positions = packEyePositions(
+      radii,
       runtime.clusterRadius,
-      minEyeRadius,
-      maxEyeRadius,
       runtime.packAttempts,
       runtime.spiralStepDegrees,
       runtime.radialExponent,
       DEFAULT_EYE_SPIRAL_OFFSET,
+      runtime.layoutShape,
     );
 
     positions.forEach((position, index) => {
@@ -1832,9 +2023,39 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     root.sortChildren();
   };
 
+  const relayoutEyes = () => {
+    if (runtime.eyes.length === 0) {
+      return;
+    }
+
+    const positions = packEyePositions(
+      runtime.eyes.map((eye) => eye.radius),
+      runtime.clusterRadius,
+      runtime.packAttempts,
+      runtime.spiralStepDegrees,
+      runtime.radialExponent,
+      DEFAULT_EYE_SPIRAL_OFFSET,
+      runtime.layoutShape,
+    );
+
+    positions.forEach((position, index) => {
+      const eye = runtime.eyes[index];
+      if (!eye) {
+        return;
+      }
+
+      startLayoutTransition(eye, position.x, position.y, runtime.layoutTransitionDuration);
+    });
+  };
+
   const layout = (width: number, height: number) => {
     runtime.clusterRadius = Math.max(Math.min(width, height) * 0.42, runtime.maxEyeSize * 0.5 + 40);
     root.position.set(width * 0.5, height * 0.5);
+    if (runtime.eyes.length === runtime.count && runtime.eyes.length > 0) {
+      relayoutEyes();
+      return;
+    }
+
     rebuildEyes();
   };
 
@@ -1844,6 +2065,9 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
   };
 
   const setConfig = ({
+    layoutShape,
+    layoutTransitionDuration,
+    layoutTransitionEase,
     minEyeSize,
     maxEyeSize,
     catMix,
@@ -1903,6 +2127,21 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
   }: EyeFieldConfig) => {
     let shouldRebuild = false;
     let shouldRefreshDropShadowTexture = false;
+    let shouldRefreshAppearance = false;
+    let shouldRelayout = false;
+
+    if (typeof layoutShape === "string" && layoutShape !== runtime.layoutShape) {
+      runtime.layoutShape = layoutShape;
+      shouldRelayout = true;
+    }
+
+    if (typeof layoutTransitionDuration === "number") {
+      runtime.layoutTransitionDuration = Math.max(layoutTransitionDuration, 0);
+    }
+
+    if (typeof layoutTransitionEase === "string") {
+      runtime.layoutTransitionEase = layoutTransitionEase;
+    }
 
     if (typeof catMix === "number") {
       const nextCatMix = clamp(catMix, 0, 1);
@@ -1995,82 +2234,102 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (typeof roundTranslateStrength === "number") {
       runtime.roundTranslateStrength = clamp(roundTranslateStrength, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catTranslateStrength === "number") {
       runtime.catTranslateStrength = clamp(catTranslateStrength, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof roundHighlightScale === "number") {
       runtime.roundHighlightScale = Math.max(roundHighlightScale, 0);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof roundHighlightOffsetX === "number") {
       runtime.roundHighlightOffsetX = clamp(roundHighlightOffsetX, -100, 100);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof roundHighlightOffsetY === "number") {
       runtime.roundHighlightOffsetY = clamp(roundHighlightOffsetY, -100, 100);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof roundHighlightRotationDegrees === "number") {
       runtime.roundHighlightRotationDegrees = clamp(roundHighlightRotationDegrees, -180, 180);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof roundHighlightOpacity === "number") {
       runtime.roundHighlightOpacity = clamp(roundHighlightOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catHighlightScale === "number") {
       runtime.catHighlightScale = Math.max(catHighlightScale, 0);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catHighlightOffsetX === "number") {
       runtime.catHighlightOffsetX = clamp(catHighlightOffsetX, -1, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catHighlightOffsetY === "number") {
       runtime.catHighlightOffsetY = clamp(catHighlightOffsetY, -1, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catHighlightRotationDegrees === "number") {
       runtime.catHighlightRotationDegrees = clamp(catHighlightRotationDegrees, -180, 180);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catHighlightOpacity === "number") {
       runtime.catHighlightOpacity = clamp(catHighlightOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catPupilHighlightMorphScale === "number") {
       runtime.catPupilHighlightMorphScale = clamp(catPupilHighlightMorphScale, 1, 8);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkSideColor === "number" && Number.isFinite(catBlinkSideColor)) {
       runtime.catBlinkSideColor = catBlinkSideColor;
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkSideOpacity === "number") {
       runtime.catBlinkSideOpacity = clamp(catBlinkSideOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkSideStrokeColor === "number" && Number.isFinite(catBlinkSideStrokeColor)) {
       runtime.catBlinkSideStrokeColor = catBlinkSideStrokeColor;
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkSideStrokeWidth === "number") {
       runtime.catBlinkSideStrokeWidth = clamp(catBlinkSideStrokeWidth, 0, 8);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkSideStrokeOpacity === "number") {
       runtime.catBlinkSideStrokeOpacity = clamp(catBlinkSideStrokeOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkBottomColor === "number" && Number.isFinite(catBlinkBottomColor)) {
       runtime.catBlinkBottomColor = catBlinkBottomColor;
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkBottomOpacity === "number") {
       runtime.catBlinkBottomOpacity = clamp(catBlinkBottomOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (
@@ -2078,14 +2337,17 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       Number.isFinite(catBlinkBottomStrokeColor)
     ) {
       runtime.catBlinkBottomStrokeColor = catBlinkBottomStrokeColor;
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkBottomStrokeWidth === "number") {
       runtime.catBlinkBottomStrokeWidth = clamp(catBlinkBottomStrokeWidth, 0, 8);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkBottomStrokeOpacity === "number") {
       runtime.catBlinkBottomStrokeOpacity = clamp(catBlinkBottomStrokeOpacity, 0, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof catBlinkMinDelay === "number") {
@@ -2128,22 +2390,27 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (typeof focusScale === "number") {
       runtime.focusScale = Math.max(focusScale, 1);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof focusUpDuration === "number") {
       runtime.focusUpDuration = Math.max(focusUpDuration, 0.01);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof focusDownDuration === "number") {
       runtime.focusDownDuration = Math.max(focusDownDuration, 0.01);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof focusMinDelay === "number") {
       runtime.focusMinDelay = Math.max(focusMinDelay, 0);
+      shouldRefreshAppearance = true;
     }
 
     if (typeof focusMaxDelay === "number") {
       runtime.focusMaxDelay = Math.max(focusMaxDelay, 0);
+      shouldRefreshAppearance = true;
     }
 
     if (runtime.focusMinDelay > runtime.focusMaxDelay) {
@@ -2154,10 +2421,12 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (typeof focusEaseUp === "string") {
       runtime.focusEaseUp = focusEaseUp;
+      shouldRefreshAppearance = true;
     }
 
     if (typeof focusEaseDown === "string") {
       runtime.focusEaseDown = focusEaseDown;
+      shouldRefreshAppearance = true;
     }
 
     if (
@@ -2193,7 +2462,8 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     ) {
       runtime.eyes.forEach((eye) => {
         applyStaticEyeSettings(eye, runtime);
-        applyCatBlinkAppearance(eye, runtime);
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
       });
     }
 
@@ -2203,6 +2473,13 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (shouldRebuild) {
       rebuildEyes();
+    } else if (shouldRelayout) {
+      relayoutEyes();
+    } else if (shouldRefreshAppearance) {
+      runtime.eyes.forEach((eye) => {
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
+      });
     }
   };
 
@@ -2253,6 +2530,8 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         eye.currentScaleY = 1;
         eye.currentAngle = 0;
         eye.catMorph = 0;
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
       });
     }
 
@@ -2285,9 +2564,15 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.pointerActive = false;
       runtime.eyes.forEach((eye) => {
         resetScrollFallState(eye);
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
       });
     } else {
       runtime.pointerActive = runtime.scrollFallResumePointerActive;
+      runtime.eyes.forEach((eye) => {
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
+      });
     }
   };
 
@@ -2332,7 +2617,6 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     );
     const sharedAttentionIdle =
       !isScrollFallLocked &&
-      runtime.pointerActive &&
       runtime.elapsed - runtime.lastPointerMoveAt >= runtime.sharedAttentionDelay;
 
     if (sharedAttentionIdle && runtime.elapsed >= runtime.nextSharedAttentionAt) {
@@ -2371,6 +2655,8 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     let visibleCount = 0;
 
     runtime.eyes.forEach((eye) => {
+      updateLayoutTransition(eye, runtime, dtSeconds);
+      eye.appearanceAccumulator += dtSeconds;
       if (isScrollFallLocked) {
         eye.parallaxX = smoothTowards(eye.parallaxX, 0, runtime.pointerEaseSpeed, dtSeconds);
         eye.parallaxY = smoothTowards(eye.parallaxY, 0, runtime.pointerEaseSpeed, dtSeconds);
@@ -2412,6 +2698,30 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       const interactionOffset = totalOffset(eye);
       const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX;
       const interactionDrawY = eye.y + interactionOffset.y + eye.fallOffsetY;
+      eye.root.position.set(interactionDrawX, interactionDrawY);
+      eye.root.rotation = (eye.fallRotationDegrees * Math.PI) / 180;
+
+      const visibleRadius =
+        renderedEyeRadius(eye) *
+        introScaleProgress *
+        Math.max(Math.abs(squashScaleX), Math.abs(squashScaleY), 0.001);
+      const drawX = root.position.x + interactionDrawX;
+      const drawY = root.position.y + interactionDrawY;
+      const isVisible =
+        drawX - visibleRadius < worldBounds.x + worldBounds.width &&
+        drawX + visibleRadius > worldBounds.x &&
+        drawY - visibleRadius < worldBounds.y + worldBounds.height &&
+        drawY + visibleRadius > worldBounds.y;
+
+      eye.root.visible = isVisible;
+      visibleCount += Number(isVisible);
+
+      if (!isVisible) {
+        eye.needsAppearanceRefresh = true;
+        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
+        return;
+      }
+
       const cursorLook =
         runtime.trackingBlend > 0.0001
           ? (() => {
@@ -2429,7 +2739,11 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
           : { x: 0, y: 0 };
       const sharedAttentionLook =
         runtime.sharedAttentionBlend > 0.0001
-          ? sampleEyeSharedAttentionLook(runtime, eye)
+          ? sampleEyeSharedAttentionLook(
+              runtime,
+              eye,
+              runtime.pointerActive ? "scattered" : "unified",
+            )
           : { x: 0, y: 0 };
       const desiredLook = {
         x: lerp(cursorLook.x, sharedAttentionLook.x, runtime.sharedAttentionBlend),
@@ -2618,23 +2932,18 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         }
       }
 
+      const shouldThrottleAppearance = eye.lowDetail && runtime.scrollFallBlend <= 0.0001;
+      if (
+        shouldThrottleAppearance &&
+        eye.scaleInFinished &&
+        !eye.needsAppearanceRefresh &&
+        eye.appearanceAccumulator < eye.appearanceUpdateInterval
+      ) {
+        return;
+      }
+
+      eye.appearanceAccumulator = 0;
       applyPupilAppearance(eye, runtime);
-      const offset = totalOffset(eye);
-      const drawX = root.position.x + eye.x + offset.x + eye.fallOffsetX;
-      const drawY = root.position.y + eye.y + offset.y + eye.fallOffsetY;
-      eye.root.position.set(eye.x + offset.x + eye.fallOffsetX, eye.y + offset.y + eye.fallOffsetY);
-      eye.root.rotation = (eye.fallRotationDegrees * Math.PI) / 180;
-
-      const halfWidth = SCLERA_RADIUS;
-      const halfHeight = SCLERA_RADIUS;
-      const isVisible =
-        drawX - halfWidth < worldBounds.x + worldBounds.width &&
-        drawX + halfWidth > worldBounds.x &&
-        drawY - halfHeight < worldBounds.y + worldBounds.height &&
-        drawY + halfHeight > worldBounds.y;
-
-      eye.root.visible = isVisible;
-      visibleCount += Number(isVisible);
     });
 
     return {

@@ -3,6 +3,7 @@ import {
   createEyeField,
   type ClickRepulseEaseName,
   type FocusEaseName,
+  type LayoutShapeName,
 } from "../entities/eye-field";
 
 interface MetricsSnapshot {
@@ -12,6 +13,9 @@ interface MetricsSnapshot {
 
 interface HeroSceneOptions {
   initialCount: number;
+  initialLayoutShape: LayoutShapeName;
+  initialLayoutTransitionDuration: number;
+  initialLayoutTransitionEase: FocusEaseName;
   initialMinEyeSize: number;
   initialMaxEyeSize: number;
   initialCatMix: number;
@@ -87,6 +91,9 @@ const drawBackdrop = (
 
 export const createHeroScene = async ({
   initialCount,
+  initialLayoutShape,
+  initialLayoutTransitionDuration,
+  initialLayoutTransitionEase,
   initialMinEyeSize,
   initialMaxEyeSize,
   initialCatMix,
@@ -168,6 +175,9 @@ export const createHeroScene = async ({
   let isScrollFallActive = false;
   const eyeField = createEyeField({ count: initialCount, renderer: app.renderer, worldBounds });
   eyeField.setConfig({
+    layoutShape: initialLayoutShape,
+    layoutTransitionDuration: initialLayoutTransitionDuration,
+    layoutTransitionEase: initialLayoutTransitionEase,
     minEyeSize: initialMinEyeSize,
     maxEyeSize: initialMaxEyeSize,
     catMix: initialCatMix,
@@ -322,6 +332,9 @@ export const createHeroScene = async ({
       eyeField.layout(worldBounds.width, worldBounds.height);
     },
     setConfig: (config: {
+      layoutShape?: LayoutShapeName;
+      layoutTransitionDuration?: number;
+      layoutTransitionEase?: FocusEaseName;
       minEyeSize?: number;
       maxEyeSize?: number;
       catMix?: number;
