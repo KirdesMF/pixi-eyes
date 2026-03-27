@@ -1,12 +1,15 @@
 # Pixi Eyes Prototype
 
-Prototype stack for porting an instance-heavy eye animation from Rive to Pixi.js before embedding it in an Astro hero section.
+Prototype stack for an instance-heavy eye animation ported from Rive to Pixi.js before embedding it in an Astro hero section.
 
 ## Stack
 
+- Bun
 - Vite `8.0.3`
 - TypeScript `6.0.2`
 - Pixi.js `8.17.1`
+- Tailwind CSS `4`
+- Oxc (`oxfmt`, `oxlint`)
 
 ## Why this stack
 
@@ -24,22 +27,21 @@ Once the behavior is correct, the Pixi canvas can be mounted inside an Astro isl
 ```bash
 bun install
 bun run dev
+bun run fmt
+bun run lint
 bun run check
 bun run build
 ```
 
 ## Current prototype
 
-- A Pixi 8 hero scene with a responsive canvas mount
-- Shared vector contexts for repeated eye geometry
-- Pointer-driven gaze updates
-- Basic blink timing and lightweight visibility culling
-- Instance slider and live FPS readout
+- Responsive Pixi hero canvas with a left-side tuning panel
+- Mixed round and cat eyes in the same field
+- Pointer-driven gaze, repulsion, click wave, idle shared-attention, and scroll-triggered fall/return behavior
+- Procedural cat pupil morph and blink system
+- Live JSON export for tuned settings
+- Shared generated textures for the static globe layers, with procedural inner eye motion preserved
 
-## Next step
+## Integration note
 
-Add the Rive Luau source here:
-
-`./rive-scripts/EyeInstance`
-
-That file is not present in the current workspace yet, so the current motion is a scaffold rather than a behavioral port.
+This prototype is meant to tune motion and rendering in isolation. Once the values feel right, the canvas can be mounted inside an Astro island with a thin wrapper and the exported JSON can be used as the initial runtime config.

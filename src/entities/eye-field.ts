@@ -10,32 +10,6 @@ import {
 
 export interface EyeFieldMetrics {
   visibleCount: number;
-  debug: EyeFieldDebugState | null;
-}
-
-export interface EyeFieldDebugState {
-  pointerActive: boolean;
-  trackingBlend: number;
-  sharedAttentionBlend: number;
-  scrollFallActive: boolean;
-  mouseX: number;
-  mouseY: number;
-  targetMouseX: number;
-  targetMouseY: number;
-  eyeIndex: number;
-  eyeType: EyeType;
-  eyeScale: number;
-  eyeX: number;
-  eyeY: number;
-  lookX: number;
-  lookY: number;
-  parallaxX: number;
-  parallaxY: number;
-  repelX: number;
-  repelY: number;
-  fallOffsetX: number;
-  fallOffsetY: number;
-  catMorph: number;
 }
 
 export type EyeType = "round" | "cat";
@@ -178,8 +152,6 @@ interface EyeInstance {
   scale: number;
   renderScale: number;
   lowDetail: boolean;
-  updateInterval: number;
-  updateAccumulator: number;
   delay: number;
   scaleInFinished: boolean;
   parallaxX: number;
@@ -206,14 +178,7 @@ interface EyeInstance {
   fallRotationDegrees: number;
   fallAngularVelocity: number;
   fallSquash: number;
-  fallSettleActive: boolean;
-  fallSettleElapsed: number;
-  fallSettleDuration: number;
-  fallSettleStartOffsetX: number;
-  fallSettleTargetOffsetX: number;
-  fallSettleStartRotationDegrees: number;
-  fallSettleTargetRotationDegrees: number;
-  fallSettleComplete: boolean;
+  fallGrounded: boolean;
   blinkDelayMix: number;
   blinkCycleOffset: number;
   focusDelayMix: number;
@@ -244,7 +209,6 @@ interface EyeFieldRuntime {
   largeEyeLookSpeed: number;
   trackingBlendSpeed: number;
   pointerEaseSpeed: number;
-  lowDetailScaleThreshold: number;
   mouseX: number;
   mouseY: number;
   targetMouseX: number;
@@ -363,8 +327,6 @@ const SCROLL_FALL_SQUASH_MAX = 0.22;
 const SCROLL_FALL_STRETCH_MAX = 0.12;
 const SCROLL_FALL_SQUASH_IMPACT_SPEED = 900;
 const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
-const DEFAULT_SMALL_EYE_UPDATE_FPS = 24;
-const DEFAULT_LARGE_EYE_UPDATE_FPS = 60;
 const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
 const DEFAULT_CLICK_REPULSE_RADIUS = 400;
 const DEFAULT_CLICK_REPULSE_STRENGTH = 40;
@@ -627,14 +589,6 @@ const clampMagnitude = (x: number, y: number, maxLength: number) => {
 
   const scale = maxLength / length;
   return { x: x * scale, y: y * scale };
-};
-
-const eyeUpdateInterval = (scale: number) => {
-  const t = clamp(scale, 0, 1);
-  const fps =
-    DEFAULT_SMALL_EYE_UPDATE_FPS +
-    (DEFAULT_LARGE_EYE_UPDATE_FPS - DEFAULT_SMALL_EYE_UPDATE_FPS) * t;
-  return 1 / Math.max(fps, 1);
 };
 
 const lowDetailEnabled = (scale: number) => scale < clamp(DEFAULT_LOW_DETAIL_SCALE_THRESHOLD, 0, 1);
@@ -1126,8 +1080,6 @@ const createEyeInstance = (
     scale,
     renderScale,
     lowDetail: lowDetailEnabled(scale),
-    updateInterval: eyeUpdateInterval(scale),
-    updateAccumulator: 0,
     delay: staggerDelay(index, count, 0, DEFAULT_RANDOMIZE_STAGGER),
     scaleInFinished: false,
     parallaxX: 0,
@@ -1154,14 +1106,7 @@ const createEyeInstance = (
     fallRotationDegrees: 0,
     fallAngularVelocity: 0,
     fallSquash: 0,
-    fallSettleActive: false,
-    fallSettleElapsed: 0,
-    fallSettleDuration: 0,
-    fallSettleStartOffsetX: 0,
-    fallSettleTargetOffsetX: 0,
-    fallSettleStartRotationDegrees: 0,
-    fallSettleTargetRotationDegrees: 0,
-    fallSettleComplete: false,
+    fallGrounded: false,
     blinkDelayMix: hash01(index * 12.731 + count * 0.73),
     blinkCycleOffset: hash01(index * 23.913 + count * 1.91),
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
@@ -1434,14 +1379,7 @@ const resetScrollFallState = (eye: EyeInstance) => {
   eye.fallRotationDegrees = 0;
   eye.fallAngularVelocity = 0;
   eye.fallSquash = 0;
-  eye.fallSettleActive = false;
-  eye.fallSettleElapsed = 0;
-  eye.fallSettleDuration = 0;
-  eye.fallSettleStartOffsetX = 0;
-  eye.fallSettleTargetOffsetX = 0;
-  eye.fallSettleStartRotationDegrees = 0;
-  eye.fallSettleTargetRotationDegrees = 0;
-  eye.fallSettleComplete = false;
+  eye.fallGrounded = false;
 };
 
 const startScrollFall = (eye: EyeInstance) => {
@@ -1460,8 +1398,7 @@ const startScrollFall = (eye: EyeInstance) => {
   );
 
   eye.fallStarted = true;
-  eye.fallSettleActive = false;
-  eye.fallSettleComplete = false;
+  eye.fallGrounded = false;
   eye.fallVelocityX = driftDirection * driftSpeed;
   eye.fallVelocityY = 0;
   eye.fallAngularVelocity = rotationDirection * spinSpeed;
@@ -1498,8 +1435,7 @@ const updateScrollFallState = (
 
   if (runtime.scrollFallTarget <= 0.5) {
     eye.fallStarted = false;
-    eye.fallSettleActive = false;
-    eye.fallSettleComplete = false;
+    eye.fallGrounded = false;
     const returnDelay = eye.fallDelayMix * SCROLL_FALL_RETURN_DELAY_MAX;
     if (runtime.scrollReturnElapsed < returnDelay) {
       return;
@@ -1555,7 +1491,7 @@ const updateScrollFallState = (
   }
 
   const floorOffset = scrollFallFloorOffset(eye, worldBounds);
-  if (!eye.fallSettleActive && !eye.fallSettleComplete) {
+  if (!eye.fallGrounded) {
     eye.fallVelocityY += SCROLL_FALL_GRAVITY * dtSeconds;
     eye.fallVelocityX = smoothTowards(eye.fallVelocityX, 0, SCROLL_FALL_AIR_DAMPING, dtSeconds);
     eye.fallAngularVelocity = smoothTowards(
@@ -1590,37 +1526,19 @@ const updateScrollFallState = (
       return;
     }
 
-    eye.fallSettleComplete = true;
+    eye.fallGrounded = true;
   }
 
-  if (!eye.fallSettleActive) {
-    eye.fallOffsetY = floorOffset;
-    eye.fallVelocityX = 0;
-    eye.fallVelocityY = 0;
-    eye.fallAngularVelocity = smoothTowards(
-      eye.fallAngularVelocity,
-      0,
-      SCROLL_FALL_GROUND_DAMPING,
-      dtSeconds,
-    );
-    return;
-  }
-};
-
-const scrollFallIsActive = (runtime: EyeFieldRuntime) =>
-  runtime.scrollFallTarget > 0.5 ||
-  runtime.scrollFallBlend > 0.0001 ||
-  runtime.eyes.some(
-    (eye) =>
-      eye.fallStarted ||
-      Math.abs(eye.fallOffsetX) > 0.02 ||
-      Math.abs(eye.fallOffsetY) > 0.02 ||
-      Math.abs(eye.fallVelocityX) > 2 ||
-      Math.abs(eye.fallVelocityY) > 2 ||
-      Math.abs(eye.fallRotationDegrees) > 0.05 ||
-      Math.abs(eye.fallAngularVelocity) > 1 ||
-      Math.abs(eye.fallSquash) > 0.001,
+  eye.fallOffsetY = floorOffset;
+  eye.fallVelocityX = 0;
+  eye.fallVelocityY = 0;
+  eye.fallAngularVelocity = smoothTowards(
+    eye.fallAngularVelocity,
+    0,
+    SCROLL_FALL_GROUND_DAMPING,
+    dtSeconds,
   );
+};
 
 const applyCatBlinkAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   const bottomProgress = eye.type === "cat" ? clamp(eye.catBlinkBottom, 0, 1) : 0;
@@ -1778,7 +1696,6 @@ const createRuntime = (count: number): EyeFieldRuntime => ({
   largeEyeLookSpeed: DEFAULT_LARGE_EYE_LOOK_SPEED,
   trackingBlendSpeed: DEFAULT_TRACKING_BLEND_SPEED,
   pointerEaseSpeed: DEFAULT_POINTER_EASE_SPEED,
-  lowDetailScaleThreshold: DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
   mouseX: 0,
   mouseY: 0,
   targetMouseX: 0,
@@ -2296,18 +2213,20 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (!isActive) {
       runtime.pointerActive = false;
-      return;
-    }
-
-    if (runtime.scrollFallTarget > 0.5) {
-      runtime.pointerActive = false;
-      runtime.targetMouseX = 0;
-      runtime.targetMouseY = 0;
+      runtime.scrollFallResumePointerActive = false;
       return;
     }
 
     const nextTargetMouseX = x - root.position.x;
     const nextTargetMouseY = y - root.position.y;
+
+    if (runtime.scrollFallTarget > 0.5) {
+      runtime.pointerActive = false;
+      runtime.scrollFallResumePointerActive = true;
+      runtime.targetMouseX = nextTargetMouseX;
+      runtime.targetMouseY = nextTargetMouseY;
+      return;
+    }
     const movedDistance = Math.hypot(
       nextTargetMouseX - runtime.targetMouseX,
       nextTargetMouseY - runtime.targetMouseY,
@@ -2391,7 +2310,6 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
   const update = (dtSeconds: number): EyeFieldMetrics => {
     runtime.elapsed += Math.max(dtSeconds, 0);
-    const isScrollFalling = scrollFallIsActive(runtime);
     const isScrollFallLocked = runtime.scrollFallTarget > 0.5;
     const trackingTarget = runtime.pointerActive && !isScrollFallLocked ? 1 : 0;
     runtime.trackingBlend = smoothTowards(
@@ -2451,10 +2369,8 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     }
 
     let visibleCount = 0;
-    let debugState: EyeFieldDebugState | null = null;
-    let debugEyeDistanceSquared = Number.POSITIVE_INFINITY;
 
-    runtime.eyes.forEach((eye, eyeIndex) => {
+    runtime.eyes.forEach((eye) => {
       if (isScrollFallLocked) {
         eye.parallaxX = smoothTowards(eye.parallaxX, 0, runtime.pointerEaseSpeed, dtSeconds);
         eye.parallaxY = smoothTowards(eye.parallaxY, 0, runtime.pointerEaseSpeed, dtSeconds);
@@ -2481,7 +2397,6 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
         );
       }
 
-      eye.updateAccumulator = 0;
       const eyeSeconds = dtSeconds;
       const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
       updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
@@ -2707,8 +2622,6 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       const offset = totalOffset(eye);
       const drawX = root.position.x + eye.x + offset.x + eye.fallOffsetX;
       const drawY = root.position.y + eye.y + offset.y + eye.fallOffsetY;
-      const localDrawX = eye.x + offset.x + eye.fallOffsetX;
-      const localDrawY = eye.y + offset.y + eye.fallOffsetY;
       eye.root.position.set(eye.x + offset.x + eye.fallOffsetX, eye.y + offset.y + eye.fallOffsetY);
       eye.root.rotation = (eye.fallRotationDegrees * Math.PI) / 180;
 
@@ -2722,42 +2635,10 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
 
       eye.root.visible = isVisible;
       visibleCount += Number(isVisible);
-
-      const pointerDistanceSquared =
-        (runtime.mouseX - localDrawX) * (runtime.mouseX - localDrawX) +
-        (runtime.mouseY - localDrawY) * (runtime.mouseY - localDrawY);
-      if (pointerDistanceSquared < debugEyeDistanceSquared) {
-        debugEyeDistanceSquared = pointerDistanceSquared;
-        debugState = {
-          pointerActive: runtime.pointerActive,
-          trackingBlend: runtime.trackingBlend,
-          sharedAttentionBlend: runtime.sharedAttentionBlend,
-          scrollFallActive: isScrollFalling,
-          mouseX: runtime.mouseX,
-          mouseY: runtime.mouseY,
-          targetMouseX: runtime.targetMouseX,
-          targetMouseY: runtime.targetMouseY,
-          eyeIndex,
-          eyeType: eye.type,
-          eyeScale: eye.scale,
-          eyeX: eye.root.position.x,
-          eyeY: eye.root.position.y,
-          lookX: eye.lookX,
-          lookY: eye.lookY,
-          parallaxX: eye.parallaxX,
-          parallaxY: eye.parallaxY,
-          repelX: eye.repelX,
-          repelY: eye.repelY,
-          fallOffsetX: eye.fallOffsetX,
-          fallOffsetY: eye.fallOffsetY,
-          catMorph: eye.catMorph,
-        };
-      }
     });
 
     return {
       visibleCount,
-      debug: debugState,
     };
   };
 
