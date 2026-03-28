@@ -1,8 +1,6 @@
 import {
-  BlurFilter,
   Container,
   Graphics,
-  GraphicsContext,
   Rectangle,
   Sprite,
   type Renderer,
@@ -31,6 +29,30 @@ export type ClickRepulseEaseName =
   | "out-back"
   | "in-out-back"
   | "out-elastic";
+
+import type { SharedContexts, SharedTextures } from "./rendering";
+import {
+  createSharedContexts,
+  createSharedTextures,
+  createDropShadowTexture,
+  destroySharedContexts,
+  destroySharedTextures,
+  DEFAULT_IRIS_COLOR,
+  DEFAULT_CAT_EYE_COLOR,
+  CAT_IRIS_SCALE,
+  CAT_PUPIL_HALF_WIDTH,
+  CAT_PUPIL_HALF_HEIGHT,
+  CAT_PUPIL_HIGHLIGHT_SCALE,
+  CAT_PUPIL_MORPH_SPEED,
+  CAT_PUPIL_MORPH_RADIUS_FACTOR,
+  CAT_PUPIL_MORPH_RADIUS_MIN,
+} from "./rendering";
+import {
+  packEyePositions,
+  resolvePackedRadii,
+  resolveEyeType,
+  staggerDelay,
+} from "./layout";
 
 interface EyeFieldOptions {
   count: number;
@@ -104,29 +126,6 @@ interface ClickWave {
   x: number;
   y: number;
   elapsed: number;
-}
-
-interface SharedContexts {
-  scleraFillContext: GraphicsContext;
-  scleraMaskContext: GraphicsContext;
-  scleraOutlineContext: GraphicsContext;
-  scleraShadowContext: GraphicsContext;
-  roundGlobeHighlightContext: GraphicsContext;
-  catGlobeHighlightContext: GraphicsContext;
-  irisContext: GraphicsContext;
-  irisMaskContext: GraphicsContext;
-  roundPupilContext: GraphicsContext;
-  catPupilContext: GraphicsContext;
-  highlightContext: GraphicsContext;
-}
-
-interface SharedTextures {
-  dropShadowTexture: ReturnType<Renderer["generateTexture"]>;
-  scleraFillTexture: ReturnType<Renderer["generateTexture"]>;
-  scleraOutlineTexture: ReturnType<Renderer["generateTexture"]>;
-  scleraShadowTexture: ReturnType<Renderer["generateTexture"]>;
-  roundGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
-  catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
 }
 
 interface EyeInstance {
@@ -381,8 +380,6 @@ const DEFAULT_CAT_BLINK_SIDE_STROKE_OPACITY = 0.6;
 const DEFAULT_CAT_BLINK_BOTTOM_STROKE_OPACITY = 0.26;
 const DEFAULT_CAT_BLINK_SIDE_STROKE_WIDTH = 4;
 const DEFAULT_CAT_BLINK_BOTTOM_STROKE_WIDTH = 2;
-const DEFAULT_IRIS_COLOR = 0xab53ee;
-const DEFAULT_CAT_EYE_COLOR = 0x66e01a;
 const DEFAULT_SHADOW_OPACITY = 0.4;
 const DEFAULT_DROP_SHADOW_COLOR = 0x4a4545;
 const DEFAULT_DROP_SHADOW_OPACITY = 0.4;
@@ -402,36 +399,11 @@ const DEFAULT_CAT_GLOBE_HIGHLIGHT_SCALE = 0.47;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_X_FACTOR = 0.37;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_Y_FACTOR = -0.62;
 const DEFAULT_CAT_GLOBE_HIGHLIGHT_OPACITY = 0.7;
-const TRIANGLE_LAYOUT_HALF_BASE_FACTOR = Math.sqrt(3) * 0.5;
-const SHADOW_EDGE_OFFSET_DEGREES = 68;
-const SHADOW_BOTTOM_X = 0;
-const SHADOW_BOTTOM_Y = 1;
-const SHADOW_TOP_CONTROL_X_FACTOR = 0.42;
-const SHADOW_TOP_CONTROL_Y = 0.9;
-const SHADOW_SIDE_CONTROL_X_FACTOR = 0.9;
-const SHADOW_RIGHT_CONTROL_Y = 0.82;
-const SHADOW_BOTTOM_CONTROL_X_FACTOR = 0.24;
-const SHADOW_BOTTOM_RIGHT_CONTROL_Y = 1;
-const SHADOW_BOTTOM_LEFT_CONTROL_Y = 1;
+const DEFAULT_CAT_PUPIL_HIGHLIGHT_MORPH_SCALE = 4;
 const SCLERA_RADIUS = 24;
-const GLOBE_TEXTURE_PADDING = 4;
-const GLOBE_TEXTURE_RESOLUTION = 4;
-const DROP_SHADOW_TEXTURE_PADDING = 18;
 const IRIS_RADIUS = 16;
 const PUPIL_RADIUS = 8.5;
-const HIGHLIGHT_RADIUS = 2.2;
-const CAT_IRIS_SCALE = 1.38;
-const CAT_PUPIL_HALF_WIDTH_FACTOR = 0.44;
-const CAT_PUPIL_HALF_WIDTH = PUPIL_RADIUS * CAT_PUPIL_HALF_WIDTH_FACTOR;
-const CAT_PUPIL_HALF_HEIGHT = PUPIL_RADIUS * 1.84;
 const CAT_PUPIL_SLIT_HANDLE_FACTOR = 0.74;
-const CAT_PUPIL_HIGHLIGHT_SCALE = 0.56;
-const DEFAULT_CAT_PUPIL_HIGHLIGHT_MORPH_SCALE = 4;
-const CAT_PUPIL_MORPH_SPEED = 12;
-const CAT_PUPIL_MORPH_RADIUS_FACTOR = 2.6;
-const CAT_PUPIL_MORPH_RADIUS_MIN = 28;
-const CAT_BLINK_RECT_WIDTH = SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + 6;
-const CAT_BLINK_BOTTOM_HEIGHT = (SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + 8) * 2;
 const MAX_LOOK = 12;
 const PUPIL_CLIP_MARGIN = 0.6;
 const MAX_SQUASH = 0.2;
@@ -639,88 +611,6 @@ const eyeAppearanceUpdateInterval = (scale: number) => {
 
 const lowDetailEnabled = (scale: number) => scale < clamp(DEFAULT_LOW_DETAIL_SCALE_THRESHOLD, 0, 1);
 
-const cross2d = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
-
-const triangleLayoutVertices = (extent: number) => {
-  const halfBase = extent * TRIANGLE_LAYOUT_HALF_BASE_FACTOR;
-  return [
-    { x: 0, y: -extent },
-    { x: halfBase, y: extent * 0.5 },
-    { x: -halfBase, y: extent * 0.5 },
-  ] as const;
-};
-
-const raySegmentDistance = (
-  dx: number,
-  dy: number,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-) => {
-  const edgeX = bx - ax;
-  const edgeY = by - ay;
-  const denominator = cross2d(dx, dy, edgeX, edgeY);
-  if (Math.abs(denominator) <= 0.000001) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  const distance = cross2d(ax, ay, edgeX, edgeY) / denominator;
-  const edgeT = cross2d(ax, ay, dx, dy) / denominator;
-  if (distance >= 0 && edgeT >= 0 && edgeT <= 1) {
-    return distance;
-  }
-
-  return Number.POSITIVE_INFINITY;
-};
-
-const shapeBoundaryDistance = (shape: LayoutShapeName, angle: number, extent: number) => {
-  const safeExtent = Math.max(extent, 0.001);
-  if (shape === "circle") {
-    return safeExtent;
-  }
-
-  const directionX = Math.cos(angle);
-  const directionY = Math.sin(angle);
-  if (shape === "square") {
-    return safeExtent / Math.max(Math.abs(directionX), Math.abs(directionY), 0.0001);
-  }
-
-  const vertices = triangleLayoutVertices(safeExtent);
-  let bestDistance = Number.POSITIVE_INFINITY;
-
-  for (let index = 0; index < vertices.length; index += 1) {
-    const start = vertices[index];
-    const end = vertices[(index + 1) % vertices.length];
-    const distance = raySegmentDistance(directionX, directionY, start.x, start.y, end.x, end.y);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-    }
-  }
-
-  return Number.isFinite(bestDistance) ? bestDistance : safeExtent;
-};
-
-const staggerDelay = (index: number, count: number, staggerSeconds: number, randomize: boolean) => {
-  const step = Math.max(staggerSeconds, 0);
-  if (randomize) {
-    return hash01(index * 1.61803398875) * step * Math.max(count - 1, 0);
-  }
-
-  return (index - 1) * step;
-};
-
-const resolveEyeType = (index: number, count: number, catMix: number): EyeType =>
-  hash01(index * 2.187 + count * 0.713) < clamp(catMix, 0, 1) ? "cat" : "round";
-
-const shadowEdgePoint = (sign: number) => {
-  const offset = (SHADOW_EDGE_OFFSET_DEGREES * Math.PI) / 180;
-  return {
-    x: Math.sin(offset) * sign,
-    y: Math.cos(offset),
-  };
-};
-
 const catPupilShape = (morph: number) => {
   const t = smoothstep(clamp(morph, 0, 1));
   const halfWidth = lerp(CAT_PUPIL_HALF_WIDTH, CAT_PUPIL_HALF_HEIGHT, t);
@@ -798,7 +688,7 @@ const drawCatBlinkBottomLid = (
   const handleLength = arcRadius * CIRCLE_KAPPA;
   const curveY = lerp(arcRadius, -arcRadius, t);
   const edgeHandleY = lerp(handleLength, -handleLength, t);
-  const fillBottomY = SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + CAT_BLINK_BOTTOM_HEIGHT;
+  const fillBottomY = arcRadius * 2 + 12;
 
   graphics
     .clear()
@@ -837,10 +727,7 @@ const drawCatBlinkSideLid = (
   const handleLength = arcRadius * CIRCLE_KAPPA;
   const curveX = side === "left" ? lerp(-arcRadius, 0, t) : lerp(arcRadius, 0, t);
   const edgeHandleX = side === "left" ? lerp(-handleLength, 0, t) : lerp(handleLength, 0, t);
-  const fillX =
-    side === "left"
-      ? -(SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + CAT_BLINK_RECT_WIDTH)
-      : SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + CAT_BLINK_RECT_WIDTH;
+  const fillX = side === "left" ? -arcRadius * 2 - 20 : arcRadius * 2 + 20;
 
   graphics
     .clear()
@@ -861,187 +748,6 @@ const drawCatBlinkSideLid = (
     });
   }
 };
-
-const createSharedContexts = (): SharedContexts => {
-  const scleraFillContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xfffbf2);
-  const scleraMaskContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
-  const scleraOutlineContext = new GraphicsContext()
-    .circle(0, 0, SCLERA_RADIUS)
-    .stroke({ color: 0x2c241d, width: 2, alignment: 1 });
-
-  const shadowLeft = shadowEdgePoint(-1);
-  const shadowRight = shadowEdgePoint(1);
-  const scleraShadowContext = new GraphicsContext()
-    .moveTo(shadowLeft.x * SCLERA_RADIUS, shadowLeft.y * SCLERA_RADIUS)
-    .bezierCurveTo(
-      shadowLeft.x * SHADOW_TOP_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_TOP_CONTROL_Y * SCLERA_RADIUS,
-      shadowRight.x * SHADOW_TOP_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_TOP_CONTROL_Y * SCLERA_RADIUS,
-      shadowRight.x * SCLERA_RADIUS,
-      shadowRight.y * SCLERA_RADIUS,
-    )
-    .bezierCurveTo(
-      shadowRight.x * SHADOW_SIDE_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_RIGHT_CONTROL_Y * SCLERA_RADIUS,
-      shadowRight.x * SHADOW_BOTTOM_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_BOTTOM_RIGHT_CONTROL_Y * SCLERA_RADIUS,
-      SHADOW_BOTTOM_X * SCLERA_RADIUS,
-      SHADOW_BOTTOM_Y * SCLERA_RADIUS,
-    )
-    .bezierCurveTo(
-      shadowLeft.x * SHADOW_BOTTOM_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_BOTTOM_LEFT_CONTROL_Y * SCLERA_RADIUS,
-      shadowLeft.x * SHADOW_SIDE_CONTROL_X_FACTOR * SCLERA_RADIUS,
-      SHADOW_RIGHT_CONTROL_Y * SCLERA_RADIUS,
-      shadowLeft.x * SCLERA_RADIUS,
-      shadowLeft.y * SCLERA_RADIUS,
-    )
-    .closePath()
-    .fill({ color: 0xffffff, alpha: 1 });
-
-  const roundGlobeHighlightContext = new GraphicsContext()
-    .moveTo(0.69, -7.64)
-    .bezierCurveTo(7.59, -7.64, 12.5, -2.21, 12.5, 0)
-    .bezierCurveTo(11.61, 2.78, 6.59, -1.55, -0.31, -1.55)
-    .bezierCurveTo(-7.21, -1.55, -12.13, 2.65, -12.5, 0)
-    .bezierCurveTo(-12.5, -2.21, -6.21, -7.64, 0.69, -7.64)
-    .closePath()
-    .fill({ color: 0xffffff, alpha: 1 });
-
-  const catGlobeHighlightContext = new GraphicsContext()
-    .moveTo(0.69, -7.64)
-    .bezierCurveTo(7.59, -7.64, 12.5, -2.21, 12.5, 0)
-    .bezierCurveTo(11.61, 2.78, 6.59, -1.55, -0.31, -1.55)
-    .bezierCurveTo(-7.21, -1.55, -12.13, 2.65, -12.5, 0)
-    .bezierCurveTo(-12.5, -2.21, -6.21, -7.64, 0.69, -7.64)
-    .closePath()
-    .fill({ color: 0xffffff, alpha: 1 });
-
-  const irisContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
-  const irisMaskContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
-  const roundPupilContext = new GraphicsContext().circle(0, 0, PUPIL_RADIUS).fill(0x17110d);
-  const catPupilContext = new GraphicsContext()
-    .moveTo(0, -PUPIL_RADIUS * 1.84)
-    .bezierCurveTo(
-      CAT_PUPIL_HALF_WIDTH,
-      -PUPIL_RADIUS * 0.92,
-      CAT_PUPIL_HALF_WIDTH,
-      PUPIL_RADIUS * 0.92,
-      0,
-      PUPIL_RADIUS * 1.84,
-    )
-    .bezierCurveTo(
-      -CAT_PUPIL_HALF_WIDTH,
-      PUPIL_RADIUS * 0.92,
-      -CAT_PUPIL_HALF_WIDTH,
-      -PUPIL_RADIUS * 0.92,
-      0,
-      -PUPIL_RADIUS * 1.84,
-    )
-    .closePath()
-    .fill(0x17110d);
-  const highlightContext = new GraphicsContext().circle(0, 0, HIGHLIGHT_RADIUS).fill(0xfffbf2);
-
-  return {
-    scleraFillContext,
-    scleraMaskContext,
-    scleraOutlineContext,
-    scleraShadowContext,
-    roundGlobeHighlightContext,
-    catGlobeHighlightContext,
-    irisContext,
-    irisMaskContext,
-    roundPupilContext,
-    catPupilContext,
-    highlightContext,
-  };
-};
-
-const generateTextureFromContext = (
-  renderer: Renderer,
-  context: GraphicsContext,
-  options?: { antialias?: boolean; padding?: number },
-) => {
-  const target = new Graphics(context);
-  const padding = options?.padding ?? GLOBE_TEXTURE_PADDING;
-  const textureFrame = new Rectangle(
-    -(SCLERA_RADIUS + padding),
-    -(SCLERA_RADIUS + padding),
-    (SCLERA_RADIUS + padding) * 2,
-    (SCLERA_RADIUS + padding) * 2,
-  );
-  const texture = renderer.generateTexture({
-    target,
-    frame: textureFrame,
-    resolution: Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION),
-    antialias: options?.antialias ?? true,
-    clearColor: [0, 0, 0, 0],
-    textureSourceOptions: {
-      scaleMode: "linear",
-      autoGenerateMipmaps: true,
-    },
-  });
-
-  target.destroy();
-
-  return texture;
-};
-
-const createDropShadowTexture = (renderer: Renderer, blur: number) => {
-  const blurStrength = Math.max(blur, 0);
-  const padding = Math.max(DROP_SHADOW_TEXTURE_PADDING, blurStrength * 3 + 12);
-  const target = new Container();
-  const source = new Graphics().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
-
-  if (blurStrength > 0.01) {
-    source.filters = [
-      new BlurFilter({
-        strength: blurStrength,
-        quality: blurStrength > 8 ? 4 : 3,
-        kernelSize: blurStrength > 10 ? 9 : 7,
-      }),
-    ];
-  }
-
-  target.addChild(source);
-  const texture = renderer.generateTexture({
-    target,
-    frame: new Rectangle(
-      -(SCLERA_RADIUS + padding),
-      -(SCLERA_RADIUS + padding),
-      (SCLERA_RADIUS + padding) * 2,
-      (SCLERA_RADIUS + padding) * 2,
-    ),
-    resolution: Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION),
-    antialias: true,
-    clearColor: [0, 0, 0, 0],
-    textureSourceOptions: {
-      scaleMode: "linear",
-      autoGenerateMipmaps: true,
-    },
-  });
-
-  target.destroy({ children: true });
-
-  return texture;
-};
-
-const createSharedTextures = (
-  renderer: Renderer,
-  contexts: SharedContexts,
-  dropShadowBlur: number,
-): SharedTextures => ({
-  dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur),
-  scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext),
-  scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext),
-  scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext),
-  roundGlobeHighlightTexture: generateTextureFromContext(
-    renderer,
-    contexts.roundGlobeHighlightContext,
-  ),
-  catGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.catGlobeHighlightContext),
-});
 
 const createEyeInstance = (
   contexts: SharedContexts,
@@ -1148,10 +854,10 @@ const createEyeInstance = (
     dropShadow,
     eyeFill,
     irisClipMask,
+    blinkClipMask,
     irisGroup,
     eyeShadow,
     globeHighlight,
-    blinkClipMask,
     blinkGroup,
     eyeOutline,
   );
@@ -1233,93 +939,6 @@ const createEyeInstance = (
     focusCycleOffset: hash01(index * 17.413 + count * 2.31),
     focusPulseScale: 1,
   } satisfies EyeInstance;
-};
-
-const resolveRadiusMix = (value: number) =>
-  value < 0.34
-    ? 0.14 + value * 0.55
-    : value < 0.72
-      ? 0.48 + (value - 0.34) * 0.35
-      : 0.78 + (value - 0.72) * 0.78;
-
-const resolvePackedRadii = (count: number, minRadius: number, maxRadius: number) => {
-  const safeMinRadius = Math.max(Math.min(minRadius, maxRadius), 0);
-  const safeMaxRadius = Math.max(Math.max(minRadius, maxRadius), 0);
-
-  return Array.from({ length: count }, (_, index) => {
-    const tierMix = count <= 1 ? 1 : index / Math.max(count - 1, 1);
-    const radiusT = resolveRadiusMix(tierMix);
-    return safeMinRadius + (safeMaxRadius - safeMinRadius) * clamp(radiusT, 0, 1);
-  });
-};
-
-const packEyePositions = (
-  radii: number[],
-  clusterRadius: number,
-  attempts: number,
-  spiralStepDegrees: number,
-  radialExponent: number,
-  eyeSpiralOffset: number,
-  shape: LayoutShapeName,
-) => {
-  const placed: Array<{ x: number; y: number; r: number }> = [];
-  const safeClusterRadius = Math.max(clusterRadius, 0);
-  const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 512));
-  const spiralStep = (spiralStepDegrees * Math.PI) / 180;
-  const safeRadialExponent = Math.max(radialExponent, 0.01);
-
-  for (let i = 0; i < radii.length; i += 1) {
-    const radius = radii[i];
-    let bestX = 0;
-    let bestY = 0;
-    let bestClearance = Number.NEGATIVE_INFINITY;
-    let placedWithoutOverlap = false;
-
-    for (let attempt = 0; attempt <= maxAttempts; attempt += 1) {
-      const t = attempt / maxAttempts;
-      const angle = (i + 1) * eyeSpiralOffset + attempt * spiralStep;
-      const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
-      const maxDistance = Math.max(0, boundaryDistance - radius);
-      const distance = maxDistance * t ** safeRadialExponent;
-      const candidateX = Math.cos(angle) * distance;
-      const candidateY = Math.sin(angle) * distance;
-
-      let clearance = maxDistance - distance;
-      let overlaps = false;
-
-      for (const placedCircle of placed) {
-        const dx = candidateX - placedCircle.x;
-        const dy = candidateY - placedCircle.y;
-        const gap = Math.hypot(dx, dy) - (radius + placedCircle.r);
-
-        if (gap < 0) {
-          overlaps = true;
-        }
-
-        if (gap < clearance) {
-          clearance = gap;
-        }
-      }
-
-      if (!overlaps) {
-        placed.push({ x: candidateX, y: candidateY, r: radius });
-        placedWithoutOverlap = true;
-        break;
-      }
-
-      if (clearance > bestClearance) {
-        bestClearance = clearance;
-        bestX = candidateX;
-        bestY = candidateY;
-      }
-    }
-
-    if (!placedWithoutOverlap) {
-      placed.push({ x: bestX, y: bestY, r: radius });
-    }
-  }
-
-  return placed;
 };
 
 const startLayoutTransition = (
@@ -1774,7 +1393,7 @@ const applyPupilAppearance = (eye: EyeInstance, runtime: EyeFieldRuntime) => {
   const maxPupilTravel = Math.max(
     effectiveIrisRadius -
       (eye.type === "cat"
-        ? (catShape?.halfWidth ?? variant.pupilClipRadius)
+        ? (catShape?.halfWidth ?? CAT_PUPIL_HALF_WIDTH)
         : variant.pupilClipRadius * eye.focusPulseScale) -
       PUPIL_CLIP_MARGIN,
     0,
@@ -2160,7 +1779,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
     }
 
     if (typeof minEyeSize === "number") {
-      runtime.minEyeSize = Math.max(8, minEyeSize);
+      runtime.minEyeSize = Math.max(1, minEyeSize);
       shouldRebuild = true;
     }
 
@@ -2968,23 +2587,8 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       }
 
       root.destroy({ children: true });
-      textures.dropShadowTexture.destroy(true);
-      textures.scleraFillTexture.destroy(true);
-      textures.scleraOutlineTexture.destroy(true);
-      textures.scleraShadowTexture.destroy(true);
-      textures.roundGlobeHighlightTexture.destroy(true);
-      textures.catGlobeHighlightTexture.destroy(true);
-      contexts.scleraFillContext.destroy();
-      contexts.scleraMaskContext.destroy();
-      contexts.scleraOutlineContext.destroy();
-      contexts.scleraShadowContext.destroy();
-      contexts.roundGlobeHighlightContext.destroy();
-      contexts.catGlobeHighlightContext.destroy();
-      contexts.irisContext.destroy();
-      contexts.irisMaskContext.destroy();
-      contexts.roundPupilContext.destroy();
-      contexts.catPupilContext.destroy();
-      contexts.highlightContext.destroy();
+      destroySharedTextures(textures);
+      destroySharedContexts(contexts);
     },
   };
 };

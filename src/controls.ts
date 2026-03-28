@@ -1,0 +1,153 @@
+import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./entities/eye-field";
+
+export interface ControlDefinition {
+  id: string;
+  label: string;
+  type: "number" | "color" | "select";
+  min?: number;
+  max?: number;
+  step?: number;
+  fractionDigits?: number;
+  default: number | string;
+  options?: Array<{ label: string; value: string }>;
+  section: string;
+}
+
+export const EASE_OPTIONS: Array<{ label: string; value: FocusEaseName }> = [
+  { label: "Out Cubic", value: "out-cubic" },
+  { label: "Out Sine", value: "out-sine" },
+  { label: "In Out Sine", value: "in-out-sine" },
+  { label: "Linear", value: "linear" },
+];
+
+export const CLICK_REPULSE_EASE_OPTIONS: Array<{ label: string; value: ClickRepulseEaseName }> = [
+  { label: "Smoothstep", value: "smoothstep" },
+  { label: "Linear", value: "linear" },
+  { label: "In Sine", value: "in-sine" },
+  { label: "Out Sine", value: "out-sine" },
+  { label: "In Out Sine", value: "in-out-sine" },
+  { label: "In Quad", value: "in-quad" },
+  { label: "Out Quad", value: "out-quad" },
+  { label: "In Out Quad", value: "in-out-quad" },
+  { label: "In Cubic", value: "in-cubic" },
+  { label: "Out Cubic", value: "out-cubic" },
+  { label: "In Out Cubic", value: "in-out-cubic" },
+  { label: "In Back", value: "in-back" },
+  { label: "Out Back", value: "out-back" },
+  { label: "In Out Back", value: "in-out-back" },
+  { label: "Out Elastic", value: "out-elastic" },
+];
+
+export const LAYOUT_SHAPE_OPTIONS: Array<{ label: string; value: LayoutShapeName }> = [
+  { label: "Circle", value: "circle" },
+  { label: "Square", value: "square" },
+  { label: "Triangle", value: "triangle" },
+];
+
+export const CONTROL_DEFINITIONS: ControlDefinition[] = [
+  { id: "instance-count", label: "Base < 640", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "instance-count-sm", label: "sm >= 640", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "instance-count-md", label: "md >= 768", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "instance-count-lg", label: "lg >= 1024", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "instance-count-xl", label: "xl >= 1280", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "instance-count-2xl", label: "2xl >= 1536", type: "number", min: 24, max: 800, step: 8, default: 400, section: "Field" },
+  { id: "layout-shape", label: "Shape", type: "select", default: "circle", options: LAYOUT_SHAPE_OPTIONS, section: "Field" },
+  { id: "layout-transition-duration", label: "Shape Move", type: "number", min: 0, max: 2.5, step: 0.05, fractionDigits: 2, default: 0.8, section: "Field" },
+  { id: "layout-transition-ease", label: "Shape Ease", type: "select", default: "out-cubic", options: EASE_OPTIONS, section: "Field" },
+  { id: "scroll-fall-exit-top-factor", label: "Fall Start", type: "number", min: 0, max: 0.5, step: 0.01, fractionDigits: 2, default: 0.18, section: "Field" },
+  { id: "scroll-fall-enter-top-factor", label: "Return Start", type: "number", min: 0, max: 0.5, step: 0.01, fractionDigits: 2, default: 0.04, section: "Field" },
+  { id: "min-eye-size", label: "Base Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size", label: "Base Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "min-eye-size-sm", label: "sm Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size-sm", label: "sm Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "min-eye-size-md", label: "md Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size-md", label: "md Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "min-eye-size-lg", label: "lg Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size-lg", label: "lg Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "min-eye-size-xl", label: "xl Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size-xl", label: "xl Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "min-eye-size-2xl", label: "2xl Min", type: "number", min: 1, max: 90, step: 1, default: 10, section: "Field" },
+  { id: "max-eye-size-2xl", label: "2xl Max", type: "number", min: 20, max: 140, step: 1, default: 90, section: "Field" },
+  { id: "cat-mix", label: "Cat Mix", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.35, section: "Field" },
+  { id: "repulsion-radius", label: "Repulsion", type: "number", min: 0, max: 220, step: 1, default: 90, section: "Field" },
+  { id: "click-repulse-radius", label: "Click Radius", type: "number", min: 0, max: 420, step: 1, default: 400, section: "Field" },
+  { id: "click-repulse-strength", label: "Click Strength", type: "number", min: 0, max: 220, step: 1, default: 40, section: "Field" },
+  { id: "click-repulse-ease", label: "Click Ease", type: "select", default: "out-elastic", options: CLICK_REPULSE_EASE_OPTIONS, section: "Field" },
+  { id: "stagger-seconds", label: "Stagger", type: "number", min: 0, max: 0.1, step: 0.001, fractionDigits: 3, default: 0.002, section: "Field" },
+  { id: "shadow-opacity", label: "Inner Shadow", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.4, section: "Appearance" },
+  { id: "round-inner-shadow-color", label: "Round Shadow", type: "color", default: "#a8abad", section: "Appearance" },
+  { id: "cat-inner-shadow-color", label: "Cat Shadow", type: "color", default: "#3d8a0a", section: "Appearance" },
+  { id: "drop-shadow-color", label: "Drop Color", type: "color", default: "#4a4545", section: "Appearance" },
+  { id: "drop-shadow-opacity", label: "Drop Opacity", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.4, section: "Appearance" },
+  { id: "drop-shadow-blur", label: "Drop Blur", type: "number", min: 0, max: 20, step: 0.1, fractionDigits: 1, default: 1.2, section: "Appearance" },
+  { id: "drop-shadow-spread", label: "Drop Spread", type: "number", min: 0, max: 10, step: 0.1, fractionDigits: 1, default: 0.7, section: "Appearance" },
+  { id: "iris-color", label: "Round Iris", type: "color", default: "#ab53ee", section: "Appearance" },
+  { id: "cat-eye-color", label: "Cat Eye", type: "color", default: "#66e01a", section: "Appearance" },
+  { id: "background-color", label: "Canvas BG", type: "color", default: "#ffffff", section: "Appearance" },
+  { id: "round-translate-strength", label: "Round Move", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.9, section: "Motion" },
+  { id: "cat-translate-strength", label: "Cat Move", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.75, section: "Motion" },
+  { id: "cat-morph-radius", label: "Cat Morph", type: "number", min: 0, max: 260, step: 1, default: 120, section: "Motion" },
+  { id: "round-highlight-scale", label: "Scale", type: "number", min: 0, max: 2, step: 0.01, fractionDigits: 2, default: 0.45, section: "Round Light" },
+  { id: "round-highlight-offset-x", label: "Offset X", type: "number", min: -100, max: 100, step: 0.5, fractionDigits: 1, default: 10, section: "Round Light" },
+  { id: "round-highlight-offset-y", label: "Offset Y", type: "number", min: -100, max: 100, step: 0.5, fractionDigits: 1, default: -12.5, section: "Round Light" },
+  { id: "round-highlight-rotation", label: "Rotation", type: "number", min: -180, max: 180, step: 1, fractionDigits: 2, default: 41.25, section: "Round Light" },
+  { id: "round-highlight-opacity", label: "Opacity", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.7, section: "Round Light" },
+  { id: "cat-highlight-scale", label: "Scale", type: "number", min: 0, max: 2, step: 0.01, fractionDigits: 2, default: 0.47, section: "Cat Light" },
+  { id: "cat-highlight-offset-x", label: "Offset X", type: "number", min: -1, max: 1, step: 0.01, fractionDigits: 2, default: 0.37, section: "Cat Light" },
+  { id: "cat-highlight-offset-y", label: "Offset Y", type: "number", min: -1, max: 1, step: 0.01, fractionDigits: 2, default: -0.62, section: "Cat Light" },
+  { id: "cat-highlight-rotation", label: "Rotation", type: "number", min: -180, max: 180, step: 1, fractionDigits: 2, default: 34, section: "Cat Light" },
+  { id: "cat-highlight-opacity", label: "Opacity", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.7, section: "Cat Light" },
+  { id: "cat-pupil-highlight-morph-scale", label: "Dot Morph", type: "number", min: 1, max: 8, step: 0.01, fractionDigits: 2, default: 4, section: "Cat Light" },
+  { id: "cat-blink-side-color", label: "Side Fill", type: "color", default: "#000000", section: "Cat Blink" },
+  { id: "cat-blink-side-opacity", label: "Side Opacity", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 1, section: "Cat Blink" },
+  { id: "cat-blink-side-stroke-color", label: "Side Stroke", type: "color", default: "#66dc1a", section: "Cat Blink" },
+  { id: "cat-blink-side-stroke-width", label: "Side Stroke W", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 4, section: "Cat Blink" },
+  { id: "cat-blink-side-stroke-opacity", label: "Side Stroke O", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.6, section: "Cat Blink" },
+  { id: "cat-blink-bottom-color", label: "Full Fill", type: "color", default: "#111113", section: "Cat Blink" },
+  { id: "cat-blink-bottom-opacity", label: "Full Opacity", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.66, section: "Cat Blink" },
+  { id: "cat-blink-bottom-stroke-color", label: "Full Stroke", type: "color", default: "#66dc1a", section: "Cat Blink" },
+  { id: "cat-blink-bottom-stroke-width", label: "Full Stroke W", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 2, section: "Cat Blink" },
+  { id: "cat-blink-bottom-stroke-opacity", label: "Full Stroke O", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.26, section: "Cat Blink" },
+  { id: "cat-blink-in-duration", label: "In", type: "number", min: 0.01, max: 2, step: 0.01, fractionDigits: 2, default: 0.25, section: "Cat Blink" },
+  { id: "cat-blink-hold-duration", label: "Hold", type: "number", min: 0, max: 2, step: 0.01, fractionDigits: 2, default: 0.06, section: "Cat Blink" },
+  { id: "cat-blink-out-duration", label: "Out", type: "number", min: 0.01, max: 2, step: 0.01, fractionDigits: 2, default: 0.25, section: "Cat Blink" },
+  { id: "cat-blink-side-delay", label: "Side Delay", type: "number", min: 0, max: 1, step: 0.01, fractionDigits: 2, default: 0.1, section: "Cat Blink" },
+  { id: "cat-blink-min-delay", label: "Delay Min", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 5, section: "Cat Blink" },
+  { id: "cat-blink-max-delay", label: "Delay Max", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 8, section: "Cat Blink" },
+  { id: "cat-blink-ease-in", label: "Ease In", type: "select", default: "out-cubic", options: EASE_OPTIONS, section: "Cat Blink" },
+  { id: "cat-blink-ease-out", label: "Ease Out", type: "select", default: "in-out-sine", options: EASE_OPTIONS, section: "Cat Blink" },
+  { id: "focus-scale", label: "Scale", type: "number", min: 1, max: 2, step: 0.01, fractionDigits: 2, default: 1.35, section: "Focus" },
+  { id: "focus-up-duration", label: "Up", type: "number", min: 0.01, max: 2, step: 0.01, fractionDigits: 2, default: 0.24, section: "Focus" },
+  { id: "focus-down-duration", label: "Down", type: "number", min: 0.01, max: 2, step: 0.01, fractionDigits: 2, default: 0.38, section: "Focus" },
+  { id: "focus-min-delay", label: "Delay Min", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 1.4, section: "Focus" },
+  { id: "focus-max-delay", label: "Delay Max", type: "number", min: 0, max: 8, step: 0.1, fractionDigits: 1, default: 3.8, section: "Focus" },
+  { id: "focus-ease-up", label: "Ease Up", type: "select", default: "out-cubic", options: EASE_OPTIONS, section: "Focus" },
+  { id: "focus-ease-down", label: "Ease Down", type: "select", default: "in-out-sine", options: EASE_OPTIONS, section: "Focus" },
+];
+
+export const SECTIONS = ["Field", "Appearance", "Motion", "Round Light", "Cat Light", "Cat Blink", "Focus"] as const;
+export type SectionName = (typeof SECTIONS)[number];
+
+export const CONTROL_ROW_CLASS =
+  "grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20";
+export const LABEL_CLASS = "text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55";
+export const NUMBER_INPUT_CLASS =
+  "h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-right text-sm text-black outline-none transition focus:border-black";
+export const COLOR_INPUT_CLASS =
+  "h-[34px] w-full cursor-pointer rounded-lg border border-black/15 bg-white p-1 outline-none transition focus:border-black";
+export const SELECT_INPUT_CLASS =
+  "h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-sm text-black outline-none transition focus:border-black";
+export const SECTION_LABEL_CLASS =
+  "px-1 text-[10px] font-medium uppercase tracking-[0.34em] text-black/40";
+
+export const sanitizeHexColor = (value: string | undefined, fallback: string) =>
+  typeof value === "string" && /^#[0-9a-f]{6}$/iu.test(value) ? value : fallback;
+
+export const sanitizeFocusEase = (value: string | undefined, fallback: FocusEaseName): FocusEaseName =>
+  EASE_OPTIONS.some((option) => option.value === value) ? (value as FocusEaseName) : fallback;
+
+export const sanitizeLayoutShape = (value: string | undefined, fallback: LayoutShapeName): LayoutShapeName =>
+  LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value) ? (value as LayoutShapeName) : fallback;
+
+export const sanitizeClickRepulseEase = (value: string | undefined, fallback: ClickRepulseEaseName): ClickRepulseEaseName =>
+  CLICK_REPULSE_EASE_OPTIONS.some((option) => option.value === value) ? (value as ClickRepulseEaseName) : fallback;
