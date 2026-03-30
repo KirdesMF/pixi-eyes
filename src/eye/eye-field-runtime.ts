@@ -1,5 +1,3 @@
-// Eye field runtime state creation
-
 import type { EyeFieldRuntime } from "./eye-state";
 import {
   DEFAULT_PACK_ATTEMPTS,

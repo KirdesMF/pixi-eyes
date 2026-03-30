@@ -5,12 +5,12 @@ import type { EyeFieldConfig } from "./eye-types";
 import type { EyeFieldRuntime } from "./eye-state";
 import { applyStaticEyeSettings } from "./eye-controller";
 
-interface ConfigUpdateResult {
+type ConfigUpdateResult = {
   shouldRebuild: boolean;
   shouldRelayout: boolean;
   shouldRefreshDropShadowTexture: boolean;
   shouldRefreshAppearance: boolean;
-}
+};
 
 export function updateConfig(runtime: EyeFieldRuntime, config: EyeFieldConfig): ConfigUpdateResult {
   const result: ConfigUpdateResult = {

@@ -174,12 +174,10 @@ export type EyeFieldRuntime = {
   focusEaseDown: FocusEaseName;
   eyes: EyeInstance[];
   waves: ClickWave[];
-}
+};
 
-interface ClickWave {
+export type ClickWave = {
   x: number;
   y: number;
   elapsed: number;
-}
-
-export type { ClickWave };
+};

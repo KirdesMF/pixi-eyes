@@ -1,5 +1,3 @@
-// Eye factory - creates eye instances
-
 import { Container, Graphics, Sprite } from "pixi.js";
 
 import type { EyeType } from "./eye-types";

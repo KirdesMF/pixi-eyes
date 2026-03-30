@@ -1,11 +1,6 @@
-// Eye domain types
-
 export type EyeType = "round" | "cat";
-
 export type LayoutShapeName = "circle" | "square" | "triangle";
-
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
-
 export type ClickRepulseEaseName =
   | "smoothstep"
   | "linear"
@@ -86,7 +81,7 @@ export type EyeFieldConfig = {
   focusMaxDelay?: number;
   focusEaseUp?: FocusEaseName;
   focusEaseDown?: FocusEaseName;
-}
+};
 
 /**
  * Metrics returned by eye field update.

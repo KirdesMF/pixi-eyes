@@ -190,11 +190,11 @@ export function createSharedContexts(): SharedContexts {
   };
 }
 
-const generateTextureFromContext = (
+function generateTextureFromContext(
   renderer: Renderer,
   context: GraphicsContext,
   options?: { antialias?: boolean; padding?: number },
-) => {
+) {
   const target = new Graphics(context);
   const padding = options?.padding ?? GLOBE_TEXTURE_PADDING;
   const textureFrame = new Rectangle(
@@ -218,7 +218,7 @@ const generateTextureFromContext = (
   target.destroy();
 
   return texture;
-};
+}
 
 /**
  * Creates a drop shadow texture with blur.

@@ -161,9 +161,7 @@ export function updateCatBlink(
   const blinkTime =
     (runtime.elapsed + eye.blinkCycleOffset * blinkCycle) / Math.max(blinkCycle, 0.001);
   const blinkPhase = (blinkTime - Math.floor(blinkTime)) * blinkCycle;
-  let nextCatBlink = 0;
-  let nextCatBlinkBottom = 0;
-  let nextCatBlinkSide = 0;
+
   const blinkCloseEnd = blinkIdleDelay + runtime.catBlinkInDuration;
   const blinkHoldEnd = blinkCloseEnd + blinkHoldDuration;
   const sideDelayIn = Math.min(
@@ -175,39 +173,100 @@ export function updateCatBlink(
     Math.max(runtime.catBlinkOutDuration - 0.01, 0),
   );
 
+  const blinkState = getBlinkState(
+    blinkPhase,
+    blinkIdleDelay,
+    blinkCloseEnd,
+    blinkHoldEnd,
+    runtime,
+    sideDelayIn,
+    sideDelayOut,
+  );
+
+  eye.catBlink = blinkState.catBlink;
+  eye.catBlinkBottom = blinkState.catBlinkBottom;
+  eye.catBlinkSide = blinkState.catBlinkSide;
+}
+
+type BlinkState = {
+  catBlink: number;
+  catBlinkBottom: number;
+  catBlinkSide: number;
+};
+
+function getBlinkState(
+  blinkPhase: number,
+  blinkIdleDelay: number,
+  blinkCloseEnd: number,
+  blinkHoldEnd: number,
+  runtime: EyeFieldRuntime,
+  sideDelayIn: number,
+  sideDelayOut: number,
+): BlinkState {
+  // Closing phase
   if (blinkPhase > blinkIdleDelay && blinkPhase <= blinkCloseEnd) {
-    const t = (blinkPhase - blinkIdleDelay) / Math.max(runtime.catBlinkInDuration, 0.01);
-    nextCatBlinkBottom = applyFocusEase(runtime.catBlinkEaseIn, t);
-    nextCatBlinkSide =
-      blinkPhase <= blinkIdleDelay + sideDelayIn
-        ? 0
-        : applyFocusEase(
-            runtime.catBlinkEaseIn,
-            remap01(blinkPhase - blinkIdleDelay, sideDelayIn, runtime.catBlinkInDuration),
-          );
-  } else if (blinkPhase > blinkCloseEnd && blinkPhase <= blinkHoldEnd) {
-    nextCatBlinkBottom = 1;
-    nextCatBlinkSide = 1;
-  } else if (
-    blinkPhase > blinkHoldEnd &&
-    blinkPhase <= blinkHoldEnd + runtime.catBlinkOutDuration
-  ) {
-    const t = (blinkPhase - blinkHoldEnd) / Math.max(runtime.catBlinkOutDuration, 0.01);
-    nextCatBlinkSide = 1 - applyFocusEase(runtime.catBlinkEaseOut, t);
-    nextCatBlinkBottom =
-      blinkPhase <= blinkHoldEnd + sideDelayOut
-        ? 1
-        : 1 -
-          applyFocusEase(
-            runtime.catBlinkEaseOut,
-            remap01(blinkPhase - blinkHoldEnd, sideDelayOut, runtime.catBlinkOutDuration),
-          );
+    return getClosingState(blinkPhase, blinkIdleDelay, runtime, sideDelayIn);
   }
 
-  nextCatBlink = Math.max(nextCatBlinkBottom, nextCatBlinkSide);
-  eye.catBlink = nextCatBlink;
-  eye.catBlinkBottom = nextCatBlinkBottom;
-  eye.catBlinkSide = nextCatBlinkSide;
+  // Fully closed (hold) phase
+  if (blinkPhase > blinkCloseEnd && blinkPhase <= blinkHoldEnd) {
+    return { catBlink: 1, catBlinkBottom: 1, catBlinkSide: 1 };
+  }
+
+  // Opening phase
+  if (blinkPhase > blinkHoldEnd && blinkPhase <= blinkHoldEnd + runtime.catBlinkOutDuration) {
+    return getOpeningState(blinkPhase, blinkHoldEnd, runtime, sideDelayOut);
+  }
+
+  // Idle phase (eyes open)
+  return { catBlink: 0, catBlinkBottom: 0, catBlinkSide: 0 };
+}
+
+function getClosingState(
+  blinkPhase: number,
+  blinkIdleDelay: number,
+  runtime: EyeFieldRuntime,
+  sideDelayIn: number,
+): BlinkState {
+  const t = (blinkPhase - blinkIdleDelay) / Math.max(runtime.catBlinkInDuration, 0.01);
+  const catBlinkBottom = applyFocusEase(runtime.catBlinkEaseIn, t);
+  const catBlinkSide =
+    blinkPhase <= blinkIdleDelay + sideDelayIn
+      ? 0
+      : applyFocusEase(
+          runtime.catBlinkEaseIn,
+          remap01(blinkPhase - blinkIdleDelay, sideDelayIn, runtime.catBlinkInDuration),
+        );
+
+  return {
+    catBlink: catBlinkBottom,
+    catBlinkBottom,
+    catBlinkSide,
+  };
+}
+
+function getOpeningState(
+  blinkPhase: number,
+  blinkHoldEnd: number,
+  runtime: EyeFieldRuntime,
+  sideDelayOut: number,
+): BlinkState {
+  const t = (blinkPhase - blinkHoldEnd) / Math.max(runtime.catBlinkOutDuration, 0.01);
+  const catBlinkSide = 1 - applyFocusEase(runtime.catBlinkEaseOut, t);
+  const catBlinkBottom =
+    blinkPhase <= blinkHoldEnd + sideDelayOut
+      ? 1
+      : 1 -
+        applyFocusEase(
+          runtime.catBlinkEaseOut,
+          remap01(blinkPhase - blinkHoldEnd, sideDelayOut, runtime.catBlinkOutDuration),
+        );
+
+  return {
+    catBlink: Math.max(catBlinkBottom, catBlinkSide),
+    catBlinkBottom,
+    catBlinkSide,
+  };
 }
 
 function smoothTowards(current: number, target: number, speed: number, dt: number): number {

@@ -23,11 +23,11 @@ import { smoothTowards } from "../shared/math";
 import { updateConfig, applyAppearanceRefresh } from "./eye-field-config";
 import { createRuntime } from "./eye-field-runtime";
 
-interface EyeFieldOptions {
+type EyeFieldOptions = {
   count: number;
   renderer: Renderer;
   worldBounds: Rectangle;
-}
+};
 
 export type EyeField = {
   root: Container;
@@ -39,7 +39,7 @@ export type EyeField = {
   pointerDown: (x: number, y: number) => void;
   update: (dtSeconds: number) => EyeFieldMetrics;
   destroy: () => void;
-}
+};
 
 export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions): EyeField {
   const root = new Container();
