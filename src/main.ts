@@ -1,119 +1,26 @@
-import { createHeroScene } from "./scenes/hero-scene";
-import {
-  CONTROL_DEFINITIONS,
-  SECTIONS,
-  CONTROL_ROW_CLASS,
-  LABEL_CLASS,
-  NUMBER_INPUT_CLASS,
-  COLOR_INPUT_CLASS,
-  SELECT_INPUT_CLASS,
-  SECTION_LABEL_CLASS,
-  sanitizeHexColor,
-  sanitizeFocusEase,
-  sanitizeLayoutShape,
-  sanitizeClickRepulseEase,
-} from "./controls";
+// Main entry point - orchestrates app initialization
 
-const appNode = document.querySelector<HTMLDivElement>("#app");
-const STORAGE_KEY = "pixi-eyes-settings";
+import { createControlBindings, renderAllSections } from "./debug/create-controls";
+import { createDefaultSettings, loadSettings, readStoredSettings, writeStoredSettings } from "./debug/debug-state";
+import { createHeroScene } from "./scenes/hero-scene";
+import { CONTROL_DEFINITIONS } from "./controls";
+
 const ACTION_BUTTON_CLASS =
   "inline-flex h-[36px] items-center justify-center rounded-xl border border-black bg-black px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-black/85";
 
-const DEFAULT_SETTINGS: Record<string, number | string> = {};
-for (const control of CONTROL_DEFINITIONS) {
-  DEFAULT_SETTINGS[control.id] = control.default;
-}
-
-const hexToNumber = (value: string) => Number.parseInt(value.slice(1), 16);
-
-const clampInput = (input: HTMLInputElement, min: number, max: number, fractionDigits?: number) => {
-  const rawValue = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : min;
-  const clamped = Math.min(Math.max(rawValue, min), max);
-  input.value =
-    typeof fractionDigits === "number" ? clamped.toFixed(fractionDigits) : String(clamped);
-  return clamped;
-};
-
-const readStoredSettings = (): Record<string, number | string> => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-};
-
-const writeStoredSettings = (settings: Record<string, number | string>) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // Ignore storage errors
-  }
-};
-
-const renderControl = (
-  control: (typeof CONTROL_DEFINITIONS)[number],
-  value: number | string,
-): string => {
-  const { id, label, type, min, max, step, default: def, options } = control;
-
-  if (type === "number") {
-    const displayValue =
-      typeof value === "number" && typeof step === "number"
-        ? Number.isFinite(value)
-          ? step < 1
-            ? value.toFixed(2)
-            : String(value)
-          : String(def)
-        : String(def);
-    return `
-      <label class="${CONTROL_ROW_CLASS}">
-        <span class="${LABEL_CLASS}">${label}</span>
-        <input id="${id}" class="${NUMBER_INPUT_CLASS}" type="number" min="${min}" max="${max}" step="${step}" value="${displayValue}" />
-      </label>
-    `;
-  }
-
-  if (type === "color") {
-    return `
-      <label class="${CONTROL_ROW_CLASS}">
-        <span class="${LABEL_CLASS}">${label}</span>
-        <input id="${id}" class="${COLOR_INPUT_CLASS}" type="color" value="${value || def}" />
-      </label>
-    `;
-  }
-
-  if (type === "select" && options) {
-    const opts = options
-      .map(
-        (o) =>
-          `<option value="${o.value}"${o.value === value ? " selected" : ""}>${o.label}</option>`,
-      )
-      .join("");
-    return `
-      <label class="${CONTROL_ROW_CLASS}">
-        <span class="${LABEL_CLASS}">${label}</span>
-        <select id="${id}" class="${SELECT_INPUT_CLASS}">${opts}</select>
-      </label>
-    `;
-  }
-
-  return "";
-};
-
-const renderSection = (section: string, stored: Record<string, number | string>): string => {
-  const controls = CONTROL_DEFINITIONS.filter((c) => c.section === section);
-  const html = controls.map((c) => renderControl(c, stored[c.id] ?? c.default)).join("");
-  return `<div class="grid gap-2"><p class="${SECTION_LABEL_CLASS}">${section}</p>${html}</div>`;
-};
-
+// Get mount nodes
+const appNode = document.querySelector<HTMLDivElement>("#app");
 if (!appNode) throw new Error("Missing #app mount node");
 
 document.body.className = "bg-black text-white antialiased";
 
-const storedSettings = { ...DEFAULT_SETTINGS, ...readStoredSettings() };
+// Load settings
+const defaultSettings = createDefaultSettings(CONTROL_DEFINITIONS);
+const storedSettings = readStoredSettings();
+let settingsState = loadSettings(defaultSettings, storedSettings);
 
-const sectionsHtml = SECTIONS.map((section) => renderSection(section, storedSettings)).join("");
+// Render UI
+const sectionsHtml = renderAllSections(settingsState);
 
 appNode.innerHTML = `
   <main class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_24%),linear-gradient(180deg,#171717_0%,#000000_100%)] px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
@@ -156,10 +63,9 @@ appNode.innerHTML = `
   </main>
 `;
 
-const getInput = <T extends Element>(id: string): T | null => document.querySelector<T>(`#${id}`);
-
+// Get DOM references
 const getRequiredInput = <T extends Element>(id: string): T => {
-  const el = getInput<T>(id);
+  const el = document.querySelector<T>(`#${id}`);
   if (!el) throw new Error(`Missing element: ${id}`);
   return el;
 };
@@ -171,8 +77,7 @@ const downloadJsonButton = getRequiredInput<HTMLButtonElement>("download-json-bu
 const jsonStatus = getRequiredInput<HTMLElement>("json-status");
 const mountNode = getRequiredInput<HTMLDivElement>("pixi-stage");
 
-let settingsState = { ...DEFAULT_SETTINGS, ...storedSettings };
-
+// Settings helpers
 const updateStoredSettings = (patch: Record<string, number | string>) => {
   settingsState = { ...settingsState, ...patch };
   writeStoredSettings(settingsState);
@@ -215,6 +120,9 @@ const downloadSettingsJson = () => {
   setJsonStatus("Downloaded JSON");
 };
 
+// Convert settings to scene config
+const hexToNumber = (value: string) => Number.parseInt(value.slice(1), 16);
+
 const getSceneConfig = () => {
   const s = settingsState;
   const toNum = (v: unknown) => (typeof v === "number" ? v : 0);
@@ -224,11 +132,7 @@ const getSceneConfig = () => {
     initialCount: toNum(s["instance-count"]),
     initialLayoutShape: String(s["layout-shape"]) as "circle" | "square" | "triangle",
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
-    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
+    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
     initialScrollFallEnterTopFactor: toNum(s["scroll-fall-enter-top-factor"]),
     initialScrollFallExitTopFactor: toNum(s["scroll-fall-exit-top-factor"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
@@ -238,22 +142,7 @@ const getSceneConfig = () => {
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
     initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
     initialClickRepulseStrength: toNum(s["click-repulse-strength"]),
-    initialClickRepulseEase: String(s["click-repulse-ease"]) as
-      | "smoothstep"
-      | "linear"
-      | "in-sine"
-      | "out-sine"
-      | "in-out-sine"
-      | "in-quad"
-      | "out-quad"
-      | "in-out-quad"
-      | "in-cubic"
-      | "out-cubic"
-      | "in-out-cubic"
-      | "in-back"
-      | "out-back"
-      | "in-out-back"
-      | "out-elastic",
+    initialClickRepulseEase: String(s["click-repulse-ease"]) as "smoothstep" | "linear" | "in-sine" | "out-sine" | "in-out-sine" | "in-quad" | "out-quad" | "in-out-quad" | "in-cubic" | "out-cubic" | "in-out-cubic" | "in-back" | "out-back" | "in-out-back" | "out-elastic",
     initialStaggerSeconds: toNum(s["stagger-seconds"]),
     initialShadowOpacity: toNum(s["shadow-opacity"]),
     initialRoundInnerShadowColor: toHex(s["round-inner-shadow-color"]),
@@ -293,37 +182,21 @@ const getSceneConfig = () => {
     initialCatBlinkHoldDuration: toNum(s["cat-blink-hold-duration"]),
     initialCatBlinkOutDuration: toNum(s["cat-blink-out-duration"]),
     initialCatBlinkSideDelay: toNum(s["cat-blink-side-delay"]),
-    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
-    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
+    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
     initialBackgroundColor: toHex(s["background-color"]),
     initialFocusScale: toNum(s["focus-scale"]),
     initialFocusUpDuration: toNum(s["focus-up-duration"]),
     initialFocusDownDuration: toNum(s["focus-down-duration"]),
     initialFocusMinDelay: toNum(s["focus-min-delay"]),
     initialFocusMaxDelay: toNum(s["focus-max-delay"]),
-    initialFocusEaseUp: String(s["focus-ease-up"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
-    initialFocusEaseDown: String(s["focus-ease-down"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
+    initialFocusEaseUp: String(s["focus-ease-up"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialFocusEaseDown: String(s["focus-ease-down"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
   };
 };
 
+// Initialize scene
 const sceneConfig = getSceneConfig();
-
 const scene = await createHeroScene({
   ...sceneConfig,
   mountNode,
@@ -333,78 +206,20 @@ const scene = await createHeroScene({
   },
 });
 
+// Persist initial settings
 writeStoredSettings(settingsState);
 
+// Setup JSON export buttons
 copyJsonButton.addEventListener("click", () => {
   void copySettingsJson();
 });
-
 downloadJsonButton.addEventListener("click", downloadSettingsJson);
 
-const bindNumberInput = (
-  id: string,
-  min: number,
-  max: number,
-  fractionDigits?: number,
-  toScene?: boolean,
-) => {
-  const input = getRequiredInput<HTMLInputElement>(id);
-  const commit = () => {
-    const value = clampInput(input, min, max, fractionDigits);
-    updateStoredSettings({ [id]: value });
-    if (toScene) {
-      scene.setConfig({ [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: value } as never);
-    }
-  };
-  input.addEventListener("change", commit);
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") commit();
-  });
-};
+// Setup control bindings
+const controlBindings = createControlBindings(scene, updateStoredSettings);
 
-const bindColorInput = (id: string) => {
-  const input = getRequiredInput<HTMLInputElement>(id);
-  const commit = () => {
-    const value = sanitizeHexColor(input.value, "#000000");
-    input.value = value;
-    updateStoredSettings({ [id]: value });
-    scene.setConfig({
-      [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: hexToNumber(value),
-    } as never);
-  };
-  input.addEventListener("input", commit);
-  input.addEventListener("change", commit);
-};
-
-const bindSelectInput = (id: string, sanitize: (v: string) => string) => {
-  const input = getRequiredInput<HTMLSelectElement>(id);
-  input.addEventListener("change", () => {
-    const value = sanitize(input.value);
-    input.value = value;
-    updateStoredSettings({ [id]: value });
-    scene.setConfig({ [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: value } as never);
-  });
-};
-
-for (const control of CONTROL_DEFINITIONS) {
-  const { id, type, min = 0, max = 100, fractionDigits } = control;
-
-  if (type === "number") {
-    bindNumberInput(id, min, max, fractionDigits, true);
-  } else if (type === "color") {
-    bindColorInput(id);
-  } else if (type === "select") {
-    if (id === "layout-shape") {
-      bindSelectInput(id, (v) => sanitizeLayoutShape(v, "circle"));
-    } else if (id === "click-repulse-ease") {
-      bindSelectInput(id, (v) => sanitizeClickRepulseEase(v, "out-elastic"));
-    } else {
-      bindSelectInput(id, (v) => sanitizeFocusEase(v, "out-cubic"));
-    }
-  }
-}
-
+// Cleanup on unload
 window.addEventListener("beforeunload", () => {
   scene.destroy();
+  controlBindings.destroy();
 });

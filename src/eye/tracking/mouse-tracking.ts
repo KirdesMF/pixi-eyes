@@ -6,10 +6,7 @@ export interface MouseTrackingState {
   isInside: boolean;
 }
 
-export interface MouseTrackingOptions {
-  canvas: HTMLCanvasElement;
-  initialX: number;
-  initialY: number;
+export interface MouseTrackingCallbacks {
   onPointerUpdate: (x: number, y: number, isInside: boolean) => void;
   onPointerDown: (x: number, y: number) => void;
 }
@@ -27,13 +24,12 @@ export interface MouseTracking {
 /**
  * Creates a mouse tracking instance.
  */
-export const createMouseTracking = ({
-  canvas,
-  initialX,
-  initialY,
-  onPointerUpdate,
-  onPointerDown,
-}: MouseTrackingOptions): MouseTracking => {
+export const createMouseTracking = (
+  canvas: HTMLCanvasElement,
+  callbacks: MouseTrackingCallbacks,
+  initialX: number,
+  initialY: number,
+): MouseTracking => {
   const state: MouseTrackingState = {
     x: initialX,
     y: initialY,
@@ -48,23 +44,23 @@ export const createMouseTracking = ({
 
   const handlePointerMove = (event: PointerEvent) => {
     updatePointerFromEvent(event);
-    onPointerUpdate(state.x, state.y, true);
+    callbacks.onPointerUpdate(state.x, state.y, true);
   };
 
   const handlePointerEnter = (event: PointerEvent) => {
     updatePointerFromEvent(event);
     state.isInside = true;
-    onPointerUpdate(state.x, state.y, true);
+    callbacks.onPointerUpdate(state.x, state.y, true);
   };
 
   const handlePointerDown = (event: PointerEvent) => {
     updatePointerFromEvent(event);
-    onPointerDown(state.x, state.y);
+    callbacks.onPointerDown(state.x, state.y);
   };
 
   const handlePointerLeave = () => {
     state.isInside = false;
-    onPointerUpdate(state.x, state.y, false);
+    callbacks.onPointerUpdate(state.x, state.y, false);
   };
 
   canvas.addEventListener("pointerenter", handlePointerEnter);
