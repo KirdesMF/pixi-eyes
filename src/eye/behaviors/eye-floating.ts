@@ -2,6 +2,7 @@
 
 import { clamp, smoothTowards } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
+import { clickWaveTarget } from "./eye-tracking";
 
 export function updateFloatingBehavior(
   eye: EyeInstance,
@@ -20,7 +21,7 @@ export function updateFloatingBehavior(
     eye.parallaxY = parallax.y;
 
     const targetRepel = calculateRepulsionTarget(runtime, eye);
-    const waveRepel = calculateClickWaveRepulsion(runtime, eye);
+    const waveRepel = clickWaveTarget(runtime, eye);
     eye.repelX = smoothTowards(
       eye.repelX,
       targetRepel.x + waveRepel.x,
@@ -91,12 +92,4 @@ function calculateRepulsionTarget(
   }
 
   return { x: reach * pushStrength * weight, y: 0 };
-}
-
-function calculateClickWaveRepulsion(
-  _runtime: EyeFieldRuntime,
-  _eye: EyeInstance,
-): { x: number; y: number } {
-  // This is handled by the tracking module
-  return { x: 0, y: 0 };
 }
