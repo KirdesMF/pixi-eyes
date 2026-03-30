@@ -1,30 +1,14 @@
 import { Container, Graphics, Rectangle, Sprite, type Renderer } from "pixi.js";
 
-export interface EyeFieldMetrics {
-  visibleCount: number;
-}
+import type {
+  EyeFieldMetrics,
+  EyeType,
+  LayoutShapeName,
+  FocusEaseName,
+  ClickRepulseEaseName,
+} from "../eye/eye-types";
 
-export type EyeType = "round" | "cat";
-export type LayoutShapeName = "circle" | "square" | "triangle";
-export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
-export type ClickRepulseEaseName =
-  | "smoothstep"
-  | "linear"
-  | "in-sine"
-  | "out-sine"
-  | "in-out-sine"
-  | "in-quad"
-  | "out-quad"
-  | "in-out-quad"
-  | "in-cubic"
-  | "out-cubic"
-  | "in-out-cubic"
-  | "in-back"
-  | "out-back"
-  | "in-out-back"
-  | "out-elastic";
-
-import type { SharedContexts, SharedTextures } from "./rendering";
+import type { SharedContexts, SharedTextures } from "../eye/eye-assets";
 import {
   createSharedContexts,
   createSharedTextures,
@@ -40,8 +24,11 @@ import {
   CAT_PUPIL_MORPH_SPEED,
   CAT_PUPIL_MORPH_RADIUS_FACTOR,
   CAT_PUPIL_MORPH_RADIUS_MIN,
-} from "./rendering";
+} from "../eye/eye-assets";
 import { packEyePositions, resolvePackedRadii, resolveEyeType, staggerDelay } from "./layout";
+
+// Re-export types for consumers
+export type { EyeFieldMetrics, EyeType, LayoutShapeName, FocusEaseName, ClickRepulseEaseName };
 
 interface EyeFieldOptions {
   count: number;

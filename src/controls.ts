@@ -1,4 +1,4 @@
-import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./entities/eye-field";
+import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./eye/eye-types";
 
 export interface ControlDefinition {
   id: string;
