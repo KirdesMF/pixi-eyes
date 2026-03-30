@@ -833,18 +833,6 @@ export const SECTIONS = [
 ] as const;
 export type SectionName = (typeof SECTIONS)[number];
 
-export const CONTROL_ROW_CLASS =
-  "grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20";
-export const LABEL_CLASS = "text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55";
-export const NUMBER_INPUT_CLASS =
-  "h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-right text-sm text-black outline-none transition focus:border-black";
-export const COLOR_INPUT_CLASS =
-  "h-[34px] w-full cursor-pointer rounded-lg border border-black/15 bg-white p-1 outline-none transition focus:border-black";
-export const SELECT_INPUT_CLASS =
-  "h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-sm text-black outline-none transition focus:border-black";
-export const SECTION_LABEL_CLASS =
-  "px-1 text-[10px] font-medium uppercase tracking-[0.34em] text-black/40";
-
 export function sanitizeHexColor(value: string | undefined, fallback: string): string {
   return typeof value === "string" && /^#[0-9a-f]{6}$/iu.test(value) ? value : fallback;
 }

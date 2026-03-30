@@ -1,4 +1,4 @@
-import { createControlBindings, renderAllSections } from "./debug/create-controls";
+import { createControlBindings } from "./debug/create-controls";
 import {
   createDefaultSettings,
   loadSettings,
@@ -6,46 +6,111 @@ import {
   writeStoredSettings,
 } from "./debug/debug-state";
 import { createHeroScene } from "./scenes/hero-scene";
-import { CONTROL_DEFINITIONS } from "./controls";
+import { CONTROL_DEFINITIONS, SECTIONS } from "./controls";
 
 const ACTION_BUTTON_CLASS =
-  "inline-flex h-[36px] items-center justify-center rounded-xl border border-black bg-black px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-black/85";
+  "inline-flex h-[36px] items-center justify-center rounded-xl border border-black bg-black px-3 text-xs font-semibold uppercase text-white transition hover:bg-black/85";
 
 // Get mount nodes
 const appNode = document.querySelector<HTMLDivElement>("#app");
 if (!appNode) throw new Error("Missing #app mount node");
-
-document.body.className = "bg-black text-white antialiased";
 
 // Load settings
 const defaultSettings = createDefaultSettings(CONTROL_DEFINITIONS);
 const storedSettings = readStoredSettings();
 let settingsState = loadSettings(defaultSettings, storedSettings);
 
+// Render control HTML with inline Tailwind classes
+function getNumberDisplayValue(
+  value: number | string,
+  step: number | undefined,
+  def: number | string,
+): string {
+  if (typeof value !== "number" || typeof step !== "number") {
+    return String(def);
+  }
+  if (!Number.isFinite(value)) {
+    return String(def);
+  }
+  if (step < 1) {
+    return value.toFixed(2);
+  }
+  return String(value);
+}
+
+function renderControl(control: typeof CONTROL_DEFINITIONS[number], value: number | string): string {
+  const { id, label, type, min, max, step, default: def, options } = control;
+
+  if (type === "number") {
+    const displayValue = getNumberDisplayValue(value, step, def);
+    return `
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
+        <input id="${id}" class="h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-right text-sm text-black outline-none transition focus:border-black" type="number" min="${min}" max="${max}" step="${step}" value="${displayValue}" />
+      </label>
+    `;
+  }
+
+  if (type === "color") {
+    return `
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
+        <input id="${id}" class="h-[34px] w-full cursor-pointer rounded-lg border border-black/15 bg-white p-1 outline-none transition focus:border-black" type="color" value="${value || def}" />
+      </label>
+    `;
+  }
+
+  if (type === "select" && options) {
+    const opts = options
+      .map(
+        (o) =>
+          `<option value="${o.value}"${o.value === value ? " selected" : ""}>${o.label}</option>`,
+      )
+      .join("");
+    return `
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
+        <select id="${id}" class="h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-sm text-black outline-none transition focus:border-black">${opts}</select>
+      </label>
+    `;
+  }
+
+  return "";
+}
+
+function renderSection(section: string, stored: Record<string, number | string>): string {
+  const controls = CONTROL_DEFINITIONS.filter((c) => c.section === section);
+  const html = controls.map((c) => renderControl(c, stored[c.id] ?? c.default)).join("");
+  return `<div class="grid gap-2"><p class="px-1 text-[10px] font-medium uppercase tracking-[0.34em] text-black/40">${section}</p>${html}</div>`;
+}
+
+function renderAllSections(stored: Record<string, number | string>): string {
+  return SECTIONS.map((section) => renderSection(section, stored)).join("");
+}
+
 // Render UI
 const sectionsHtml = renderAllSections(settingsState);
 
 appNode.innerHTML = `
-  <main class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_24%),linear-gradient(180deg,#171717_0%,#000000_100%)] px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
+  <main class="min-h-screen px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
     <section class="mx-auto grid max-w-375 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <aside class="relative overflow-hidden rounded-2xl border border-white/20 bg-white p-4 text-black shadow-[0_34px_120px_rgba(0,0,0,0.42)] sm:p-5 lg:sticky lg:top-6 lg:h-[calc(100svh-3rem)]">
-        <div class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,rgba(0,0,0,0.08),transparent_70%)]"></div>
+      <aside class="relative overflow-hidden rounded-2xl border border-white/20 bg-white p-4 text-black sm:p-5 lg:sticky lg:top-6 lg:h-[calc(100svh-3rem)]">
         <div class="relative flex h-full flex-col">
           <div class="mb-4 flex items-start justify-between border-b border-black/10 pb-4">
             <div>
               <p class="text-[10px] uppercase tracking-[0.42em] text-black/35">Pixi Eyes</p>
               <h1 class="mt-2 text-[28px] font-medium tracking-[-0.08em] text-black">Settings</h1>
             </div>
-            <span class="rounded-full bg-black px-2.5 py-1 text-[10px] uppercase tracking-[0.28em] text-white">Live</span>
+            <span class="rounded-full bg-black px-2.5 py-1 text-[10px] uppercase tracking-tight text-white">Live</span>
           </div>
           <dl class="mb-4 grid grid-cols-2 gap-3">
             <div class="rounded-[20px] border border-black/10 bg-black px-3 py-3 text-white">
               <dt class="text-[10px] uppercase tracking-[0.28em] text-white/45">FPS</dt>
-              <dd id="fps-value" class="mt-2 text-3xl font-medium tracking-[-0.08em] text-white">0</dd>
+              <dd id="fps-value" class="mt-2 text-3xl font-medium  text-white">0</dd>
             </div>
             <div class="rounded-[20px] border border-black/10 bg-black/6 px-3 py-3">
-              <dt class="text-[10px] uppercase tracking-[0.28em] text-black/45">Visible</dt>
-              <dd id="visible-value" class="mt-2 text-3xl font-medium tracking-[-0.08em] text-black">0</dd>
+              <dt class="text-[10px] uppercase tracking-tight text-black/45">Visible</dt>
+              <dd id="visible-value" class="mt-2 text-3xl font-medium text-black">0</dd>
             </div>
           </dl>
           <div class="mb-4 grid gap-2">
@@ -53,13 +118,13 @@ appNode.innerHTML = `
               <button id="copy-json-button" class="${ACTION_BUTTON_CLASS}" type="button">Copy JSON</button>
               <button id="download-json-button" class="${ACTION_BUTTON_CLASS}" type="button">Download</button>
             </div>
-            <p id="json-status" class="px-1 text-[10px] uppercase tracking-[0.24em] text-black/45">Export current settings</p>
+            <p id="json-status" class="px-1 text-[10px] uppercase text-black/45">Export current settings</p>
           </div>
           <div class="grid flex-1 content-start gap-4 overflow-y-auto pr-1">${sectionsHtml}</div>
         </div>
       </aside>
-      <section class="overflow-hidden rounded-2xl border border-white/20 bg-black p-3 shadow-[0_34px_120px_rgba(0,0,0,0.42)]">
-        <div id="pixi-stage" class="h-[52svh] min-h-110] overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-190"></div>
+      <section class="overflow-hidden rounded-2xl border border-white/20 bg-black p-3">
+        <div id="pixi-stage" class="h-[52svh] min-h-110] overflow-hidden rounded-2xl border border-white/20 bg-white sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-190"></div>
       </section>
     </section>
     <div aria-hidden="true" class="h-[140svh]"></div>
@@ -67,11 +132,11 @@ appNode.innerHTML = `
 `;
 
 // Get DOM references
-const getRequiredInput = <T extends Element>(id: string): T => {
+function getRequiredInput<T extends Element>(id: string): T {
   const el = document.querySelector<T>(`#${id}`);
   if (!el) throw new Error(`Missing element: ${id}`);
   return el;
-};
+}
 
 const fpsValue = getRequiredInput<HTMLElement>("fps-value");
 const visibleValue = getRequiredInput<HTMLElement>("visible-value");
