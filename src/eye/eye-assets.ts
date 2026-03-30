@@ -83,13 +83,13 @@ export interface SharedTextures {
   catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
 }
 
-const shadowEdgePoint = (sign: number) => {
+function shadowEdgePoint(sign: number): { x: number; y: number } {
   const offset = (SHADOW_EDGE_OFFSET_DEGREES * Math.PI) / 180;
   return {
     x: Math.sin(offset) * sign,
     y: Math.cos(offset),
   };
-};
+}
 
 /**
  * Creates all shared graphics contexts.

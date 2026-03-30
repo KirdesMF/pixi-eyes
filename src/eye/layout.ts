@@ -2,12 +2,14 @@ import type { LayoutShapeName } from "../eye/eye-types";
 
 const TRIANGLE_LAYOUT_HALF_BASE_FACTOR = Math.sqrt(3) * 0.5;
 
-const cross2d = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
+function cross2d(ax: number, ay: number, bx: number, by: number): number {
+  return ax * by - ay * bx;
+}
 
-const hash01 = (value: number) => {
+function hash01(value: number): number {
   const hashed = Math.sin(value * 12.9898 + 78.233) * 43758.5453;
   return hashed - Math.floor(hashed);
-};
+}
 
 export function resolveRadiusMix(value: number): number {
   return value < 0.34
@@ -28,23 +30,23 @@ export function resolvePackedRadii(count: number, minRadius: number, maxRadius: 
   });
 }
 
-const triangleLayoutVertices = (extent: number) => {
+function triangleLayoutVertices(extent: number): readonly { x: number; y: number }[] {
   const halfBase = extent * TRIANGLE_LAYOUT_HALF_BASE_FACTOR;
   return [
     { x: 0, y: -extent },
     { x: halfBase, y: extent * 0.5 },
     { x: -halfBase, y: extent * 0.5 },
   ] as const;
-};
+}
 
-const raySegmentDistance = (
+function raySegmentDistance(
   dx: number,
   dy: number,
   ax: number,
   ay: number,
   bx: number,
   by: number,
-) => {
+): number {
   const edgeX = bx - ax;
   const edgeY = by - ay;
   const denominator = cross2d(dx, dy, edgeX, edgeY);
@@ -61,7 +63,7 @@ const raySegmentDistance = (
   return Number.POSITIVE_INFINITY;
 };
 
-const shapeBoundaryDistance = (shape: LayoutShapeName, angle: number, extent: number) => {
+function shapeBoundaryDistance(shape: LayoutShapeName, angle: number, extent: number): number {
   const safeExtent = Math.max(extent, 0.001);
   if (shape === "circle") {
     return safeExtent;

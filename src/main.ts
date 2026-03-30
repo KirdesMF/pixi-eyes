@@ -83,18 +83,20 @@ const jsonStatus = getRequiredInput<HTMLElement>("json-status");
 const mountNode = getRequiredInput<HTMLDivElement>("pixi-stage");
 
 // Settings helpers
-const updateStoredSettings = (patch: Record<string, number | string>) => {
+function updateStoredSettings(patch: Record<string, number | string>): void {
   settingsState = { ...settingsState, ...patch };
   writeStoredSettings(settingsState);
-};
+}
 
-const serializeSettings = () => JSON.stringify(settingsState, null, 2);
+function serializeSettings(): string {
+  return JSON.stringify(settingsState, null, 2);
+}
 
-const setJsonStatus = (message: string) => {
+function setJsonStatus(message: string): void {
   jsonStatus.textContent = message;
-};
+}
 
-const fallbackCopyText = (value: string) => {
+function fallbackCopyText(value: string): void {
   const textarea = document.createElement("textarea");
   textarea.value = value;
   textarea.style.cssText = "position:fixed;opacity:0";
@@ -102,9 +104,9 @@ const fallbackCopyText = (value: string) => {
   textarea.select();
   document.execCommand("copy");
   textarea.remove();
-};
+}
 
-const copySettingsJson = async () => {
+async function copySettingsJson(): Promise<void> {
   try {
     await navigator.clipboard.writeText(serializeSettings());
     setJsonStatus("Copied JSON");
@@ -112,9 +114,9 @@ const copySettingsJson = async () => {
     fallbackCopyText(serializeSettings());
     setJsonStatus("Copied JSON");
   }
-};
+}
 
-const downloadSettingsJson = () => {
+function downloadSettingsJson(): void {
   const blob = new Blob([serializeSettings()], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -123,12 +125,14 @@ const downloadSettingsJson = () => {
   a.click();
   URL.revokeObjectURL(url);
   setJsonStatus("Downloaded JSON");
-};
+}
 
 // Convert settings to scene config
-const hexToNumber = (value: string) => Number.parseInt(value.slice(1), 16);
+function hexToNumber(value: string): number {
+  return Number.parseInt(value.slice(1), 16);
+}
 
-const getSceneConfig = () => {
+function getSceneConfig() {
   const s = settingsState;
   const toNum = (v: unknown) => (typeof v === "number" ? v : 0);
   const toHex = (v: unknown) => (typeof v === "string" ? hexToNumber(v) : 0);
