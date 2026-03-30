@@ -128,3 +128,67 @@ export function smoothRotateTowards(
   const t = 1 - Math.exp(-Math.max(speed, 0) * dt);
   return wrapDegrees(current + delta * t);
 }
+
+export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
+export type ClickRepulseEaseName =
+  | "smoothstep"
+  | "linear"
+  | "in-sine"
+  | "out-sine"
+  | "in-out-sine"
+  | "in-quad"
+  | "out-quad"
+  | "in-out-quad"
+  | "in-cubic"
+  | "out-cubic"
+  | "in-out-cubic"
+  | "in-back"
+  | "out-back"
+  | "in-out-back"
+  | "out-elastic";
+
+export function applyEase(ease: FocusEaseName | ClickRepulseEaseName, value: number): number {
+  const clampedValue = clamp(value, 0, 1);
+
+  switch (ease) {
+    case "smoothstep":
+      return smoothstep(clampedValue);
+    case "linear":
+      return easeLinear(clampedValue);
+    case "in-sine":
+      return easeInSine(clampedValue);
+    case "out-sine":
+      return easeOutSine(clampedValue);
+    case "in-out-sine":
+      return easeInOutSine(clampedValue);
+    case "in-quad":
+      return easeInQuad(clampedValue);
+    case "out-quad":
+      return easeOutQuad(clampedValue);
+    case "in-out-quad":
+      return easeInOutQuad(clampedValue);
+    case "in-cubic":
+      return easeInCubic(clampedValue);
+    case "in-out-cubic":
+      return easeInOutCubic(clampedValue);
+    case "in-back":
+      return easeInBack(clampedValue);
+    case "out-back":
+      return easeOutBack(clampedValue);
+    case "in-out-back":
+      return easeInOutBack(clampedValue);
+    case "out-elastic":
+      return easeOutElastic(clampedValue);
+    case "out-cubic":
+    default:
+      return easeOutCubic(clampedValue);
+  }
+}
+
+export function applyFocusEase(ease: FocusEaseName, value: number): number {
+  return applyEase(ease, value);
+}
+
+export function applyClickRepulseEase(ease: ClickRepulseEaseName, value: number): number {
+  return applyEase(ease, value);
+}

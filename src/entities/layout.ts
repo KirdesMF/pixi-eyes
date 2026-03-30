@@ -1,4 +1,4 @@
-import type { LayoutShapeName } from "./eye-field";
+import type { LayoutShapeName } from "../eye/eye-types";
 
 const TRIANGLE_LAYOUT_HALF_BASE_FACTOR = Math.sqrt(3) * 0.5;
 
