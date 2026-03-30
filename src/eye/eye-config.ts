@@ -1,6 +1,11 @@
 // Eye configuration and constants
 
-import type { EyeFieldConfig, LayoutShapeName, FocusEaseName, ClickRepulseEaseName } from "./eye-types";
+import type {
+  EyeFieldConfig,
+  LayoutShapeName,
+  FocusEaseName,
+  ClickRepulseEaseName,
+} from "./eye-types";
 
 export type { EyeFieldConfig };
 

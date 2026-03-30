@@ -33,10 +33,7 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   eye.eyeShadow.position.set(0, 0);
   eye.eyeShadow.scale.set(1);
   eye.eyeShadow.rotation = 0;
-  eye.globeHighlight.position.set(
-    runtime.roundHighlightOffsetX,
-    runtime.roundHighlightOffsetY,
-  );
+  eye.globeHighlight.position.set(runtime.roundHighlightOffsetX, runtime.roundHighlightOffsetY);
   eye.globeHighlight.scale.set(runtime.roundHighlightScale);
   eye.globeHighlight.rotation = (runtime.roundHighlightRotationDegrees * Math.PI) / 180;
   eye.iris.scale.set(eye.currentScaleX * variant.irisScale, eye.currentScaleY * variant.irisScale);
@@ -61,18 +58,12 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   );
   eye.pupil.rotation = rotation;
   eye.highlight.scale.set(1);
-  eye.highlight.position.set(
-    pupilX - PUPIL_RADIUS * 0.3,
-    pupilY - PUPIL_RADIUS * 0.4,
-  );
+  eye.highlight.position.set(pupilX - PUPIL_RADIUS * 0.3, pupilY - PUPIL_RADIUS * 0.4);
 
   eye.needsAppearanceRefresh = false;
 }
 
-export function updateHumanEyeDeformation(
-  eye: EyeInstance,
-  eyeSeconds: number,
-): void {
+export function updateHumanEyeDeformation(eye: EyeInstance, eyeSeconds: number): void {
   const variant = humanEyeVariantMetrics();
   const pupilOffsetForDeform = clampMagnitude(
     eye.lookX * PUPIL_INNER_TRAVEL,
@@ -97,24 +88,9 @@ export function updateHumanEyeDeformation(
       ? (Math.atan2(eye.lookY, eye.lookX) * 180) / Math.PI
       : 0;
 
-  eye.currentScaleX = smoothTowards(
-    eye.currentScaleX,
-    targetScaleX,
-    SQUEEZE_SPEED,
-    eyeSeconds,
-  );
-  eye.currentScaleY = smoothTowards(
-    eye.currentScaleY,
-    targetScaleY,
-    SQUEEZE_SPEED,
-    eyeSeconds,
-  );
-  eye.currentAngle = smoothRotateTowards(
-    eye.currentAngle,
-    targetAngle,
-    SQUEEZE_SPEED,
-    eyeSeconds,
-  );
+  eye.currentScaleX = smoothTowards(eye.currentScaleX, targetScaleX, SQUEEZE_SPEED, eyeSeconds);
+  eye.currentScaleY = smoothTowards(eye.currentScaleY, targetScaleY, SQUEEZE_SPEED, eyeSeconds);
+  eye.currentAngle = smoothRotateTowards(eye.currentAngle, targetAngle, SQUEEZE_SPEED, eyeSeconds);
 }
 
 export function updateHumanEyeFocusPulse(
@@ -143,10 +119,8 @@ export function updateHumanEyeFocusPulse(
     pulseTime <= idleDelay + runtime.focusUpDuration + runtime.focusDownDuration
   ) {
     const t =
-      (pulseTime - idleDelay - runtime.focusUpDuration) /
-      Math.max(runtime.focusDownDuration, 0.01);
-    nextFocusScale =
-      1 + (runtime.focusScale - 1) * (1 - applyFocusEase(runtime.focusEaseDown, t));
+      (pulseTime - idleDelay - runtime.focusUpDuration) / Math.max(runtime.focusDownDuration, 0.01);
+    nextFocusScale = 1 + (runtime.focusScale - 1) * (1 - applyFocusEase(runtime.focusEaseDown, t));
   }
 
   eye.focusPulseScale = nextFocusScale;

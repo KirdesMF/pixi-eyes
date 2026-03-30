@@ -9,14 +9,15 @@ const hash01 = (value: number) => {
   return hashed - Math.floor(hashed);
 };
 
-export const resolveRadiusMix = (value: number) =>
-  value < 0.34
+export function resolveRadiusMix(value: number): number {
+  return value < 0.34
     ? 0.14 + value * 0.55
     : value < 0.72
       ? 0.48 + (value - 0.34) * 0.35
       : 0.78 + (value - 0.72) * 0.78;
+}
 
-export const resolvePackedRadii = (count: number, minRadius: number, maxRadius: number) => {
+export function resolvePackedRadii(count: number, minRadius: number, maxRadius: number): number[] {
   const safeMinRadius = Math.max(Math.min(minRadius, maxRadius), 0);
   const safeMaxRadius = Math.max(Math.max(minRadius, maxRadius), 0);
 
@@ -25,7 +26,7 @@ export const resolvePackedRadii = (count: number, minRadius: number, maxRadius: 
     const radiusT = resolveRadiusMix(tierMix);
     return safeMinRadius + (safeMaxRadius - safeMinRadius) * Math.max(0, Math.min(radiusT, 1));
   });
-};
+}
 
 const triangleLayoutVertices = (extent: number) => {
   const halfBase = extent * TRIANGLE_LAYOUT_HALF_BASE_FACTOR;
@@ -162,19 +163,20 @@ export const packEyePositions = (
   return placed;
 };
 
-export const resolveEyeType = (index: number, count: number, catMix: number): "cat" | "round" =>
-  hash01(index * 2.187 + count * 0.713) < Math.max(0, Math.min(catMix, 1)) ? "cat" : "round";
+export function resolveEyeType(index: number, count: number, catMix: number): "cat" | "round" {
+  return hash01(index * 2.187 + count * 0.713) < Math.max(0, Math.min(catMix, 1)) ? "cat" : "round";
+}
 
-export const staggerDelay = (
+export function staggerDelay(
   index: number,
   count: number,
   staggerSeconds: number,
   randomize: boolean,
-) => {
+): number {
   const step = Math.max(staggerSeconds, 0);
   if (randomize) {
     return hash01(index * 1.61803398875) * step * Math.max(count - 1, 0);
   }
 
   return (index - 1) * step;
-};
+}

@@ -2,13 +2,12 @@
 
 import { clamp, lerp, hash01, applyEase } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
-import {
-  MAX_LOOK,
-  CLICK_WAVE_SPEED,
-  CLICK_WAVE_WIDTH,
-} from "../eye-config";
+import { MAX_LOOK, CLICK_WAVE_SPEED, CLICK_WAVE_WIDTH } from "../eye-config";
 
-export function parallaxOffset(runtime: EyeFieldRuntime, eye: EyeInstance): { x: number; y: number } {
+export function parallaxOffset(
+  runtime: EyeFieldRuntime,
+  eye: EyeInstance,
+): { x: number; y: number } {
   const weight = runtime.trackingBlend;
   if (weight <= 0.0001) {
     return { x: 0, y: 0 };
@@ -22,7 +21,10 @@ export function parallaxOffset(runtime: EyeFieldRuntime, eye: EyeInstance): { x:
   return { x: -normalizedX * distance, y: -normalizedY * distance };
 }
 
-export function repulsionTarget(runtime: EyeFieldRuntime, eye: EyeInstance): { x: number; y: number } {
+export function repulsionTarget(
+  runtime: EyeFieldRuntime,
+  eye: EyeInstance,
+): { x: number; y: number } {
   const weight = runtime.trackingBlend;
   if (weight <= 0.0001) {
     return { x: 0, y: 0 };
@@ -59,7 +61,10 @@ export function repulsionTarget(runtime: EyeFieldRuntime, eye: EyeInstance): { x
   return { x: reach * pushStrength * weight, y: 0 };
 }
 
-export function clickWaveTarget(runtime: EyeFieldRuntime, eye: EyeInstance): { x: number; y: number } {
+export function clickWaveTarget(
+  runtime: EyeFieldRuntime,
+  eye: EyeInstance,
+): { x: number; y: number } {
   if (
     eye.lowDetail ||
     runtime.waves.length === 0 ||

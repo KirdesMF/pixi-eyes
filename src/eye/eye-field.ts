@@ -106,7 +106,7 @@ interface EyeFieldOptions {
   worldBounds: Rectangle;
 }
 
-export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions) => {
+export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions) {
   const root = new Container();
   const runtime = createRuntime(count);
   const contexts = createSharedContexts();
@@ -833,7 +833,7 @@ export const createEyeField = ({ count, renderer, worldBounds }: EyeFieldOptions
       destroySharedContexts(contexts);
     },
   };
-};
+}
 
 function createRuntime(count: number): EyeFieldRuntime {
   return {

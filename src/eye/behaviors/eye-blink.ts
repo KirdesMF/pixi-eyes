@@ -3,11 +3,7 @@
 import { clamp, lerp, remap01 } from "../../shared/math";
 import { applyFocusEase } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
-import {
-  SCLERA_RADIUS,
-  CIRCLE_KAPPA,
-  CAT_PUPIL_MORPH_SPEED,
-} from "../eye-config";
+import { SCLERA_RADIUS, CIRCLE_KAPPA, CAT_PUPIL_MORPH_SPEED } from "../eye-config";
 import type { Graphics } from "pixi.js";
 
 export function drawCatBlinkBottomLid(
@@ -101,8 +97,7 @@ export function applyCatBlinkAppearance(eye: EyeInstance, runtime: EyeFieldRunti
   eye.blinkGroup.position.set(0, 0);
   eye.blinkGroup.scale.set(1);
   eye.blinkGroup.rotation = 0;
-  eye.blinkGroup.visible =
-    eye.type === "cat" && (bottomProgress > 0.0001 || sideProgress > 0.0001);
+  eye.blinkGroup.visible = eye.type === "cat" && (bottomProgress > 0.0001 || sideProgress > 0.0001);
   if (shouldRedrawBottom) {
     drawCatBlinkBottomLid(eye.blinkBottom, bottomProgress, {
       fillColor: runtime.catBlinkBottomColor,

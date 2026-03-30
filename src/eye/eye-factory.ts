@@ -5,11 +5,7 @@ import { Container, Graphics, Sprite } from "pixi.js";
 import type { EyeType } from "./eye-types";
 import type { EyeInstance } from "./eye-state";
 import type { SharedContexts, SharedTextures } from "./eye-assets";
-import {
-  SCLERA_RADIUS,
-  IRIS_RADIUS,
-  DEFAULT_IRIS_COLOR,
-} from "./eye-assets";
+import { SCLERA_RADIUS, IRIS_RADIUS, DEFAULT_IRIS_COLOR } from "./eye-assets";
 import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
@@ -232,7 +228,10 @@ function lerpAppearanceFps(scale: number): number {
   const t = clamp(scale, 0, 1);
   const DEFAULT_SMALL_EYE_APPEARANCE_FPS = 24;
   const DEFAULT_LARGE_EYE_APPEARANCE_FPS = 60;
-  return DEFAULT_SMALL_EYE_APPEARANCE_FPS + (DEFAULT_LARGE_EYE_APPEARANCE_FPS - DEFAULT_SMALL_EYE_APPEARANCE_FPS) * t;
+  return (
+    DEFAULT_SMALL_EYE_APPEARANCE_FPS +
+    (DEFAULT_LARGE_EYE_APPEARANCE_FPS - DEFAULT_SMALL_EYE_APPEARANCE_FPS) * t
+  );
 }
 
 function clamp(value: number, minValue: number, maxValue: number): number {

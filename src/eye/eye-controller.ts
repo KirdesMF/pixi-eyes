@@ -14,8 +14,16 @@ import {
 import { updateScrollFallState } from "./behaviors/eye-fall";
 import { updateFloatingBehavior } from "./behaviors/eye-floating";
 import { resolveScaleInProgress } from "./eye-factory";
-import { totalOffset, sampleEyeSharedAttentionLook, pupilFollowSpeed } from "./behaviors/eye-tracking";
-import { applyHumanPupilAppearance, updateHumanEyeDeformation, updateHumanEyeFocusPulse } from "./render/human-eye-view";
+import {
+  totalOffset,
+  sampleEyeSharedAttentionLook,
+  pupilFollowSpeed,
+} from "./behaviors/eye-tracking";
+import {
+  applyHumanPupilAppearance,
+  updateHumanEyeDeformation,
+  updateHumanEyeFocusPulse,
+} from "./render/human-eye-view";
 import { applyCatPupilAppearance } from "./render/cat-eye-view";
 import { updateCatBlink } from "./behaviors/eye-blink";
 
@@ -105,10 +113,8 @@ export function updateSingleEye(
   const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
   updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
   updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
-  const squashScaleX =
-    eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
-  const squashScaleY =
-    eye.fallSquash >= 0 ? 1 - eye.fallSquash * 0.75 : 1 - eye.fallSquash * 0.5;
+  const squashScaleX = eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
+  const squashScaleY = eye.fallSquash >= 0 ? 1 - eye.fallSquash * 0.75 : 1 - eye.fallSquash * 0.5;
   eye.root.scale.set(
     eye.renderScale * introScaleProgress * squashScaleX,
     eye.renderScale * introScaleProgress * squashScaleY,
@@ -158,11 +164,7 @@ export function updateSingleEye(
 
   const sharedAttentionLook =
     runtime.sharedAttentionBlend > 0.0001
-      ? sampleEyeSharedAttentionLook(
-          runtime,
-          eye,
-          runtime.pointerActive ? "scattered" : "unified",
-        )
+      ? sampleEyeSharedAttentionLook(runtime, eye, runtime.pointerActive ? "scattered" : "unified")
       : { x: 0, y: 0 };
 
   const desiredLook = {
@@ -212,10 +214,7 @@ function updateCatEye(
   } else {
     const morphCenterX = eye.x + eye.parallaxX;
     const morphCenterY = eye.y + eye.parallaxY;
-    const scaleRadius = Math.max(
-      runtime.catMorphRadius * eye.scale,
-      runtime.catMorphRadius * 0.6,
-    );
+    const scaleRadius = Math.max(runtime.catMorphRadius * eye.scale, runtime.catMorphRadius * 0.6);
     const morphRadius = Math.max(
       scaleRadius,
       SCLERA_RADIUS * eye.root.scale.x * CAT_PUPIL_MORPH_RADIUS_FACTOR,
@@ -230,12 +229,7 @@ function updateCatEye(
         ? 0
         : smoothstep(1 - clamp(pointerDistance / morphRadius, 0, 1)) * runtime.trackingBlend;
 
-    eye.catMorph = smoothTowards(
-      eye.catMorph,
-      morphTarget,
-      CAT_PUPIL_MORPH_SPEED,
-      eyeSeconds,
-    );
+    eye.catMorph = smoothTowards(eye.catMorph, morphTarget, CAT_PUPIL_MORPH_SPEED, eyeSeconds);
 
     updateCatBlink(eye, runtime, eyeSeconds, isScrollFallLocked);
 

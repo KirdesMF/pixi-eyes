@@ -845,27 +845,33 @@ export const SELECT_INPUT_CLASS =
 export const SECTION_LABEL_CLASS =
   "px-1 text-[10px] font-medium uppercase tracking-[0.34em] text-black/40";
 
-export const sanitizeHexColor = (value: string | undefined, fallback: string) =>
-  typeof value === "string" && /^#[0-9a-f]{6}$/iu.test(value) ? value : fallback;
+export function sanitizeHexColor(value: string | undefined, fallback: string): string {
+  return typeof value === "string" && /^#[0-9a-f]{6}$/iu.test(value) ? value : fallback;
+}
 
-export const sanitizeFocusEase = (
+export function sanitizeFocusEase(
   value: string | undefined,
   fallback: FocusEaseName,
-): FocusEaseName =>
-  EASE_OPTIONS.some((option) => option.value === value) ? (value as FocusEaseName) : fallback;
+): FocusEaseName {
+  return EASE_OPTIONS.some((option) => option.value === value)
+    ? (value as FocusEaseName)
+    : fallback;
+}
 
-export const sanitizeLayoutShape = (
+export function sanitizeLayoutShape(
   value: string | undefined,
   fallback: LayoutShapeName,
-): LayoutShapeName =>
-  LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value)
+): LayoutShapeName {
+  return LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value)
     ? (value as LayoutShapeName)
     : fallback;
+}
 
-export const sanitizeClickRepulseEase = (
+export function sanitizeClickRepulseEase(
   value: string | undefined,
   fallback: ClickRepulseEaseName,
-): ClickRepulseEaseName =>
-  CLICK_REPULSE_EASE_OPTIONS.some((option) => option.value === value)
+): ClickRepulseEaseName {
+  return CLICK_REPULSE_EASE_OPTIONS.some((option) => option.value === value)
     ? (value as ClickRepulseEaseName)
     : fallback;
+}

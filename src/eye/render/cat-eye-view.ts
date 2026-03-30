@@ -87,10 +87,7 @@ export function applyCatPupilAppearance(eye: EyeInstance, runtime: EyeFieldRunti
   const rotation = 0;
   const effectiveIrisRadius = IRIS_RADIUS * variant.irisScale;
   const catShape = catPupilShape(eye.catMorph);
-  const maxPupilTravel = Math.max(
-    effectiveIrisRadius - catShape.halfWidth - PUPIL_CLIP_MARGIN,
-    0,
-  );
+  const maxPupilTravel = Math.max(effectiveIrisRadius - catShape.halfWidth - PUPIL_CLIP_MARGIN, 0);
   const pupilOffset = clampMagnitude(
     eye.lookX * runtime.catTranslateStrength,
     eye.lookY * runtime.catTranslateStrength,
@@ -125,10 +122,7 @@ export function applyCatPupilAppearance(eye: EyeInstance, runtime: EyeFieldRunti
   eye.irisShadow.rotation = rotation;
   eye.pupilGroup.position.set(0, 0);
   eye.pupil.position.set(pupilX, pupilY);
-  if (
-    eye.needsAppearanceRefresh ||
-    Math.abs(eye.catMorph - eye.lastDrawnCatMorph) > 0.002
-  ) {
+  if (eye.needsAppearanceRefresh || Math.abs(eye.catMorph - eye.lastDrawnCatMorph) > 0.002) {
     drawCatPupil(eye.pupil, eye.catMorph);
     eye.lastDrawnCatMorph = eye.catMorph;
   }
