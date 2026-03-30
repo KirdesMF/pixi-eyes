@@ -23,23 +23,23 @@ export interface ControlBindings {
 /**
  * Clamps an input value between min and max.
  */
-export const clampInput = (
+export function clampInput(
   input: HTMLInputElement,
   min: number,
   max: number,
   fractionDigits?: number,
-): number => {
+): number {
   const rawValue = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : min;
   const clamped = Math.min(Math.max(rawValue, min), max);
   input.value =
     typeof fractionDigits === "number" ? clamped.toFixed(fractionDigits) : String(clamped);
   return clamped;
-};
+}
 
 /**
  * Renders a single control as HTML string.
  */
-export const renderControl = (control: ControlDefinition, value: number | string): string => {
+export function renderControl(control: ControlDefinition, value: number | string): string {
   const { id, label, type, min, max, step, default: def, options } = control;
 
   if (type === "number") {
@@ -84,35 +84,35 @@ export const renderControl = (control: ControlDefinition, value: number | string
   }
 
   return "";
-};
+}
 
 /**
  * Renders a section of controls as HTML string.
  */
-export const renderSection = (section: string, stored: Record<string, number | string>): string => {
+export function renderSection(section: string, stored: Record<string, number | string>): string {
   const controls = CONTROL_DEFINITIONS.filter((c) => c.section === section);
   const html = controls.map((c) => renderControl(c, stored[c.id] ?? c.default)).join("");
   return `<div class="grid gap-2"><p class="${SECTION_LABEL_CLASS}">${section}</p>${html}</div>`;
-};
+}
 
 /**
  * Renders all control sections as HTML string.
  */
-export const renderAllSections = (stored: Record<string, number | string>): string => {
+export function renderAllSections(stored: Record<string, number | string>): string {
   return SECTIONS.map((section) => renderSection(section, stored)).join("");
-};
+}
 
 /**
  * Binds a number input to settings and scene config.
  */
-export const bindNumberInput = (
+export function bindNumberInput(
   id: string,
   min: number,
   max: number,
   fractionDigits: number | undefined,
   scene: { setConfig: (config: Record<string, unknown>) => void },
   updateStoredSettings: (patch: Record<string, number | string>) => void,
-): (() => void) => {
+): () => void {
   const input = document.querySelector<HTMLInputElement>(`#${id}`);
   if (!input) return () => {};
 
@@ -133,16 +133,16 @@ export const bindNumberInput = (
     input.removeEventListener("blur", commit);
     input.removeEventListener("keydown", commit);
   };
-};
+}
 
 /**
  * Binds a color input to settings and scene config.
  */
-export const bindColorInput = (
+export function bindColorInput(
   id: string,
   scene: { setConfig: (config: Record<string, unknown>) => void },
   updateStoredSettings: (patch: Record<string, number | string>) => void,
-): (() => void) => {
+): () => void {
   const input = document.querySelector<HTMLInputElement>(`#${id}`);
   if (!input) return () => {};
 
@@ -164,17 +164,17 @@ export const bindColorInput = (
     input.removeEventListener("input", commit);
     input.removeEventListener("change", commit);
   };
-};
+}
 
 /**
  * Binds a select input to settings and scene config.
  */
-export const bindSelectInput = (
+export function bindSelectInput(
   id: string,
   sanitize: (v: string) => string,
   scene: { setConfig: (config: Record<string, unknown>) => void },
   updateStoredSettings: (patch: Record<string, number | string>) => void,
-): (() => void) => {
+): () => void {
   const input = document.querySelector<HTMLSelectElement>(`#${id}`);
   if (!input) return () => {};
 
@@ -190,15 +190,15 @@ export const bindSelectInput = (
   return () => {
     input.removeEventListener("change", onChange);
   };
-};
+}
 
 /**
  * Sets up all control bindings.
  */
-export const createControlBindings = (
+export function createControlBindings(
   scene: { setConfig: (config: Record<string, unknown>) => void },
   updateStoredSettings: (patch: Record<string, number | string>) => void,
-): ControlBindings => {
+): ControlBindings {
   const unbinds: Array<() => void> = [];
 
   for (const control of CONTROL_DEFINITIONS) {
@@ -240,4 +240,4 @@ export const createControlBindings = (
       unbinds.forEach((unbind) => unbind());
     },
   };
-};
+}

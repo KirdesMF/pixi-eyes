@@ -12,12 +12,12 @@ export interface CreateAppOptions {
 /**
  * Creates and initializes a Pixi Application.
  */
-export const createApp = async ({
+export async function createApp({
   mountNode,
   resolution = Math.min(window.devicePixelRatio || 1, 2),
   antialias = true,
   backgroundAlpha = 0,
-}: CreateAppOptions): Promise<Application> => {
+}: CreateAppOptions): Promise<Application> {
   const app = new Application();
 
   await app.init({
@@ -33,4 +33,4 @@ export const createApp = async ({
   mountNode.appendChild(app.canvas);
 
   return app;
-};
+}

@@ -94,7 +94,7 @@ const shadowEdgePoint = (sign: number) => {
 /**
  * Creates all shared graphics contexts.
  */
-export const createSharedContexts = (): SharedContexts => {
+export function createSharedContexts(): SharedContexts {
   const scleraFillContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xfffbf2);
   const scleraMaskContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
   const scleraOutlineContext = new GraphicsContext()
@@ -188,7 +188,7 @@ export const createSharedContexts = (): SharedContexts => {
     catPupilContext,
     highlightContext,
   };
-};
+}
 
 const generateTextureFromContext = (
   renderer: Renderer,
@@ -223,7 +223,7 @@ const generateTextureFromContext = (
 /**
  * Creates a drop shadow texture with blur.
  */
-export const createDropShadowTexture = (renderer: Renderer, blur: number) => {
+export function createDropShadowTexture(renderer: Renderer, blur: number) {
   const blurStrength = Math.max(blur, 0);
   const padding = Math.max(DROP_SHADOW_TEXTURE_PADDING, blurStrength * 3 + 12);
   const target = new Container();
@@ -260,31 +260,36 @@ export const createDropShadowTexture = (renderer: Renderer, blur: number) => {
   target.destroy({ children: true });
 
   return texture;
-};
+}
 
 /**
  * Creates all shared textures from contexts.
  */
-export const createSharedTextures = (
+export function createSharedTextures(
   renderer: Renderer,
   contexts: SharedContexts,
   dropShadowBlur: number,
-): SharedTextures => ({
-  dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur),
-  scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext),
-  scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext),
-  scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext),
-  roundGlobeHighlightTexture: generateTextureFromContext(
-    renderer,
-    contexts.roundGlobeHighlightContext,
-  ),
-  catGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.catGlobeHighlightContext),
-});
+): SharedTextures {
+  return {
+    dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur),
+    scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext),
+    scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext),
+    scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext),
+    roundGlobeHighlightTexture: generateTextureFromContext(
+      renderer,
+      contexts.roundGlobeHighlightContext,
+    ),
+    catGlobeHighlightTexture: generateTextureFromContext(
+      renderer,
+      contexts.catGlobeHighlightContext,
+    ),
+  };
+}
 
 /**
  * Destroys all shared graphics contexts.
  */
-export const destroySharedContexts = (contexts: SharedContexts) => {
+export function destroySharedContexts(contexts: SharedContexts): void {
   contexts.scleraFillContext.destroy();
   contexts.scleraMaskContext.destroy();
   contexts.scleraOutlineContext.destroy();
@@ -296,16 +301,16 @@ export const destroySharedContexts = (contexts: SharedContexts) => {
   contexts.roundPupilContext.destroy();
   contexts.catPupilContext.destroy();
   contexts.highlightContext.destroy();
-};
+}
 
 /**
  * Destroys all shared textures.
  */
-export const destroySharedTextures = (textures: SharedTextures) => {
+export function destroySharedTextures(textures: SharedTextures): void {
   textures.dropShadowTexture.destroy(true);
   textures.scleraFillTexture.destroy(true);
   textures.scleraOutlineTexture.destroy(true);
   textures.scleraShadowTexture.destroy(true);
   textures.roundGlobeHighlightTexture.destroy(true);
   textures.catGlobeHighlightTexture.destroy(true);
-};
+}

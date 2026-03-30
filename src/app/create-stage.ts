@@ -17,7 +17,7 @@ export interface Stage {
 /**
  * Creates the stage container with backdrop.
  */
-export const createStage = ({ worldBounds, backgroundColor }: CreateStageOptions): Stage => {
+export function createStage({ worldBounds, backgroundColor }: CreateStageOptions): Stage {
   const world = new Container();
   const backdrop = new Graphics();
 
@@ -40,4 +40,4 @@ export const createStage = ({ worldBounds, backgroundColor }: CreateStageOptions
       backdrop.clear().rect(0, 0, worldBounds.width, worldBounds.height).fill({ color });
     },
   };
-};
+}

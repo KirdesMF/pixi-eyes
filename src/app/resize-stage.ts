@@ -16,11 +16,11 @@ export interface ResizeHandler {
 /**
  * Creates a resize handler for the stage.
  */
-export const createResizeHandler = ({
+export function createResizeHandler({
   worldBounds,
   mountNode,
   onResize,
-}: ResizeStageOptions): ResizeHandler => {
+}: ResizeStageOptions): ResizeHandler {
   const resizeObserver = new ResizeObserver(() => {
     resize();
   });
@@ -39,4 +39,4 @@ export const createResizeHandler = ({
       resizeObserver.disconnect();
     },
   };
-};
+}

@@ -24,12 +24,12 @@ export interface MouseTracking {
 /**
  * Creates a mouse tracking instance.
  */
-export const createMouseTracking = (
+export function createMouseTracking(
   canvas: HTMLCanvasElement,
   callbacks: MouseTrackingCallbacks,
   initialX: number,
   initialY: number,
-): MouseTracking => {
+): MouseTracking {
   const state: MouseTrackingState = {
     x: initialX,
     y: initialY,
@@ -82,4 +82,4 @@ export const createMouseTracking = (
       canvas.removeEventListener("pointerleave", handlePointerLeave);
     },
   };
-};
+}
