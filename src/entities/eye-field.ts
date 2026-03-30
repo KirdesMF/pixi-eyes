@@ -1,10 +1,4 @@
-import {
-  Container,
-  Graphics,
-  Rectangle,
-  Sprite,
-  type Renderer,
-} from "pixi.js";
+import { Container, Graphics, Rectangle, Sprite, type Renderer } from "pixi.js";
 
 export interface EyeFieldMetrics {
   visibleCount: number;
@@ -47,12 +41,7 @@ import {
   CAT_PUPIL_MORPH_RADIUS_FACTOR,
   CAT_PUPIL_MORPH_RADIUS_MIN,
 } from "./rendering";
-import {
-  packEyePositions,
-  resolvePackedRadii,
-  resolveEyeType,
-  staggerDelay,
-} from "./layout";
+import { packEyePositions, resolvePackedRadii, resolveEyeType, staggerDelay } from "./layout";
 
 interface EyeFieldOptions {
   count: number;

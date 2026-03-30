@@ -3,8 +3,7 @@
 export const clamp = (value: number, minValue: number, maxValue: number): number =>
   Math.max(minValue, Math.min(value, maxValue));
 
-export const lerp = (start: number, end: number, t: number): number =>
-  start + (end - start) * t;
+export const lerp = (start: number, end: number, t: number): number => start + (end - start) * t;
 
 export const remap01 = (value: number, start: number, end: number): number =>
   clamp((value - start) / Math.max(end - start, 0.001), 0, 1);

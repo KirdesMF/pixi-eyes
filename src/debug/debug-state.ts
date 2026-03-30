@@ -32,7 +32,9 @@ export const writeStoredSettings = (settings: Record<string, number | string>): 
 /**
  * Creates default settings from control definitions.
  */
-export const createDefaultSettings = (controls: readonly ControlDefinition[]): Record<string, number | string> => {
+export const createDefaultSettings = (
+  controls: readonly ControlDefinition[],
+): Record<string, number | string> => {
   const result: Record<string, number | string> = {};
   for (const control of controls) {
     result[control.id] = control.default;

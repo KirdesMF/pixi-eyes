@@ -1,7 +1,12 @@
 // Main entry point - orchestrates app initialization
 
 import { createControlBindings, renderAllSections } from "./debug/create-controls";
-import { createDefaultSettings, loadSettings, readStoredSettings, writeStoredSettings } from "./debug/debug-state";
+import {
+  createDefaultSettings,
+  loadSettings,
+  readStoredSettings,
+  writeStoredSettings,
+} from "./debug/debug-state";
 import { createHeroScene } from "./scenes/hero-scene";
 import { CONTROL_DEFINITIONS } from "./controls";
 
@@ -132,7 +137,11 @@ const getSceneConfig = () => {
     initialCount: toNum(s["instance-count"]),
     initialLayoutShape: String(s["layout-shape"]) as "circle" | "square" | "triangle",
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
-    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
     initialScrollFallEnterTopFactor: toNum(s["scroll-fall-enter-top-factor"]),
     initialScrollFallExitTopFactor: toNum(s["scroll-fall-exit-top-factor"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
@@ -142,7 +151,22 @@ const getSceneConfig = () => {
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
     initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
     initialClickRepulseStrength: toNum(s["click-repulse-strength"]),
-    initialClickRepulseEase: String(s["click-repulse-ease"]) as "smoothstep" | "linear" | "in-sine" | "out-sine" | "in-out-sine" | "in-quad" | "out-quad" | "in-out-quad" | "in-cubic" | "out-cubic" | "in-out-cubic" | "in-back" | "out-back" | "in-out-back" | "out-elastic",
+    initialClickRepulseEase: String(s["click-repulse-ease"]) as
+      | "smoothstep"
+      | "linear"
+      | "in-sine"
+      | "out-sine"
+      | "in-out-sine"
+      | "in-quad"
+      | "out-quad"
+      | "in-out-quad"
+      | "in-cubic"
+      | "out-cubic"
+      | "in-out-cubic"
+      | "in-back"
+      | "out-back"
+      | "in-out-back"
+      | "out-elastic",
     initialStaggerSeconds: toNum(s["stagger-seconds"]),
     initialShadowOpacity: toNum(s["shadow-opacity"]),
     initialRoundInnerShadowColor: toHex(s["round-inner-shadow-color"]),
@@ -182,16 +206,32 @@ const getSceneConfig = () => {
     initialCatBlinkHoldDuration: toNum(s["cat-blink-hold-duration"]),
     initialCatBlinkOutDuration: toNum(s["cat-blink-out-duration"]),
     initialCatBlinkSideDelay: toNum(s["cat-blink-side-delay"]),
-    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
-    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
+    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
     initialBackgroundColor: toHex(s["background-color"]),
     initialFocusScale: toNum(s["focus-scale"]),
     initialFocusUpDuration: toNum(s["focus-up-duration"]),
     initialFocusDownDuration: toNum(s["focus-down-duration"]),
     initialFocusMinDelay: toNum(s["focus-min-delay"]),
     initialFocusMaxDelay: toNum(s["focus-max-delay"]),
-    initialFocusEaseUp: String(s["focus-ease-up"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
-    initialFocusEaseDown: String(s["focus-ease-down"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialFocusEaseUp: String(s["focus-ease-up"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
+    initialFocusEaseDown: String(s["focus-ease-down"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
   };
 };
 

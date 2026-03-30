@@ -39,10 +39,7 @@ export const clampInput = (
 /**
  * Renders a single control as HTML string.
  */
-export const renderControl = (
-  control: ControlDefinition,
-  value: number | string,
-): string => {
+export const renderControl = (control: ControlDefinition, value: number | string): string => {
   const { id, label, type, min, max, step, default: def, options } = control;
 
   if (type === "number") {
@@ -227,7 +224,12 @@ export const createControlBindings = (
         );
       } else {
         unbinds.push(
-          bindSelectInput(id, (v) => sanitizeFocusEase(v, "out-cubic"), scene, updateStoredSettings),
+          bindSelectInput(
+            id,
+            (v) => sanitizeFocusEase(v, "out-cubic"),
+            scene,
+            updateStoredSettings,
+          ),
         );
       }
     }
