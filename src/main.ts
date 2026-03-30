@@ -96,27 +96,8 @@ function setJsonStatus(message: string): void {
   jsonStatus.textContent = message;
 }
 
-async function fallbackCopyText(value: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(value);
-  } catch {
-    // Last resort: create temporary textarea and copy
-    const textarea = document.createElement("textarea");
-    textarea.value = value;
-    textarea.style.cssText = "position:fixed;opacity:0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand("copy");
-    } catch {
-      // Copy failed, but we've done everything possible
-    }
-    textarea.remove();
-  }
-}
-
 async function copySettingsJson(): Promise<void> {
-  await fallbackCopyText(serializeSettings());
+  await navigator.clipboard.writeText(serializeSettings());
   setJsonStatus("Copied JSON");
 }
 
