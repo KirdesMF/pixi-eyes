@@ -94,7 +94,7 @@ export interface PackedPosition {
   r: number;
 }
 
-export const packEyePositions = (
+export function packEyePositions(
   radii: number[],
   clusterRadius: number,
   attempts: number,
@@ -102,7 +102,7 @@ export const packEyePositions = (
   radialExponent: number,
   eyeSpiralOffset: number,
   shape: LayoutShapeName,
-): PackedPosition[] => {
+): PackedPosition[] {
   const placed: PackedPosition[] = [];
   const safeClusterRadius = Math.max(clusterRadius, 0);
   const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 512));
@@ -161,7 +161,7 @@ export const packEyePositions = (
   }
 
   return placed;
-};
+}
 
 export function resolveEyeType(index: number, count: number, catMix: number): "cat" | "round" {
   return hash01(index * 2.187 + count * 0.713) < Math.max(0, Math.min(catMix, 1)) ? "cat" : "round";
