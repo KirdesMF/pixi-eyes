@@ -9,7 +9,7 @@ import { createHeroScene } from "./scenes/hero-scene";
 import { CONTROL_DEFINITIONS, SECTIONS } from "./controls";
 
 const ACTION_BUTTON_CLASS =
-  "inline-flex h-[36px] items-center justify-center rounded-xl border border-black bg-black px-3 text-xs font-semibold uppercase text-white transition hover:bg-black/85";
+  "inline-flex h-9 items-center justify-center rounded-xl border border-black bg-black px-3 text-xs font-semibold uppercase text-white transition hover:bg-black/85";
 
 // Get mount nodes
 const appNode = document.querySelector<HTMLDivElement>("#app");
@@ -44,18 +44,18 @@ function renderControl(control: typeof CONTROL_DEFINITIONS[number], value: numbe
   if (type === "number") {
     const displayValue = getNumberDisplayValue(value, step, def);
     return `
-      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
-        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
-        <input id="${id}" class="h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-right text-sm text-black outline-none transition focus:border-black" type="number" min="${min}" max="${max}" step="${step}" value="${displayValue}" />
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-2xl border border-black/10 bg-black/5 px-3 py-2 transition hover:border-black/20">
+        <span class="text-xs font-semibold uppercase tracking-tight text-black/55">${label}</span>
+        <input id="${id}" class="h-8 w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-right text-sm text-black outline-none transition focus:border-black" type="number" min="${min}" max="${max}" step="${step}" value="${displayValue}" />
       </label>
     `;
   }
 
   if (type === "color") {
     return `
-      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
-        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
-        <input id="${id}" class="h-[34px] w-full cursor-pointer rounded-lg border border-black/15 bg-white p-1 outline-none transition focus:border-black" type="color" value="${value || def}" />
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-2xl border border-black/10 bg-black/5 px-3 py-2 transition hover:border-black/20">
+        <span class="text-xs font-semibold uppercase tracking-tight text-black/55">${label}</span>
+        <input id="${id}" class="h-8 w-full cursor-pointer rounded-lg border border-black/15 bg-white p-1 outline-none transition focus:border-black" type="color" value="${value || def}" />
       </label>
     `;
   }
@@ -68,9 +68,9 @@ function renderControl(control: typeof CONTROL_DEFINITIONS[number], value: numbe
       )
       .join("");
     return `
-      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-[20px] border border-black/10 bg-black/[0.03] px-3 py-2 transition hover:border-black/20">
-        <span class="text-[10px] font-semibold uppercase tracking-[0.28em] text-black/55">${label}</span>
-        <select id="${id}" class="h-[34px] w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-sm text-black outline-none transition focus:border-black">${opts}</select>
+      <label class="grid grid-cols-[minmax(0,1fr)_112px] items-center gap-3 rounded-2xl border border-black/10 bg-black/5 px-3 py-2 transition hover:border-black/20">
+        <span class="text-xs font-semibold uppercase tracking-tight text-black/55">${label}</span>
+        <select id="${id}" class="h-8 w-full rounded-lg border border-black/15 bg-white px-2.5 py-1 text-sm text-black outline-none transition focus:border-black">${opts}</select>
       </label>
     `;
   }
@@ -81,7 +81,7 @@ function renderControl(control: typeof CONTROL_DEFINITIONS[number], value: numbe
 function renderSection(section: string, stored: Record<string, number | string>): string {
   const controls = CONTROL_DEFINITIONS.filter((c) => c.section === section);
   const html = controls.map((c) => renderControl(c, stored[c.id] ?? c.default)).join("");
-  return `<div class="grid gap-2"><p class="px-1 text-[10px] font-medium uppercase tracking-[0.34em] text-black/40">${section}</p>${html}</div>`;
+  return `<div class="grid gap-2"><p class="px-1 text-xs font-medium uppercase tracking-wider text-black/40">${section}</p>${html}</div>`;
 }
 
 function renderAllSections(stored: Record<string, number | string>): string {
@@ -98,18 +98,18 @@ appNode.innerHTML = `
         <div class="relative flex h-full flex-col">
           <div class="mb-4 flex items-start justify-between border-b border-black/10 pb-4">
             <div>
-              <p class="text-[10px] uppercase tracking-[0.42em] text-black/35">Pixi Eyes</p>
-              <h1 class="mt-2 text-[28px] font-medium tracking-[-0.08em] text-black">Settings</h1>
+              <p class="text-xs uppercase tracking-widest text-black/35">Pixi Eyes</p>
+              <h1 class="mt-2 text-3xl font-medium tracking-tight text-black">Settings</h1>
             </div>
-            <span class="rounded-full bg-black px-2.5 py-1 text-[10px] uppercase tracking-tight text-white">Live</span>
+            <span class="rounded-full bg-black px-2.5 py-1 text-xs uppercase tracking-tight text-white">Live</span>
           </div>
           <dl class="mb-4 grid grid-cols-2 gap-3">
-            <div class="rounded-[20px] border border-black/10 bg-black px-3 py-3 text-white">
-              <dt class="text-[10px] uppercase tracking-[0.28em] text-white/45">FPS</dt>
-              <dd id="fps-value" class="mt-2 text-3xl font-medium  text-white">0</dd>
+            <div class="rounded-2xl border border-black/10 bg-black px-3 py-3 text-white">
+              <dt class="text-xs uppercase tracking-tight text-white/45">FPS</dt>
+              <dd id="fps-value" class="mt-2 text-3xl font-medium text-white">0</dd>
             </div>
-            <div class="rounded-[20px] border border-black/10 bg-black/6 px-3 py-3">
-              <dt class="text-[10px] uppercase tracking-tight text-black/45">Visible</dt>
+            <div class="rounded-2xl border border-black/10 bg-black/5 px-3 py-3">
+              <dt class="text-xs uppercase tracking-tight text-black/45">Visible</dt>
               <dd id="visible-value" class="mt-2 text-3xl font-medium text-black">0</dd>
             </div>
           </dl>
@@ -118,13 +118,13 @@ appNode.innerHTML = `
               <button id="copy-json-button" class="${ACTION_BUTTON_CLASS}" type="button">Copy JSON</button>
               <button id="download-json-button" class="${ACTION_BUTTON_CLASS}" type="button">Download</button>
             </div>
-            <p id="json-status" class="px-1 text-[10px] uppercase text-black/45">Export current settings</p>
+            <p id="json-status" class="px-1 text-xs uppercase text-black/45">Export current settings</p>
           </div>
           <div class="grid flex-1 content-start gap-4 overflow-y-auto pr-1">${sectionsHtml}</div>
         </div>
       </aside>
       <section class="overflow-hidden rounded-2xl border border-white/20 bg-black p-3">
-        <div id="pixi-stage" class="h-[52svh] min-h-110] overflow-hidden rounded-2xl border border-white/20 bg-white sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-190"></div>
+        <div id="pixi-stage" class="h-[52svh] min-h-[110px] overflow-hidden rounded-2xl border border-white/20 bg-white sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-[190px]"></div>
       </section>
     </section>
     <div aria-hidden="true" class="h-[140svh]"></div>
