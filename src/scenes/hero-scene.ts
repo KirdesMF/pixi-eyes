@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
-import { createEyeField } from "../entities/eye-field";
+import { createEyeField } from "../eye/eye-field";
 import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "../eye/eye-types";
 
 interface MetricsSnapshot {

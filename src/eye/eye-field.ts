@@ -90,7 +90,7 @@ import {
   DEFAULT_FOCUS_EASE_UP,
   DEFAULT_FOCUS_EASE_DOWN,
 } from "./eye-config";
-import { packEyePositions, resolvePackedRadii, resolveEyeType, staggerDelay } from "../entities/layout";
+import { packEyePositions, resolvePackedRadii, resolveEyeType, staggerDelay } from "./layout";
 import { createEyeInstance, resolveScaleInProgress } from "./eye-factory";
 import { startLayoutTransition, applyStaticEyeSettings, updateSingleEye } from "./eye-controller";
 import {

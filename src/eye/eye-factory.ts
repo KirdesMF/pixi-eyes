@@ -18,7 +18,7 @@ import {
 import { drawCatPupil } from "./render/cat-eye-view";
 import { drawCatBlinkBottomLid, drawCatBlinkSideLid } from "./behaviors/eye-blink";
 import { hash01, smoothstep } from "../shared/math";
-import { staggerDelay } from "../entities/layout";
+import { staggerDelay } from "./layout";
 
 export function createEyeInstance(
   contexts: SharedContexts,
