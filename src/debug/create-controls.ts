@@ -31,8 +31,11 @@ export function clampInput(
 ): number {
   const rawValue = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : min;
   const clamped = Math.min(Math.max(rawValue, min), max);
-  input.value =
-    typeof fractionDigits === "number" ? clamped.toFixed(fractionDigits) : String(clamped);
+  if (typeof fractionDigits === "number") {
+    input.value = clamped.toFixed(fractionDigits);
+  } else {
+    input.value = String(clamped);
+  }
   return clamped;
 }
 
@@ -43,14 +46,7 @@ export function renderControl(control: ControlDefinition, value: number | string
   const { id, label, type, min, max, step, default: def, options } = control;
 
   if (type === "number") {
-    const displayValue =
-      typeof value === "number" && typeof step === "number"
-        ? Number.isFinite(value)
-          ? step < 1
-            ? value.toFixed(2)
-            : String(value)
-          : String(def)
-        : String(def);
+    const displayValue = getNumberDisplayValue(value, step, def);
     return `
       <label class="${CONTROL_ROW_CLASS}">
         <span class="${LABEL_CLASS}">${label}</span>
@@ -84,6 +80,23 @@ export function renderControl(control: ControlDefinition, value: number | string
   }
 
   return "";
+}
+
+function getNumberDisplayValue(
+  value: number | string,
+  step: number | undefined,
+  def: number | string,
+): string {
+  if (typeof value !== "number" || typeof step !== "number") {
+    return String(def);
+  }
+  if (!Number.isFinite(value)) {
+    return String(def);
+  }
+  if (step < 1) {
+    return value.toFixed(2);
+  }
+  return String(value);
 }
 
 /**
@@ -201,37 +214,23 @@ export function createControlBindings(
 ): ControlBindings {
   const unbinds: Array<() => void> = [];
 
+  const SANITIZER_BY_ID: Record<string, (v: string) => string> = {
+    "layout-shape": (v) => sanitizeLayoutShape(v, "circle"),
+    "click-repulse-ease": (v) => sanitizeClickRepulseEase(v, "out-elastic"),
+  };
+
   for (const control of CONTROL_DEFINITIONS) {
     const { id, type, min = 0, max = 100, fractionDigits } = control;
 
     if (type === "number") {
       unbinds.push(bindNumberInput(id, min, max, fractionDigits, scene, updateStoredSettings));
-    } else if (type === "color") {
+    }
+    if (type === "color") {
       unbinds.push(bindColorInput(id, scene, updateStoredSettings));
-    } else if (type === "select") {
-      if (id === "layout-shape") {
-        unbinds.push(
-          bindSelectInput(id, (v) => sanitizeLayoutShape(v, "circle"), scene, updateStoredSettings),
-        );
-      } else if (id === "click-repulse-ease") {
-        unbinds.push(
-          bindSelectInput(
-            id,
-            (v) => sanitizeClickRepulseEase(v, "out-elastic"),
-            scene,
-            updateStoredSettings,
-          ),
-        );
-      } else {
-        unbinds.push(
-          bindSelectInput(
-            id,
-            (v) => sanitizeFocusEase(v, "out-cubic"),
-            scene,
-            updateStoredSettings,
-          ),
-        );
-      }
+    }
+    if (type === "select") {
+      const sanitize = SANITIZER_BY_ID[id] ?? ((v: string) => sanitizeFocusEase(v, "out-cubic"));
+      unbinds.push(bindSelectInput(id, sanitize, scene, updateStoredSettings));
     }
   }
 
