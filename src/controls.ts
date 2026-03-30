@@ -1,6 +1,6 @@
 import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./eye/eye-types";
 
-export interface ControlDefinition {
+export type ControlDefinition = {
   id: string;
   label: string;
   type: "number" | "color" | "select";
@@ -11,7 +11,7 @@ export interface ControlDefinition {
   default: number | string;
   options?: Array<{ label: string; value: string }>;
   section: string;
-}
+};
 
 export const EASE_OPTIONS: Array<{ label: string; value: FocusEaseName }> = [
   { label: "Out Cubic", value: "out-cubic" },

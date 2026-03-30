@@ -2,16 +2,16 @@
 
 import type { Rectangle } from "pixi.js";
 
-export interface ResizeStageOptions {
+export type ResizeStageOptions = {
   worldBounds: Rectangle;
   mountNode: HTMLElement;
   onResize: (width: number, height: number) => void;
-}
+};
 
-export interface ResizeHandler {
+export type ResizeHandler = {
   resize: () => void;
   destroy: () => void;
-}
+};
 
 /**
  * Creates a resize handler for the stage.

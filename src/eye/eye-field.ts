@@ -29,7 +29,7 @@ interface EyeFieldOptions {
   worldBounds: Rectangle;
 }
 
-export interface EyeField {
+export type EyeField = {
   root: Container;
   layout: (width: number, height: number) => void;
   syncCount: (nextCount: number) => void;

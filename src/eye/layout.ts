@@ -90,11 +90,11 @@ function shapeBoundaryDistance(shape: LayoutShapeName, angle: number, extent: nu
   return Number.isFinite(bestDistance) ? bestDistance : safeExtent;
 };
 
-export interface PackedPosition {
+export type PackedPosition = {
   x: number;
   y: number;
   r: number;
-}
+};
 
 export function packEyePositions(
   radii: number[],

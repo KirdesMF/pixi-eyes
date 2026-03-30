@@ -1,17 +1,17 @@
 // Mouse/pointer tracking for eyes
 
-export interface MouseTrackingState {
+export type MouseTrackingState = {
   x: number;
   y: number;
   isInside: boolean;
-}
+};
 
-export interface MouseTrackingCallbacks {
+export type MouseTrackingCallbacks = {
   onPointerUpdate: (x: number, y: number, isInside: boolean) => void;
   onPointerDown: (x: number, y: number) => void;
-}
+};
 
-export interface MouseTracking {
+export type MouseTracking = {
   state: MouseTrackingState;
   updatePointerFromEvent: (event: PointerEvent) => void;
   handlePointerMove: (event: PointerEvent) => void;
@@ -19,7 +19,7 @@ export interface MouseTracking {
   handlePointerDown: (event: PointerEvent) => void;
   handlePointerLeave: () => void;
   destroy: () => void;
-}
+};
 
 /**
  * Creates a mouse tracking instance.

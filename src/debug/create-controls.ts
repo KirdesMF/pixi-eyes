@@ -16,9 +16,9 @@ import {
   type ControlDefinition,
 } from "../controls";
 
-export interface ControlBindings {
+export type ControlBindings = {
   destroy: () => void;
-}
+};
 
 /**
  * Clamps an input value between min and max.

@@ -2,17 +2,17 @@
 
 import { Container, Graphics, Rectangle } from "pixi.js";
 
-export interface CreateStageOptions {
+export type CreateStageOptions = {
   worldBounds: Rectangle;
   backgroundColor: number;
-}
+};
 
-export interface Stage {
+export type Stage = {
   world: Container;
   backdrop: Graphics;
   worldBounds: Rectangle;
   setBackgroundColor: (color: number) => void;
-}
+};
 
 /**
  * Creates the stage container with backdrop.

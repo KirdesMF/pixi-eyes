@@ -1,5 +1,3 @@
-// Main entry point - orchestrates app initialization
-
 import { createControlBindings, renderAllSections } from "./debug/create-controls";
 import {
   createDefaultSettings,
@@ -222,7 +220,7 @@ function getSceneConfig() {
       | "out-sine"
       | "in-out-sine",
   };
-};
+}
 
 // Initialize scene
 const sceneConfig = getSceneConfig();
@@ -239,9 +237,7 @@ const scene = await createHeroScene({
 writeStoredSettings(settingsState);
 
 // Setup JSON export buttons
-copyJsonButton.addEventListener("click", () => {
-  void copySettingsJson();
-});
+copyJsonButton.addEventListener("click", () => copySettingsJson);
 downloadJsonButton.addEventListener("click", downloadSettingsJson);
 
 // Setup control bindings

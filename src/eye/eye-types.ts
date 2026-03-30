@@ -26,7 +26,7 @@ export type ClickRepulseEaseName =
 /**
  * Configuration for an eye field instance.
  */
-export interface EyeFieldConfig {
+export type EyeFieldConfig = {
   layoutShape?: LayoutShapeName;
   layoutTransitionDuration?: number;
   layoutTransitionEase?: FocusEaseName;
@@ -91,6 +91,6 @@ export interface EyeFieldConfig {
 /**
  * Metrics returned by eye field update.
  */
-export interface EyeFieldMetrics {
+export type EyeFieldMetrics = {
   visibleCount: number;
-}
+};

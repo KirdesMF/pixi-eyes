@@ -4,7 +4,7 @@ import { Container, Graphics, Sprite } from "pixi.js";
 
 import type { EyeType, LayoutShapeName, FocusEaseName, ClickRepulseEaseName } from "./eye-types";
 
-export interface EyeInstance {
+export type EyeInstance = {
   type: EyeType;
   root: Container;
   dropShadow: Sprite;
@@ -75,9 +75,9 @@ export interface EyeInstance {
   focusDelayMix: number;
   focusCycleOffset: number;
   focusPulseScale: number;
-}
+};
 
-export interface EyeFieldRuntime {
+export type EyeFieldRuntime = {
   count: number;
   clusterRadius: number;
   layoutShape: LayoutShapeName;

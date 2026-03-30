@@ -2,12 +2,12 @@
 
 import { Application } from "pixi.js";
 
-export interface CreateAppOptions {
+export type CreateAppOptions = {
   mountNode: HTMLElement;
   resolution?: number;
   antialias?: boolean;
   backgroundAlpha?: number;
-}
+};
 
 /**
  * Creates and initializes a Pixi Application.

@@ -57,7 +57,7 @@ export {
 /**
  * Shared graphics contexts for eye rendering.
  */
-export interface SharedContexts {
+export type SharedContexts = {
   scleraFillContext: GraphicsContext;
   scleraMaskContext: GraphicsContext;
   scleraOutlineContext: GraphicsContext;
@@ -69,19 +69,19 @@ export interface SharedContexts {
   roundPupilContext: GraphicsContext;
   catPupilContext: GraphicsContext;
   highlightContext: GraphicsContext;
-}
+};
 
 /**
  * Shared textures for eye rendering.
  */
-export interface SharedTextures {
+export type SharedTextures = {
   dropShadowTexture: ReturnType<Renderer["generateTexture"]>;
   scleraFillTexture: ReturnType<Renderer["generateTexture"]>;
   scleraOutlineTexture: ReturnType<Renderer["generateTexture"]>;
   scleraShadowTexture: ReturnType<Renderer["generateTexture"]>;
   roundGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
   catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
-}
+};
 
 function shadowEdgePoint(sign: number): { x: number; y: number } {
   const offset = (SHADOW_EDGE_OFFSET_DEGREES * Math.PI) / 180;
