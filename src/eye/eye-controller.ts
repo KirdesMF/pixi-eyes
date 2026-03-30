@@ -12,6 +12,7 @@ import {
   CAT_PUPIL_MORPH_RADIUS_MIN,
 } from "./eye-config";
 import { updateScrollFallState } from "./behaviors/eye-fall";
+import { updateFloatingBehavior } from "./behaviors/eye-floating";
 import { resolveScaleInProgress } from "./eye-factory";
 import { totalOffset, sampleEyeSharedAttentionLook, pupilFollowSpeed } from "./behaviors/eye-tracking";
 import { applyHumanPupilAppearance, updateHumanEyeDeformation, updateHumanEyeFocusPulse } from "./render/human-eye-view";
@@ -103,6 +104,7 @@ export function updateSingleEye(
   const eyeSeconds = dtSeconds;
   const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
   updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
+  updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
   const squashScaleX =
     eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
   const squashScaleY =
