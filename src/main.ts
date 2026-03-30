@@ -1,4 +1,3 @@
-import "./style.css";
 import { createHeroScene } from "./scenes/hero-scene";
 import {
   CONTROL_DEFINITIONS,
@@ -30,7 +29,8 @@ const hexToNumber = (value: string) => Number.parseInt(value.slice(1), 16);
 const clampInput = (input: HTMLInputElement, min: number, max: number, fractionDigits?: number) => {
   const rawValue = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : min;
   const clamped = Math.min(Math.max(rawValue, min), max);
-  input.value = typeof fractionDigits === "number" ? clamped.toFixed(fractionDigits) : String(clamped);
+  input.value =
+    typeof fractionDigits === "number" ? clamped.toFixed(fractionDigits) : String(clamped);
   return clamped;
 };
 
@@ -51,13 +51,21 @@ const writeStoredSettings = (settings: Record<string, number | string>) => {
   }
 };
 
-const renderControl = (control: typeof CONTROL_DEFINITIONS[number], value: number | string): string => {
+const renderControl = (
+  control: (typeof CONTROL_DEFINITIONS)[number],
+  value: number | string,
+): string => {
   const { id, label, type, min, max, step, default: def, options } = control;
 
   if (type === "number") {
-    const displayValue = typeof value === "number" && typeof step === "number"
-      ? Number.isFinite(value) ? (step < 1 ? value.toFixed(2) : String(value)) : String(def)
-      : String(def);
+    const displayValue =
+      typeof value === "number" && typeof step === "number"
+        ? Number.isFinite(value)
+          ? step < 1
+            ? value.toFixed(2)
+            : String(value)
+          : String(def)
+        : String(def);
     return `
       <label class="${CONTROL_ROW_CLASS}">
         <span class="${LABEL_CLASS}">${label}</span>
@@ -76,7 +84,12 @@ const renderControl = (control: typeof CONTROL_DEFINITIONS[number], value: numbe
   }
 
   if (type === "select" && options) {
-    const opts = options.map((o) => `<option value="${o.value}"${o.value === value ? " selected" : ""}>${o.label}</option>`).join("");
+    const opts = options
+      .map(
+        (o) =>
+          `<option value="${o.value}"${o.value === value ? " selected" : ""}>${o.label}</option>`,
+      )
+      .join("");
     return `
       <label class="${CONTROL_ROW_CLASS}">
         <span class="${LABEL_CLASS}">${label}</span>
@@ -104,8 +117,8 @@ const sectionsHtml = SECTIONS.map((section) => renderSection(section, storedSett
 
 appNode.innerHTML = `
   <main class="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_24%),linear-gradient(180deg,#171717_0%,#000000_100%)] px-3 py-3 sm:px-4 sm:py-4 lg:px-6">
-    <section class="mx-auto grid max-w-[1500px] gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <aside class="relative overflow-hidden rounded-[32px] border border-white/20 bg-white p-4 text-black shadow-[0_34px_120px_rgba(0,0,0,0.42)] sm:p-5 lg:sticky lg:top-6 lg:h-[calc(100svh-3rem)]">
+    <section class="mx-auto grid max-w-375 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <aside class="relative overflow-hidden rounded-2xl border border-white/20 bg-white p-4 text-black shadow-[0_34px_120px_rgba(0,0,0,0.42)] sm:p-5 lg:sticky lg:top-6 lg:h-[calc(100svh-3rem)]">
         <div class="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_left,rgba(0,0,0,0.08),transparent_70%)]"></div>
         <div class="relative flex h-full flex-col">
           <div class="mb-4 flex items-start justify-between border-b border-black/10 pb-4">
@@ -120,7 +133,7 @@ appNode.innerHTML = `
               <dt class="text-[10px] uppercase tracking-[0.28em] text-white/45">FPS</dt>
               <dd id="fps-value" class="mt-2 text-3xl font-medium tracking-[-0.08em] text-white">0</dd>
             </div>
-            <div class="rounded-[20px] border border-black/10 bg-black/[0.06] px-3 py-3">
+            <div class="rounded-[20px] border border-black/10 bg-black/6 px-3 py-3">
               <dt class="text-[10px] uppercase tracking-[0.28em] text-black/45">Visible</dt>
               <dd id="visible-value" class="mt-2 text-3xl font-medium tracking-[-0.08em] text-black">0</dd>
             </div>
@@ -135,16 +148,15 @@ appNode.innerHTML = `
           <div class="grid flex-1 content-start gap-4 overflow-y-auto pr-1">${sectionsHtml}</div>
         </div>
       </aside>
-      <section class="overflow-hidden rounded-[32px] border border-white/20 bg-black p-3 shadow-[0_34px_120px_rgba(0,0,0,0.42)]">
-        <div id="pixi-stage" class="h-[52svh] min-h-[440px] overflow-hidden rounded-[24px] border border-white/20 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-[760px]"></div>
+      <section class="overflow-hidden rounded-2xl border border-white/20 bg-black p-3 shadow-[0_34px_120px_rgba(0,0,0,0.42)]">
+        <div id="pixi-stage" class="h-[52svh] min-h-110] overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-190"></div>
       </section>
     </section>
     <div aria-hidden="true" class="h-[140svh]"></div>
   </main>
 `;
 
-const getInput = <T extends Element>(id: string): T | null =>
-  document.querySelector<T>(`#${id}`);
+const getInput = <T extends Element>(id: string): T | null => document.querySelector<T>(`#${id}`);
 
 const getRequiredInput = <T extends Element>(id: string): T => {
   const el = getInput<T>(id);
@@ -212,7 +224,11 @@ const getSceneConfig = () => {
     initialCount: toNum(s["instance-count"]),
     initialLayoutShape: String(s["layout-shape"]) as "circle" | "square" | "triangle",
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
-    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
     initialScrollFallEnterTopFactor: toNum(s["scroll-fall-enter-top-factor"]),
     initialScrollFallExitTopFactor: toNum(s["scroll-fall-exit-top-factor"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
@@ -222,7 +238,22 @@ const getSceneConfig = () => {
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
     initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
     initialClickRepulseStrength: toNum(s["click-repulse-strength"]),
-    initialClickRepulseEase: String(s["click-repulse-ease"]) as "smoothstep" | "linear" | "in-sine" | "out-sine" | "in-out-sine" | "in-quad" | "out-quad" | "in-out-quad" | "in-cubic" | "out-cubic" | "in-out-cubic" | "in-back" | "out-back" | "in-out-back" | "out-elastic",
+    initialClickRepulseEase: String(s["click-repulse-ease"]) as
+      | "smoothstep"
+      | "linear"
+      | "in-sine"
+      | "out-sine"
+      | "in-out-sine"
+      | "in-quad"
+      | "out-quad"
+      | "in-out-quad"
+      | "in-cubic"
+      | "out-cubic"
+      | "in-out-cubic"
+      | "in-back"
+      | "out-back"
+      | "in-out-back"
+      | "out-elastic",
     initialStaggerSeconds: toNum(s["stagger-seconds"]),
     initialShadowOpacity: toNum(s["shadow-opacity"]),
     initialRoundInnerShadowColor: toHex(s["round-inner-shadow-color"]),
@@ -262,16 +293,32 @@ const getSceneConfig = () => {
     initialCatBlinkHoldDuration: toNum(s["cat-blink-hold-duration"]),
     initialCatBlinkOutDuration: toNum(s["cat-blink-out-duration"]),
     initialCatBlinkSideDelay: toNum(s["cat-blink-side-delay"]),
-    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
-    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
+    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
     initialBackgroundColor: toHex(s["background-color"]),
     initialFocusScale: toNum(s["focus-scale"]),
     initialFocusUpDuration: toNum(s["focus-up-duration"]),
     initialFocusDownDuration: toNum(s["focus-down-duration"]),
     initialFocusMinDelay: toNum(s["focus-min-delay"]),
     initialFocusMaxDelay: toNum(s["focus-max-delay"]),
-    initialFocusEaseUp: String(s["focus-ease-up"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
-    initialFocusEaseDown: String(s["focus-ease-down"]) as "linear" | "out-cubic" | "out-sine" | "in-out-sine",
+    initialFocusEaseUp: String(s["focus-ease-up"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
+    initialFocusEaseDown: String(s["focus-ease-down"]) as
+      | "linear"
+      | "out-cubic"
+      | "out-sine"
+      | "in-out-sine",
   };
 };
 
@@ -294,7 +341,13 @@ copyJsonButton.addEventListener("click", () => {
 
 downloadJsonButton.addEventListener("click", downloadSettingsJson);
 
-const bindNumberInput = (id: string, min: number, max: number, fractionDigits?: number, toScene?: boolean) => {
+const bindNumberInput = (
+  id: string,
+  min: number,
+  max: number,
+  fractionDigits?: number,
+  toScene?: boolean,
+) => {
   const input = getRequiredInput<HTMLInputElement>(id);
   const commit = () => {
     const value = clampInput(input, min, max, fractionDigits);
@@ -305,7 +358,9 @@ const bindNumberInput = (id: string, min: number, max: number, fractionDigits?: 
   };
   input.addEventListener("change", commit);
   input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") commit(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") commit();
+  });
 };
 
 const bindColorInput = (id: string) => {
@@ -314,7 +369,9 @@ const bindColorInput = (id: string) => {
     const value = sanitizeHexColor(input.value, "#000000");
     input.value = value;
     updateStoredSettings({ [id]: value });
-    scene.setConfig({ [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: hexToNumber(value) } as never);
+    scene.setConfig({
+      [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: hexToNumber(value),
+    } as never);
   };
   input.addEventListener("input", commit);
   input.addEventListener("change", commit);
