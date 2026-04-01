@@ -69,10 +69,10 @@ export const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
 
 // Appearance constants
 export const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
-export const DEFAULT_CLICK_REPULSE_RADIUS = 400;
-export const DEFAULT_CLICK_REPULSE_STRENGTH = 40;
-export const CLICK_WAVE_SPEED = 520;
-export const CLICK_WAVE_WIDTH = 90;
+export const DEFAULT_CLICK_REPULSE_RADIUS = 150; // Radius for organic click ripple
+export const DEFAULT_CLICK_REPULSE_STRENGTH = 25; // Max strength at click center
+export const CLICK_RIPPLE_DECAY = 0.5; // Dissipation speed (lower = longer ripple)
+export const CLICK_RIPPLE_SIGMA = 0.03; // Gaussian spread (lower = wider ripple)
 
 // Shadow and appearance constants
 export const DEFAULT_SHADOW_OPACITY = 0.4;

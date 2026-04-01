@@ -1,13 +1,13 @@
 // Eye tracking behavior
 
-import { clamp, lerp, hash01, applyEase, smoothstep } from "../../shared/math";
+import { clamp, lerp, hash01, smoothstep } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
 import {
   MAX_LOOK,
-  CLICK_WAVE_SPEED,
-  CLICK_WAVE_WIDTH,
   MICRO_SACCADE_AMPLITUDE,
   MICRO_SACCADE_DURATION,
+  CLICK_RIPPLE_DECAY,
+  CLICK_RIPPLE_SIGMA,
 } from "../eye-config";
 
 export function microSaccadeOffset(
@@ -118,7 +118,6 @@ export function clickWaveTarget(
     return { x: 0, y: 0 };
   }
 
-  const halfWidth = Math.max(CLICK_WAVE_WIDTH * 0.5, 0.001);
   const maxRadius = Math.max(runtime.clickRepulseRadius, 0);
   const strength = Math.max(runtime.clickRepulseStrength, 0);
 
@@ -140,18 +139,23 @@ export function clickWaveTarget(
     }
 
     const distance = Math.sqrt(distanceSquared);
-    if (distance > maxRadius + halfWidth) {
+    
+    // Gaussian falloff for organic ripple effect
+    // Eyes closer to click point are pushed more
+    const gaussian = Math.exp(-distance * distance * CLICK_RIPPLE_SIGMA);
+    
+    // Time-based decay for dissipation
+    const timeDecay = Math.exp(-wave.elapsed * CLICK_RIPPLE_DECAY);
+    
+    // Only affect eyes within radius
+    if (distance > maxRadius) {
       continue;
     }
-
-    const radius = wave.elapsed * CLICK_WAVE_SPEED;
-    const bandDistance = Math.abs(distance - radius);
-    if (bandDistance > halfWidth) {
-      continue;
-    }
-
-    const t = 1 - bandDistance / halfWidth;
-    const push = Math.max(applyEase(runtime.clickRepulseEase, t), 0) * strength;
+    
+    // Smooth falloff at edge of radius
+    const radiusFalloff = 1 - Math.pow(distance / maxRadius, 2);
+    
+    const push = gaussian * timeDecay * radiusFalloff * strength;
     totalX += (dx / distance) * push;
     totalY += (dy / distance) * push;
   }
@@ -173,8 +177,9 @@ export function totalOffset(eye: EyeInstance): { x: number; y: number } {
   };
 }
 
-export function clickWaveLifetime(radius: number): number {
-  return radius <= 0 ? 0 : (radius + CLICK_WAVE_WIDTH * 0.5) / CLICK_WAVE_SPEED;
+export function clickWaveLifetime(_radius: number): number {
+  // Fixed lifetime for gaussian ripple (dissipates over time)
+  return 2.0; // 2 seconds for full dissipation
 }
 
 export function sampleSharedAttentionTarget(runtime: EyeFieldRuntime): { x: number; y: number } {
