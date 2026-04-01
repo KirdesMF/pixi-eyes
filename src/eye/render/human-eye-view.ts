@@ -64,7 +64,7 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   const pupilY = irisY + pupilOffsetY;
 
   eye.iris.position.set(irisX, irisY);
-  eye.iris.tint = runtime.irisColor;
+  // Note: iris.tint is set in eye-controller.ts for edge iris color effect
   eye.eyeShadow.position.set(0, 0);
   eye.eyeShadow.scale.set(1);
   eye.eyeShadow.rotation = 0;
