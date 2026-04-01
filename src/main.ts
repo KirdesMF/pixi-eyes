@@ -203,6 +203,7 @@ function getSceneConfig() {
     initialMinEyeSize: toNum(s["min-eye-size"]),
     initialMaxEyeSize: toNum(s["max-eye-size"]),
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
+    initialRepulsionPushSpeed: toNum(s["repulsion-push-speed"]),
     initialRepulsionReturnSpeed: toNum(s["repulsion-return-speed"]),
     initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
     initialClickRepulseStrength: toNum(s["click-repulse-strength"]),

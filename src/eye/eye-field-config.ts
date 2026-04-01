@@ -53,6 +53,9 @@ export function updateConfig(
   if (config.repulsionRadius !== undefined) {
     runtime.repulsionRadius = Math.max(0, config.repulsionRadius);
   }
+  if (config.repulsionPushSpeed !== undefined) {
+    runtime.repulsionPushSpeed = Math.max(1, config.repulsionPushSpeed);
+  }
   if (config.repulsionReturnSpeed !== undefined) {
     runtime.repulsionReturnSpeed = Math.max(0.1, config.repulsionReturnSpeed);
   }

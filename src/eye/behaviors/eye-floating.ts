@@ -22,18 +22,17 @@ export function updateFloatingBehavior(
 
     const targetRepel = calculateRepulsionTarget(runtime, eye);
     const waveRepel = clickWaveTarget(runtime, eye);
-    eye.repelX = smoothTowards(
-      eye.repelX,
-      targetRepel.x + waveRepel.x,
-      runtime.repulsionReturnSpeed,
-      dtSeconds,
-    );
-    eye.repelY = smoothTowards(
-      eye.repelY,
-      targetRepel.y + waveRepel.y,
-      runtime.repulsionReturnSpeed,
-      dtSeconds,
-    );
+    const targetX = targetRepel.x + waveRepel.x;
+    const targetY = targetRepel.y + waveRepel.y;
+    
+    // Use different speeds for push vs return
+    // Push (moving away from center): fast, responsive
+    // Return (moving back to center): slow, creates trail effect
+    const isPushing = Math.abs(targetX) > Math.abs(eye.repelX) || Math.abs(targetY) > Math.abs(eye.repelY);
+    const speed = isPushing ? runtime.repulsionPushSpeed : runtime.repulsionReturnSpeed;
+    
+    eye.repelX = smoothTowards(eye.repelX, targetX, speed, dtSeconds);
+    eye.repelY = smoothTowards(eye.repelY, targetY, speed, dtSeconds);
   }
 }
 
