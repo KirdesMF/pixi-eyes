@@ -297,6 +297,17 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     section: "Field",
   },
   {
+    id: "repulsion-return-speed",
+    label: "Return Speed",
+    type: "number",
+    min: 0.5,
+    max: 20,
+    step: 0.5,
+    fractionDigits: 1,
+    default: 3,
+    section: "Motion",
+  },
+  {
     id: "click-repulse-radius",
     label: "Click Radius",
     type: "number",
