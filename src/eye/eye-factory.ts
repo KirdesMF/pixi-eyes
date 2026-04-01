@@ -7,6 +7,7 @@ import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
   SCALE_IN_DURATION,
+  MICRO_SACCADE_FREQUENCY,
 } from "./eye-config";
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
@@ -123,6 +124,11 @@ export function createEyeInstance(
     fallGrounded: false,
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
     focusCycleOffset: hash01(index * 17.413 + count * 2.31),
+    // Micro-saccade initialization
+    microSaccadeTimer: hash01(index * 3.17) * MICRO_SACCADE_FREQUENCY,
+    microSaccadePhase: 0,
+    microSaccadeX: 0,
+    microSaccadeY: 0,
   } satisfies EyeInstance;
 }
 

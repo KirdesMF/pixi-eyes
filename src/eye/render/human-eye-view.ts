@@ -1,6 +1,6 @@
 // Human (round) eye rendering
 
-import { clamp, applyFocusEase } from "../../shared/math";
+import { clamp, smoothstep } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
 import {
   SCLERA_RADIUS,
@@ -97,40 +97,43 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
 }
 
 /**
- * Update pupil scale animation: quick dip down and back (500ms total)
+ * Update pupil scale animation: natural pupil breathing
  * At rest: scale = 1.0 (pupil appears bigger)
- * During animation: dips to 0.65 then returns to 1.0
+ * During animation: dips to 0.70 then returns to 1.0
+ * More natural timing with variable delays
  */
 export function updateHumanPupilScale(
   eye: EyeInstance,
   runtime: EyeFieldRuntime,
   _eyeSeconds: number,
 ): void {
-  // Animation timing (500ms total: 250ms down, 250ms up)
-  const DIP_DURATION = 0.25;
-  const RETURN_DURATION = 0.25;
-  const MIN_DELAY = 2.0;
-  const MAX_DELAY = 4.0;
-  
-  // Calculate animation cycle
+  // Animation timing - more natural variation
+  const DIP_DURATION = 0.3; // Slower dip for more natural look
+  const RETURN_DURATION = 0.4; // Even slower return
+  const MIN_DELAY = 2.5; // Longer minimum delay
+  const MAX_DELAY = 5.0; // Longer maximum delay
+
+  // Calculate animation cycle with smooth transitions
   const delay = MIN_DELAY + eye.focusDelayMix * (MAX_DELAY - MIN_DELAY);
   const cycle = delay + DIP_DURATION + RETURN_DURATION;
   const cycleTime = (runtime.elapsed + eye.focusCycleOffset * cycle) % cycle;
-  
+
   // Determine current phase
   if (cycleTime < delay) {
-    // At rest: full size pupil
-    eye.pupilScale = 1.0;
+    // At rest: full size pupil with subtle pulse
+    const restTime = cycleTime / delay;
+    const subtlePulse = Math.sin(restTime * Math.PI * 2) * 0.02; // ±2% subtle breathing
+    eye.pupilScale = 1.0 + subtlePulse;
   } else if (cycleTime < delay + DIP_DURATION) {
-    // Dipping down
+    // Dipping down - smooth acceleration
     const t = (cycleTime - delay) / DIP_DURATION;
-    const eased = applyFocusEase("out-cubic", t);
-    eye.pupilScale = 1.0 - eased * 0.35; // 1.0 → 0.65
-  } else if (cycleTime < delay + DIP_DURATION + RETURN_DURATION) {
-    // Returning up
+    const eased = smoothstep(t); // Smooth S-curve
+    eye.pupilScale = 1.0 - eased * 0.30; // 1.0 → 0.70
+  } else if (cycleTime < cycle) {
+    // Returning up - smooth deceleration
     const t = (cycleTime - delay - DIP_DURATION) / RETURN_DURATION;
-    const eased = 1 - applyFocusEase("out-cubic", 1 - t); // Invert for smooth return
-    eye.pupilScale = 0.65 + eased * 0.35; // 0.65 → 1.0
+    const eased = smoothstep(t); // Smooth S-curve
+    eye.pupilScale = 0.70 + eased * 0.30; // 0.70 → 1.0
   } else {
     eye.pupilScale = 1.0;
   }

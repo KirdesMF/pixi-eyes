@@ -1,8 +1,52 @@
 // Eye tracking behavior
 
-import { clamp, lerp, hash01, applyEase } from "../../shared/math";
+import { clamp, lerp, hash01, applyEase, smoothstep } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
-import { MAX_LOOK, CLICK_WAVE_SPEED, CLICK_WAVE_WIDTH } from "../eye-config";
+import {
+  MAX_LOOK,
+  CLICK_WAVE_SPEED,
+  CLICK_WAVE_WIDTH,
+  MICRO_SACCADE_AMPLITUDE,
+  MICRO_SACCADE_DURATION,
+} from "../eye-config";
+
+export function microSaccadeOffset(
+  eye: EyeInstance,
+  runtime: EyeFieldRuntime,
+  dtSeconds: number,
+): { x: number; y: number } {
+  // Only apply when tracking is active (mouse in canvas)
+  if (runtime.trackingBlend <= 0.0001) {
+    return { x: 0, y: 0 };
+  }
+
+  // Update micro-saccade timer
+  eye.microSaccadeTimer -= dtSeconds;
+  
+  if (eye.microSaccadeTimer <= 0) {
+    // Start new micro-saccade
+    eye.microSaccadeTimer = MICRO_SACCADE_DURATION;
+    eye.microSaccadePhase = 1; // Active phase
+    
+    // Random direction for this saccade
+    const seed = hash01(eye.focusCycleOffset * 7.31 + runtime.elapsed * 0.17);
+    const angle = seed * Math.PI * 2;
+    eye.microSaccadeX = Math.cos(angle) * MICRO_SACCADE_AMPLITUDE;
+    eye.microSaccadeY = Math.sin(angle) * MICRO_SACCADE_AMPLITUDE;
+  } else if (eye.microSaccadePhase === 1) {
+    // Return to baseline after twitch
+    eye.microSaccadePhase = 0;
+  }
+  
+  // Apply smooth twitch movement
+  const t = eye.microSaccadeTimer / MICRO_SACCADE_DURATION;
+  const twitch = smoothstep(1 - t); // Quick onset, slow decay
+  
+  return {
+    x: eye.microSaccadeX * twitch,
+    y: eye.microSaccadeY * twitch,
+  };
+}
 
 export function parallaxOffset(
   runtime: EyeFieldRuntime,

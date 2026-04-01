@@ -12,6 +12,7 @@ import {
   totalOffset,
   sampleEyeSharedAttentionLook,
   pupilFollowSpeed,
+  microSaccadeOffset,
 } from "./behaviors/eye-tracking";
 import { updateFloatingBehavior } from "./behaviors/eye-floating";
 import { updateScrollFallState } from "./behaviors/eye-fall";
@@ -117,9 +118,12 @@ export function updateSingleEye(
   // Update parallax and repulsion
   updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
 
+  // Get micro-saccade offset for natural eye movement
+  const microSaccade = microSaccadeOffset(eye, runtime, dtSeconds);
+
   const interactionOffset = totalOffset(eye);
-  const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX;
-  const interactionDrawY = eye.y + interactionOffset.y + eye.fallOffsetY;
+  const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX + microSaccade.x;
+  const interactionDrawY = eye.y + interactionOffset.y + eye.fallOffsetY + microSaccade.y;
   eye.root.position.set(interactionDrawX, interactionDrawY);
   eye.root.rotation = (eye.fallRotationDegrees * Math.PI) / 180;
 

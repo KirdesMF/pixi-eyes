@@ -60,6 +60,11 @@ export type EyeInstance = {
   fallGrounded: boolean;
   focusDelayMix: number;
   focusCycleOffset: number;
+  // Micro-saccade state for natural eye movement
+  microSaccadeTimer: number;
+  microSaccadePhase: number;
+  microSaccadeX: number;
+  microSaccadeY: number;
 };
 
 export type EyeFieldRuntime = {

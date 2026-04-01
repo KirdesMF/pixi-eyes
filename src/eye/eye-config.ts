@@ -108,6 +108,11 @@ export const SQUEEZE_SPEED = 12;
 export const PUPIL_INNER_TRAVEL = 6.5;
 export const CIRCLE_KAPPA = 0.5522847498307936;
 
+// Micro-saccade constants for natural eye movement
+export const MICRO_SACCADE_AMPLITUDE = 0.15;
+export const MICRO_SACCADE_FREQUENCY = 0.8;
+export const MICRO_SACCADE_DURATION = 0.08;
+
 // Re-export from eye-assets for convenience
 export {
   HIGHLIGHT_RADIUS,
