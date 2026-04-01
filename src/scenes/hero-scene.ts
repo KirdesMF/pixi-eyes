@@ -13,6 +13,9 @@ interface HeroSceneOptions {
   initialRingInnerRatio: number;
   initialCrossType: CrossType;
   initialStarBranches: number;
+  initialSlitEyeMix: number;
+  initialSlitPupilWidth: number;
+  initialSlitPupilHeight: number;
   initialLayoutTransitionDuration: number;
   initialLayoutTransitionEase: FocusEaseName;
   initialLayoutJitter: number;
@@ -41,6 +44,8 @@ interface HeroSceneOptions {
   initialRoundHighlightRotationDegrees: number;
   initialRoundHighlightOpacity: number;
   initialRoundHighlightColor: number;
+  initialSlitGlobeBaseColor: number;
+  initialSlitMouseColor: number;
   initialBackgroundColor: number;
   mountNode: HTMLElement;
   onMetrics: (metrics: MetricsSnapshot) => void;
@@ -61,6 +66,9 @@ export const createHeroScene = async ({
   initialRingInnerRatio,
   initialCrossType,
   initialStarBranches,
+  initialSlitEyeMix,
+  initialSlitPupilWidth,
+  initialSlitPupilHeight,
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
   initialLayoutJitter,
@@ -89,6 +97,8 @@ export const createHeroScene = async ({
   initialRoundHighlightRotationDegrees,
   initialRoundHighlightOpacity,
   initialRoundHighlightColor,
+  initialSlitGlobeBaseColor,
+  initialSlitMouseColor,
   initialBackgroundColor,
   mountNode,
   onMetrics,
@@ -118,6 +128,9 @@ export const createHeroScene = async ({
     ringInnerRatio: initialRingInnerRatio,
     crossType: initialCrossType,
     starBranches: initialStarBranches,
+    slitEyeMix: initialSlitEyeMix,
+    slitPupilWidth: initialSlitPupilWidth,
+    slitPupilHeight: initialSlitPupilHeight,
     layoutTransitionDuration: initialLayoutTransitionDuration,
     layoutTransitionEase: initialLayoutTransitionEase,
     layoutJitter: initialLayoutJitter,
@@ -146,6 +159,8 @@ export const createHeroScene = async ({
     roundHighlightRotationDegrees: initialRoundHighlightRotationDegrees,
     roundHighlightOpacity: initialRoundHighlightOpacity,
     roundHighlightColor: initialRoundHighlightColor,
+    slitGlobeBaseColor: initialSlitGlobeBaseColor,
+    slitMouseColor: initialSlitMouseColor,
   });
   let pointerX = worldBounds.width * 0.5;
   let pointerY = worldBounds.height * 0.5;
@@ -223,6 +238,9 @@ export const createHeroScene = async ({
       ringInnerRatio?: number;
       crossType?: CrossType;
       starBranches?: number;
+      slitEyeMix?: number;
+      slitPupilWidth?: number;
+      slitPupilHeight?: number;
       layoutTransitionDuration?: number;
       layoutTransitionEase?: FocusEaseName;
       layoutJitter?: number;
@@ -251,6 +269,8 @@ export const createHeroScene = async ({
       roundHighlightRotationDegrees?: number;
       roundHighlightOpacity?: number;
       roundHighlightColor?: number;
+      slitGlobeBaseColor?: number;
+      slitMouseColor?: number;
       backgroundColor?: number;
     }) => {
       if (typeof config.backgroundColor === "number") {

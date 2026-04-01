@@ -9,7 +9,6 @@ import {
   totalOffset,
   sampleEyeSharedAttentionLook,
   pupilFollowSpeed,
-  microSaccadeOffset,
 } from "./behaviors/eye-tracking";
 import { updateFloatingBehavior } from "./behaviors/eye-floating";
 import { resolveScaleInProgress } from "./eye-factory";
@@ -18,6 +17,10 @@ import {
   updateHumanPupilScale,
   updateHumanEyeDeformation,
 } from "./render/human-eye-view";
+import {
+  applySlitEyeAppearance,
+  updateSlitEyeDeformation,
+} from "./render/slit-eye-view";
 
 export function updateLayoutTransition(
   eye: EyeInstance,
@@ -103,8 +106,8 @@ export function updateSingleEye(
   // Update parallax and repulsion
   updateFloatingBehavior(eye, runtime, dtSeconds);
 
-  // Get micro-saccade offset for natural eye movement
-  const microSaccade = microSaccadeOffset(eye, runtime, dtSeconds);
+  // No micro-saccade offset - disabled
+  const microSaccade = { x: 0, y: 0 };
 
   const interactionOffset = totalOffset(eye);
   const interactionDrawX = eye.x + interactionOffset.x + microSaccade.x;
@@ -162,7 +165,12 @@ export function updateSingleEye(
   eye.lookX = smoothTowards(eye.lookX, desiredLook.x, lookSpeed, eyeSeconds);
   eye.lookY = smoothTowards(eye.lookY, desiredLook.y, lookSpeed, eyeSeconds);
 
-  updateHumanEyeDeformation(eye, eyeSeconds);
+  // Update deformation based on eye type
+  if (eye.type === "slit") {
+    updateSlitEyeDeformation(eye, eyeSeconds);
+  } else {
+    updateHumanEyeDeformation(eye, eyeSeconds);
+  }
 
   const shouldThrottleAppearance = eye.lowDetail;
   if (
@@ -176,13 +184,18 @@ export function updateSingleEye(
 
   eye.appearanceAccumulator = 0;
 
-  updateHumanPupilScale(eye, runtime, eyeSeconds);
+  // Update pupil scale animation for human eyes only
+  if (eye.type === "human") {
+    updateHumanPupilScale(eye, runtime, eyeSeconds);
+  }
 
+  // Mouse proximity color effect
   const dx = eye.x - runtime.mouseX;
   const dy = eye.y - runtime.mouseY;
   const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
 
-  const maxDist = runtime.mouseIrisRadius;
+  // Use a larger radius for the color effect (200px instead of mouseIrisRadius)
+  const maxDist = 200; // Larger radius for more visible effect
   const targetProximity = 1 - clamp(distanceToMouse / maxDist, 0, 1);
 
   const decaySpeed = runtime.mouseIrisDecay;
@@ -193,9 +206,19 @@ export function updateSingleEye(
   }
   eye.irisProximity = clamp(eye.irisProximity, 0, 1);
 
-  eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);
-
-  applyHumanPupilAppearance(eye, runtime);
+  // Apply color to appropriate element based on eye type
+  if (eye.type === "slit") {
+    // Slit eye: white globe with different mouse proximity color
+    // Base color is runtime.slitGlobeBaseColor (default white), interpolate to slitMouseColor
+    const newTint = lerpColor(runtime.slitGlobeBaseColor, runtime.slitMouseColor, eye.irisProximity);
+    eye.eyeFill.tint = newTint;
+    console.log("SLIT GLOBE COLOR:", newTint.toString(16));
+    applySlitEyeAppearance(eye, runtime);
+  } else {
+    // Human eye: color the iris
+    eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);
+    applyHumanPupilAppearance(eye, runtime);
+  }
 }
 
 function clampMagnitude(x: number, y: number, maxLength: number): { x: number; y: number } {

@@ -1,8 +1,4 @@
 import { SCLERA_RADIUS, IRIS_RADIUS, PUPIL_RADIUS, HIGHLIGHT_RADIUS } from "../eye-config";
-import {
-  CAT_PUPIL_HALF_WIDTH,
-  CAT_PUPIL_HALF_HEIGHT,
-} from "../eye-assets";
 
 export type CircleShape = {
   cx: number;
@@ -40,33 +36,12 @@ export function buildIris(): CircleShape {
   return { cx: 0, cy: 0, r: IRIS_RADIUS };
 }
 
-export function buildIrisMask(): CircleShape {
-  return { cx: 0, cy: 0, r: IRIS_RADIUS };
-}
-
 export function buildRoundPupil(): CircleShape {
   return { cx: 0, cy: 0, r: PUPIL_RADIUS };
 }
 
 export function buildHighlight(): CircleShape {
   return { cx: 0, cy: 0, r: HIGHLIGHT_RADIUS };
-}
-
-export function buildCatPupilStatic(): BezierCurve[] {
-  return [
-    {
-      start: { x: 0, y: -CAT_PUPIL_HALF_HEIGHT },
-      cp1: { x: CAT_PUPIL_HALF_WIDTH, y: -PUPIL_RADIUS * 0.92 },
-      cp2: { x: CAT_PUPIL_HALF_WIDTH, y: PUPIL_RADIUS * 0.92 },
-      end: { x: 0, y: CAT_PUPIL_HALF_HEIGHT },
-    },
-    {
-      start: { x: 0, y: CAT_PUPIL_HALF_HEIGHT },
-      cp1: { x: -CAT_PUPIL_HALF_WIDTH, y: PUPIL_RADIUS * 0.92 },
-      cp2: { x: -CAT_PUPIL_HALF_WIDTH, y: -PUPIL_RADIUS * 0.92 },
-      end: { x: 0, y: -CAT_PUPIL_HALF_HEIGHT },
-    },
-  ];
 }
 
 export function buildIrisShadow(): BezierCurve {

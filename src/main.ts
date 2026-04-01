@@ -194,6 +194,9 @@ function getSceneConfig() {
     initialRingInnerRatio: toNum(s["ring-inner-ratio"]),
     initialCrossType: String(s["cross-type"]) as "x" | "plus",
     initialStarBranches: toNum(s["star-branches"]),
+    initialSlitEyeMix: toNum(s["slit-eye-mix"]),
+    initialSlitPupilWidth: toNum(s["slit-pupil-width"]),
+    initialSlitPupilHeight: toNum(s["slit-pupil-height"]),
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
     initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
       | "linear"
@@ -226,6 +229,8 @@ function getSceneConfig() {
     initialRoundHighlightRotationDegrees: toNum(s["round-highlight-rotation"]),
     initialRoundHighlightOpacity: toNum(s["round-highlight-opacity"]),
     initialRoundHighlightColor: toHex(s["round-highlight-color"]),
+    initialSlitGlobeBaseColor: toHex(s["slit-globe-base-color"]),
+    initialSlitMouseColor: toHex(s["slit-mouse-color"]),
     initialBackgroundColor: toHex(s["background-color"]),
   };
 }

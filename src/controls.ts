@@ -100,7 +100,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     type: "select",
     default: "circle",
     options: LAYOUT_SHAPE_OPTIONS,
-    section: "Field",
+    section: "Layout",
   },
   {
     id: "ring-inner-ratio",
@@ -111,7 +111,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     step: 0.05,
     fractionDigits: 2,
     default: 0.5,
-    section: "Field",
+    section: "Layout",
   },
   {
     id: "cross-type",
@@ -119,7 +119,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     type: "select",
     default: "x",
     options: CROSS_TYPE_OPTIONS,
-    section: "Field",
+    section: "Layout",
   },
   {
     id: "star-branches",
@@ -130,7 +130,54 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     step: 1,
     fractionDigits: 0,
     default: 5,
-    section: "Field",
+    section: "Layout",
+  },
+  {
+    id: "slit-eye-mix",
+    label: "Slit Mix",
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.05,
+    fractionDigits: 2,
+    default: 0.3,
+    section: "Slit Eye",
+  },
+  {
+    id: "slit-pupil-width",
+    label: "Pupil Width",
+    type: "number",
+    min: 0.01,
+    max: 1.0,
+    step: 0.01,
+    fractionDigits: 2,
+    default: 0.25,
+    section: "Slit Eye",
+  },
+  {
+    id: "slit-pupil-height",
+    label: "Pupil Height",
+    type: "number",
+    min: 0.1,
+    max: 2.0,
+    step: 0.05,
+    fractionDigits: 2,
+    default: 0.8,
+    section: "Slit Eye",
+  },
+  {
+    id: "slit-globe-base-color",
+    label: "Globe Base",
+    type: "color",
+    default: "#ffffff",
+    section: "Slit Eye",
+  },
+  {
+    id: "slit-mouse-color",
+    label: "Mouse Proximity",
+    type: "color",
+    default: "#ff6b6b",
+    section: "Slit Eye",
   },
   {
     id: "layout-transition-duration",
@@ -141,7 +188,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     step: 0.05,
     fractionDigits: 2,
     default: 0.5,
-    section: "Field",
+    section: "Layout",
   },
   {
     id: "layout-transition-ease",
@@ -149,7 +196,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     type: "select",
     default: "linear",
     options: EASE_OPTIONS,
-    section: "Field",
+    section: "Layout",
   },
   {
     id: "layout-jitter",
@@ -517,9 +564,23 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     default: "#ffffff",
     section: "Round Light",
   },
+  {
+    id: "slit-mouse-color",
+    label: "Slit Mouse",
+    type: "color",
+    default: "#ff6b6b",
+    section: "Round Light",
+  },
 ];
 
-export const SECTIONS = ["Field", "Appearance", "Motion", "Round Light"] as const;
+export const SECTIONS = [
+  "Field",
+  "Layout",
+  "Slit Eye",
+  "Appearance",
+  "Motion",
+  "Round Light",
+] as const;
 export type SectionName = (typeof SECTIONS)[number];
 
 export function sanitizeHexColor(value: string | undefined, fallback: string): string {

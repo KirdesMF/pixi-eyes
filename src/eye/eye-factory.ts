@@ -1,19 +1,23 @@
-import { Container, Graphics, Sprite } from "pixi.js";
+import { Container, Sprite } from "pixi.js";
 
 import type { EyeInstance } from "./eye-state";
-import type { SharedContexts, SharedTextures } from "./eye-assets";
+import type { SharedTextures } from "./eye-assets";
 import { SCLERA_RADIUS, DEFAULT_IRIS_COLOR, selectBucket } from "./eye-assets";
 import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
   SCALE_IN_DURATION,
-  MICRO_SACCADE_DURATION,
+  DEFAULT_SLIT_EYE_MIX,
 } from "./eye-config";
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
 
+function resolveEyeType(index: number, count: number, slitEyeMix: number): "human" | "slit" {
+  const hash = hash01(index * 11.337 + count * 1.73);
+  return hash < slitEyeMix ? "slit" : "human";
+}
+
 export function createEyeInstance(
-  contexts: SharedContexts,
   textures: SharedTextures,
   x: number,
   y: number,
@@ -21,28 +25,43 @@ export function createEyeInstance(
   maxRadius: number,
   count: number,
   index: number,
+  slitEyeMix: number = DEFAULT_SLIT_EYE_MIX,
 ): EyeInstance {
   const bucket = selectBucket(radius);
   const bt = textures.buckets[bucket];
 
+  const eyeType = resolveEyeType(index, count, slitEyeMix);
+  const isSlit = eyeType === "slit";
+
   const root = new Container();
   const dropShadow = new Sprite(bt.dropShadowTexture);
-  const eyeFill = new Sprite(bt.scleraFillTexture);
-  const irisClipMask = new Graphics(contexts.scleraMaskContext);
   const blinkGroup = new Container();
+  
+  // For slit eyes: use pure white texture for proper tinting
+  const eyeFill = new Sprite(isSlit ? bt.slitGlobeTexture : bt.scleraFillTexture);
+  eyeFill.anchor.set(0.5);
+  
   const eyeOutline = new Sprite(bt.scleraOutlineTexture);
   const eyeShadow = new Sprite(bt.scleraShadowTexture);
   const globeHighlight = new Sprite(bt.roundGlobeHighlightTexture);
   const irisGroup = new Container();
   const pupilGroup = new Container();
 
+  // For slit eyes: no iris texture, just white globe + black slit pupil
   const iris = new Sprite(bt.irisFillTexture);
-  const pupil = new Sprite(bt.roundPupilTexture);
+  const pupil = new Sprite(isSlit ? bt.slitPupilTexture : bt.roundPupilTexture);
   const highlight = new Sprite(bt.roundHighlightTexture);
 
-  iris.tint = DEFAULT_IRIS_COLOR;
+  if (isSlit) {
+    // For slit eyes: no iris, just pupil + highlight directly
+    pupil.visible = true;
+    highlight.visible = true;
+  } else {
+    iris.tint = DEFAULT_IRIS_COLOR;
+    iris.visible = true;
+  }
   dropShadow.anchor.set(0.5);
-  eyeFill.anchor.set(0.5);
+  if (!isSlit) (eyeFill as Sprite).anchor.set(0.5); // Graphics doesn't have anchor
   eyeOutline.anchor.set(0.5);
   eyeShadow.anchor.set(0.5);
   globeHighlight.anchor.set(0.5);
@@ -51,18 +70,31 @@ export function createEyeInstance(
   highlight.anchor.set(0.5);
 
   pupilGroup.addChild(pupil, highlight);
-  irisGroup.addChild(iris, pupilGroup);
-
-  root.addChild(
-    dropShadow,
-    eyeFill,
-    irisClipMask,
-    irisGroup,
-    eyeShadow,
-    globeHighlight,
-    blinkGroup,
-    eyeOutline,
-  );
+  
+  if (isSlit) {
+    // For slit eyes: no iris, pupil goes directly in root
+    root.addChild(
+      dropShadow,
+      eyeFill, // Globe color - behind everything
+      eyeShadow,
+      pupilGroup, // Pupil + highlight
+      globeHighlight,
+      blinkGroup,
+      eyeOutline,
+    );
+  } else {
+    // For human eyes: iris + pupil in irisGroup
+    irisGroup.addChild(iris, pupilGroup);
+    root.addChild(
+      dropShadow,
+      eyeFill,
+      irisGroup,
+      eyeShadow,
+      globeHighlight,
+      blinkGroup,
+      eyeOutline,
+    );
+  }
 
   const scale = Math.max(radius / Math.max(maxRadius, 0.001), 0.001);
   const renderScale = Math.max(radius / SCLERA_RADIUS, 0.001);
@@ -70,14 +102,13 @@ export function createEyeInstance(
   root.alpha = 1;
 
   return {
-    type: "human",
+    type: eyeType,
     root,
     dropShadow,
     eyeFill,
     eyeOutline,
     eyeShadow,
     globeHighlight,
-    irisClipMask,
     blinkGroup,
     irisGroup,
     pupilGroup,
@@ -114,10 +145,6 @@ export function createEyeInstance(
     irisProximity: 0,
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
     focusCycleOffset: hash01(index * 17.413 + count * 2.31),
-    microSaccadeTimer: hash01(index * 3.17) * MICRO_SACCADE_DURATION,
-    microSaccadePhase: 0,
-    microSaccadeX: 0,
-    microSaccadeY: 0,
   } satisfies EyeInstance;
 }
 

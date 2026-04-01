@@ -83,10 +83,21 @@ export const PUPIL_INNER_TRAVEL = 6.5;
 export const PUPIL_IRIS_RATIO = 0.65; // Pupil travels 65% of iris distance for natural movement
 export const CIRCLE_KAPPA = 0.5522847498307936;
 
-// Micro-saccade constants for natural eye movement
-export const MICRO_SACCADE_AMPLITUDE = 0.15;
-export const MICRO_SACCADE_FREQUENCY = 0.8;
-export const MICRO_SACCADE_DURATION = 0.08;
+// Slit pupil eye constants
+export const SLIT_PUPIL_WIDTH_RATIO = 0.25; // 25% of iris radius (adjustable 1-100%)
+export const SLIT_PUPIL_HEIGHT_RATIO = 0.8; // 80% of iris radius (adjustable 10-200%)
+export const SLIT_PUPIL_CORNER_RADIUS = 5; // Rounded corners (increased for better visibility)
+export const DEFAULT_SLIT_EYE_MIX = 0.3; // 30% slit eyes
+export const DEFAULT_SLIT_PUPIL_WIDTH = 0.25;
+export const DEFAULT_SLIT_PUPIL_HEIGHT = 0.8;
+export const DEFAULT_SLIT_GLOBE_BASE_COLOR = 0xffffff; // Pure white for slit eye globe base
+export const DEFAULT_SLIT_MOUSE_COLOR = 0xff6b6b; // Coral red for slit eye mouse proximity
+
+// Dot eye constants
+export const DEFAULT_DOT_EYE_MIX = 0.0; // 0% dot eyes by default
+export const DEFAULT_DOT_PUPIL_RATIO = 0.15; // 15% of iris radius (small dot)
+export const DEFAULT_DOT_GLOBE_COLOR = 0xe8f0f8; // Light blue-gray for dot eye globe
+export const DEFAULT_DOT_MOUSE_COLOR = 0x4ecdc4; // Teal for dot eye mouse proximity
 
 // Re-export from eye-assets for convenience
 export { HIGHLIGHT_RADIUS } from "./eye-assets";

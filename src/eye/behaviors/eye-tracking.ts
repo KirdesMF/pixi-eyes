@@ -1,115 +1,8 @@
-// Eye tracking behavior
+// Eye tracking behavior (micro-saccades removed)
 
 import { clamp, lerp, hash01, smoothstep } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
-import {
-  MAX_LOOK,
-  MICRO_SACCADE_AMPLITUDE,
-  MICRO_SACCADE_DURATION,
-} from "../eye-config";
-
-export function microSaccadeOffset(
-  eye: EyeInstance,
-  runtime: EyeFieldRuntime,
-  dtSeconds: number,
-): { x: number; y: number } {
-  // Only apply when tracking is active (mouse in canvas)
-  if (runtime.trackingBlend <= 0.0001) {
-    return { x: 0, y: 0 };
-  }
-
-  // Update micro-saccade timer
-  eye.microSaccadeTimer -= dtSeconds;
-  
-  if (eye.microSaccadeTimer <= 0) {
-    // Start new micro-saccade
-    eye.microSaccadeTimer = MICRO_SACCADE_DURATION;
-    eye.microSaccadePhase = 1; // Active phase
-    
-    // Random direction for this saccade
-    const seed = hash01(eye.focusCycleOffset * 7.31 + runtime.elapsed * 0.17);
-    const angle = seed * Math.PI * 2;
-    eye.microSaccadeX = Math.cos(angle) * MICRO_SACCADE_AMPLITUDE;
-    eye.microSaccadeY = Math.sin(angle) * MICRO_SACCADE_AMPLITUDE;
-  } else if (eye.microSaccadePhase === 1) {
-    // Return to baseline after twitch
-    eye.microSaccadePhase = 0;
-  }
-  
-  // Apply smooth twitch movement
-  const t = eye.microSaccadeTimer / MICRO_SACCADE_DURATION;
-  const twitch = smoothstep(1 - t); // Quick onset, slow decay
-  
-  return {
-    x: eye.microSaccadeX * twitch,
-    y: eye.microSaccadeY * twitch,
-  };
-}
-
-export function parallaxOffset(
-  runtime: EyeFieldRuntime,
-  eye: EyeInstance,
-): { x: number; y: number } {
-  const weight = runtime.trackingBlend;
-  if (weight <= 0.0001) {
-    return { x: 0, y: 0 };
-  }
-
-  const radius = Math.max(runtime.clusterRadius, 1);
-  const normalizedX = clamp(runtime.mouseX / radius, -1, 1);
-  const normalizedY = clamp(runtime.mouseY / radius, -1, 1);
-  const distance = runtime.parallaxStrength * eye.scale * weight;
-
-  return { x: -normalizedX * distance, y: -normalizedY * distance };
-}
-
-export function repulsionTarget(
-  runtime: EyeFieldRuntime,
-  eye: EyeInstance,
-): { x: number; y: number } {
-  const weight = runtime.trackingBlend;
-  if (weight <= 0.0001) {
-    return { x: 0, y: 0 };
-  }
-
-  const mouseRadius = Math.max(runtime.repulsionRadius, 0);
-  if (mouseRadius <= 0) {
-    return { x: 0, y: 0 };
-  }
-
-  const baseX = eye.x + eye.parallaxX;
-  const baseY = eye.y + eye.parallaxY;
-  const dx = baseX - runtime.mouseX;
-  const dy = baseY - runtime.mouseY;
-  const distanceSquared = dx * dx + dy * dy;
-  const reach = mouseRadius + eye.radius;
-
-  if (distanceSquared >= reach * reach) {
-    return { x: 0, y: 0 };
-  }
-
-  const pushStrength = Math.max(runtime.repulsionStrength, 0);
-  if (pushStrength <= 0) {
-    return { x: 0, y: 0 };
-  }
-
-  if (distanceSquared > 0.0001) {
-    const distance = Math.sqrt(distanceSquared);
-    const overlap = reach - distance;
-    const push = overlap * pushStrength * weight;
-    return { x: (dx / distance) * push, y: (dy / distance) * push };
-  }
-
-  return { x: reach * pushStrength * weight, y: 0 };
-}
-
-export function clickWaveTarget(
-  _runtime: EyeFieldRuntime,
-  _eye: EyeInstance,
-): { x: number; y: number } {
-  // Click repulsion disabled
-  return { x: 0, y: 0 };
-}
+import { MAX_LOOK } from "../eye-config";
 
 export function pupilFollowSpeed(runtime: EyeFieldRuntime, eye: EyeInstance): number {
   const smallSpeed = Math.max(runtime.smallEyeLookSpeed, 0);
@@ -125,11 +18,6 @@ export function totalOffset(eye: EyeInstance): { x: number; y: number } {
   };
 }
 
-export function clickWaveLifetime(_radius: number): number {
-  // Fixed lifetime for gaussian ripple (dissipates over time)
-  return 2.0; // 2 seconds for full dissipation
-}
-
 export function sampleSharedAttentionTarget(runtime: EyeFieldRuntime): { x: number; y: number } {
   const seed =
     runtime.elapsed * 0.731 +
@@ -137,7 +25,6 @@ export function sampleSharedAttentionTarget(runtime: EyeFieldRuntime): { x: numb
     runtime.mouseX * 0.017 +
     runtime.mouseY * 0.023;
   const angle = hash01(seed) * Math.PI * 2;
-  // Use full MAX_LOOK range (0.8 to 1.0) to match cursor tracking range
   const magnitude = MAX_LOOK * lerp(0.8, 1.0, hash01(seed * 2.417 + 0.31));
 
   return {
@@ -186,11 +73,18 @@ export function sampleEyeSharedAttentionLook(
     eye.y * 0.0023;
   const angleSpread = lerp(-Math.PI * 0.9, Math.PI * 0.9, hash01(eyeSeed));
   const angle = baseAngle + angleSpread;
-  // Allow shared attention to reach edges (80-100% of MAX_LOOK)
   const magnitude = MAX_LOOK * lerp(0.8, 1.0, smoothstep(hash01(eyeSeed * 2.137 + 0.41)));
 
   return {
     x: Math.cos(angle) * magnitude,
     y: Math.sin(angle) * magnitude,
   };
+}
+
+export function clickWaveTarget(
+  _runtime: EyeFieldRuntime,
+  _eye: EyeInstance,
+): { x: number; y: number } {
+  // Click wave effect removed
+  return { x: 0, y: 0 };
 }

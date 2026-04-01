@@ -8,11 +8,10 @@ export type EyeInstance = {
   type: EyeType;
   root: Container;
   dropShadow: Sprite;
-  eyeFill: Sprite;
+  eyeFill: Sprite | Graphics;
   eyeOutline: Sprite;
   eyeShadow: Sprite;
   globeHighlight: Sprite;
-  irisClipMask: Graphics;
   blinkGroup: Container;
   irisGroup: Container;
   pupilGroup: Container;
@@ -49,11 +48,6 @@ export type EyeInstance = {
   irisProximity: number; // For smooth color transition (0 = base, 1 = mouse color)
   focusDelayMix: number;
   focusCycleOffset: number;
-  // Micro-saccade state for natural eye movement
-  microSaccadeTimer: number;
-  microSaccadePhase: number;
-  microSaccadeX: number;
-  microSaccadeY: number;
 };
 
 export type EyeFieldRuntime = {
@@ -73,6 +67,9 @@ export type EyeFieldRuntime = {
   ringInnerRatio: number;
   crossType: CrossType;
   starBranches: number;
+  slitEyeMix: number;
+  slitPupilWidth: number;
+  slitPupilHeight: number;
   parallaxStrength: number;
   repulsionRadius: number;
   repulsionStrength: number;
@@ -117,5 +114,7 @@ export type EyeFieldRuntime = {
   roundHighlightRotationDegrees: number;
   roundHighlightOpacity: number;
   roundHighlightColor: number;
+  slitGlobeBaseColor: number;
+  slitMouseColor: number;
   eyes: EyeInstance[];
 };

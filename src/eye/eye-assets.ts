@@ -9,6 +9,12 @@ import {
   type Renderer,
 } from "pixi.js";
 
+import {
+  SLIT_PUPIL_WIDTH_RATIO,
+  SLIT_PUPIL_HEIGHT_RATIO,
+  SLIT_PUPIL_CORNER_RADIUS,
+} from "./eye-config";
+
 // Constants
 const SCLERA_RADIUS = 24;
 const GLOBE_TEXTURE_PADDING = 4;
@@ -61,18 +67,16 @@ export {
  */
 export type SharedContexts = {
   scleraFillContext: GraphicsContext;
-  scleraMaskContext: GraphicsContext;
   scleraOutlineContext: GraphicsContext;
   scleraShadowContext: GraphicsContext;
   roundGlobeHighlightContext: GraphicsContext;
   catGlobeHighlightContext: GraphicsContext;
   irisContext: GraphicsContext;
-  irisMaskContext: GraphicsContext;
   roundPupilContext: GraphicsContext;
   catPupilContext: GraphicsContext;
+  slitPupilContext: GraphicsContext;
+  slitGlobeContext: GraphicsContext;
   highlightContext: GraphicsContext;
-  catBlinkSideContext: GraphicsContext;
-  catBlinkBottomContext: GraphicsContext;
 };
 
 /**
@@ -101,9 +105,9 @@ export type BucketTextures = {
   catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
   irisFillTexture: ReturnType<Renderer["generateTexture"]>;
   roundPupilTexture: ReturnType<Renderer["generateTexture"]>;
+  slitPupilTexture: ReturnType<Renderer["generateTexture"]>;
+  slitGlobeTexture: ReturnType<Renderer["generateTexture"]>;
   roundHighlightTexture: ReturnType<Renderer["generateTexture"]>;
-  catBlinkSideTexture: ReturnType<Renderer["generateTexture"]>;
-  catBlinkBottomTexture: ReturnType<Renderer["generateTexture"]>;
 };
 
 export type SharedTextures = {
@@ -123,7 +127,6 @@ function shadowEdgePoint(sign: number): { x: number; y: number } {
  */
 export function createSharedContexts(): SharedContexts {
   const scleraFillContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xfffbf2);
-  const scleraMaskContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
   const scleraOutlineContext = new GraphicsContext()
     .circle(0, 0, SCLERA_RADIUS)
     .stroke({ color: 0x2c241d, width: 2, alignment: 1 });
@@ -168,7 +171,6 @@ export function createSharedContexts(): SharedContexts {
     .fill({ color: 0xffffff, alpha: 1 });
 
   const irisContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
-  const irisMaskContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
   const roundPupilContext = new GraphicsContext().circle(0, 0, PUPIL_RADIUS).fill(0x17110d);
   const catPupilContext = new GraphicsContext()
     .moveTo(0, -PUPIL_RADIUS * 1.84)
@@ -190,31 +192,35 @@ export function createSharedContexts(): SharedContexts {
     )
     .closePath()
     .fill(0x17110d);
+  // Slit pupil: vertical rounded rectangle with padding for better quality
+  const slitPupilWidth = IRIS_RADIUS * SLIT_PUPIL_WIDTH_RATIO;
+  const slitPupilHeight = IRIS_RADIUS * SLIT_PUPIL_HEIGHT_RATIO;
+  const slitPupilPadding = 4; // Extra padding for smooth corners
+  const slitPupilContext = new GraphicsContext()
+    .roundRect(
+      -slitPupilWidth / 2 - slitPupilPadding,
+      -slitPupilHeight / 2 - slitPupilPadding,
+      slitPupilWidth + slitPupilPadding * 2,
+      slitPupilHeight + slitPupilPadding * 2,
+      SLIT_PUPIL_CORNER_RADIUS + slitPupilPadding * 0.5,
+    )
+    .fill(0x000000);
   const highlightContext = new GraphicsContext().circle(0, 0, HIGHLIGHT_RADIUS).fill(0xfffbf2);
-  // Blink contexts need to match the texture frame size for proper UV mapping
-  // blinkFrameSize = 110, so we create a rect from -110 to +110
-  const blinkFrameSize = 110;
-  const catBlinkSideContext = new GraphicsContext()
-    .rect(-blinkFrameSize, -blinkFrameSize, blinkFrameSize * 2, blinkFrameSize * 2)
-    .fill({ color: 0xffffff, alpha: 1 });
-  const catBlinkBottomContext = new GraphicsContext()
-    .rect(-blinkFrameSize, -blinkFrameSize, blinkFrameSize * 2, blinkFrameSize * 2)
-    .fill({ color: 0xffffff, alpha: 1 });
+  // White globe texture for slit eyes (pure white for proper tinting)
+  const slitGlobeContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
 
   return {
     scleraFillContext,
-    scleraMaskContext,
     scleraOutlineContext,
     scleraShadowContext,
     roundGlobeHighlightContext,
     catGlobeHighlightContext,
     irisContext,
-    irisMaskContext,
     roundPupilContext,
     catPupilContext,
+    slitPupilContext,
+    slitGlobeContext,
     highlightContext,
-    catBlinkSideContext,
-    catBlinkBottomContext,
   };
 }
 
@@ -345,9 +351,6 @@ function generateBucketTextures(
   dropShadowBlur: number,
   resolution: number,
 ): BucketTextures {
-  // Blink textures need a larger frame because blink shapes extend beyond the globe
-  // blinkSize = SCLERA_RADIUS * 3 + 30 = 102, so we need at least 102px frame
-  const blinkFrameSize = 110;
   // Pupil texture needs a smaller frame sized for the pupil
   const pupilFrameSize = PUPIL_RADIUS + 2;
   return {
@@ -360,9 +363,9 @@ function generateBucketTextures(
     // New static textures (replacing Graphics)
     irisFillTexture: generateTextureFromContext(renderer, contexts.irisContext, { resolution }),
     roundPupilTexture: generateTextureFromContextWithFrame(renderer, contexts.roundPupilContext, pupilFrameSize, { resolution }),
+    slitPupilTexture: generateTextureFromContext(renderer, contexts.slitPupilContext, { resolution: resolution * 2 }), // Higher res for smooth corners
+    slitGlobeTexture: generateTextureFromContext(renderer, contexts.slitGlobeContext, { resolution }),
     roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, { resolution }),
-    catBlinkSideTexture: generateTextureFromContextWithFrame(renderer, contexts.catBlinkSideContext, blinkFrameSize, { resolution }),
-    catBlinkBottomTexture: generateTextureFromContextWithFrame(renderer, contexts.catBlinkBottomContext, blinkFrameSize, { resolution }),
   };
 }
 
@@ -371,18 +374,16 @@ function generateBucketTextures(
  */
 export function destroySharedContexts(contexts: SharedContexts): void {
   contexts.scleraFillContext.destroy();
-  contexts.scleraMaskContext.destroy();
   contexts.scleraOutlineContext.destroy();
   contexts.scleraShadowContext.destroy();
   contexts.roundGlobeHighlightContext.destroy();
   contexts.catGlobeHighlightContext.destroy();
   contexts.irisContext.destroy();
-  contexts.irisMaskContext.destroy();
   contexts.roundPupilContext.destroy();
   contexts.catPupilContext.destroy();
+  contexts.slitPupilContext.destroy();
+  contexts.slitGlobeContext.destroy();
   contexts.highlightContext.destroy();
-  contexts.catBlinkSideContext.destroy();
-  contexts.catBlinkBottomContext.destroy();
 }
 
 /**
@@ -398,8 +399,8 @@ export function destroySharedTextures(textures: SharedTextures): void {
     bucket.catGlobeHighlightTexture.destroy(true);
     bucket.irisFillTexture.destroy(true);
     bucket.roundPupilTexture.destroy(true);
+    bucket.slitPupilTexture.destroy(true);
+    bucket.slitGlobeTexture.destroy(true);
     bucket.roundHighlightTexture.destroy(true);
-    bucket.catBlinkSideTexture.destroy(true);
-    bucket.catBlinkBottomTexture.destroy(true);
   }
 }

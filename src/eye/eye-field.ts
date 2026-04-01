@@ -78,7 +78,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
 
     positions.forEach((position, index) => {
       const eye = createEyeInstance(
-        contexts,
         textures,
         position.x,
         position.y,
@@ -86,6 +85,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
         maxEyeRadius,
         positions.length,
         index + 1,
+        runtime.slitEyeMix,
       );
       eye.delay = staggerDelay(
         index + 1,
