@@ -1,9 +1,6 @@
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
 import { createEyeField } from "../eye/eye-field";
 import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "../eye/eye-types";
-import { getCapturePoseConfigs, downloadBase64 } from "../debug/capture";
-import { runBenchmark } from "../debug/benchmark";
-import { BatchLogger } from "../debug/batch-logger";
 
 interface MetricsSnapshot {
   fps: number;
@@ -88,15 +85,6 @@ export const createHeroScene = async ({
   mountNode,
   onMetrics,
 }: HeroSceneOptions) => {
-  const urlParams = new URLSearchParams(window.location.search);
-
-  // Mask isolation test (Phase 11)
-  const nomaskMode = urlParams.get("nomask") === "1";
-  if (nomaskMode) {
-    console.log("[TEST] MASK ISOLATION MODE ENABLED (?nomask=1)");
-    console.log("[TEST] Comparing with normal mode to measure mask overhead");
-  }
-
   const app = new Application();
 
   await app.init({
@@ -120,11 +108,6 @@ export const createHeroScene = async ({
   let scrollFallExitTopFactor = initialScrollFallExitTopFactor;
   const eyeField = createEyeField({ count: initialCount, renderer: app.renderer, worldBounds });
 
-  // Batch logger for performance measurement (Phase 9 optimization)
-  const batchLogger = new BatchLogger(app, 1000);
-  if (urlParams.get("batchlog") === "1" || nomaskMode) {
-    batchLogger.start();
-  }
   eyeField.setConfig({
     layoutShape: initialLayoutShape,
     layoutTransitionDuration: initialLayoutTransitionDuration,
@@ -232,7 +215,6 @@ export const createHeroScene = async ({
 
   const handleTick = ({ elapsedMS, FPS }: { elapsedMS: number; FPS: number }) => {
     const metrics = eyeField.update(elapsedMS / 1000);
-    batchLogger.update();
     const smoothing = 1 - Math.exp(-elapsedMS / 280);
     smoothedFps += (FPS - smoothedFps) * smoothing;
     metricsElapsedMs += elapsedMS;
@@ -244,90 +226,6 @@ export const createHeroScene = async ({
   };
 
   app.ticker.add(handleTick);
-
-  const captureMode = urlParams.get("capture") === "1";
-  const benchmarkMode = urlParams.get("benchmark") === "1";
-
-  if (captureMode) {
-    const configs = getCapturePoseConfigs();
-    const runtime = eyeField._runtime;
-
-    const savedMinEyeSize = runtime.minEyeSize;
-    const savedMaxEyeSize = runtime.maxEyeSize;
-    const savedPointerActive = runtime.pointerActive;
-    const savedTrackingBlend = runtime.trackingBlend;
-    const savedMouseX = runtime.mouseX;
-    const savedMouseY = runtime.mouseY;
-    const savedTargetMouseX = runtime.targetMouseX;
-    const savedTargetMouseY = runtime.targetMouseY;
-
-    const savedEyeStates = runtime.eyes.map((eye) => ({
-      lookX: eye.lookX,
-      lookY: eye.lookY,
-      needsAppearanceRefresh: eye.needsAppearanceRefresh,
-    }));
-
-    async function runCaptures(): Promise<void> {
-      for (const pose of configs) {
-        runtime.pointerActive = pose.pointerActive;
-        runtime.trackingBlend = pose.trackingBlend;
-        runtime.mouseX = pose.mouseX;
-        runtime.mouseY = pose.mouseY;
-        runtime.targetMouseX = pose.mouseX;
-        runtime.targetMouseY = pose.mouseY;
-
-        eyeField.setConfig({
-          minEyeSize: pose.minEyeSize,
-          maxEyeSize: pose.maxEyeSize,
-        });
-
-        runtime.eyes.forEach((eye) => {
-          eye.needsAppearanceRefresh = true;
-          eye.appearanceAccumulator = eye.appearanceUpdateInterval;
-        });
-
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => resolve());
-        });
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => resolve());
-        });
-
-        const base64 = await app.renderer.extract.base64(eyeField.root);
-        downloadBase64(base64, `${pose.name}.png`);
-      }
-
-      runtime.minEyeSize = savedMinEyeSize;
-      runtime.maxEyeSize = savedMaxEyeSize;
-      runtime.pointerActive = savedPointerActive;
-      runtime.trackingBlend = savedTrackingBlend;
-      runtime.mouseX = savedMouseX;
-      runtime.mouseY = savedMouseY;
-      runtime.targetMouseX = savedTargetMouseX;
-      runtime.targetMouseY = savedTargetMouseY;
-
-      runtime.eyes.forEach((eye, i) => {
-        const saved = savedEyeStates[i];
-        if (!saved) return;
-        eye.lookX = saved.lookX;
-        eye.lookY = saved.lookY;
-        eye.needsAppearanceRefresh = saved.needsAppearanceRefresh;
-      });
-
-      eyeField.setConfig({
-        minEyeSize: savedMinEyeSize,
-        maxEyeSize: savedMaxEyeSize,
-      });
-    }
-
-    void runCaptures();
-  }
-
-  if (benchmarkMode) {
-    setTimeout(() => {
-      void runBenchmark(app, 5000);
-    }, 2000);
-  }
 
   return {
     setCount: (nextCount: number) => {
@@ -394,8 +292,6 @@ export const createHeroScene = async ({
       app.ticker.remove(handleTick);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
-      batchLogger.printReport(); // Final report in console
-      batchLogger.stop();
       eyeField.destroy();
       app.destroy(true, { children: true });
     },

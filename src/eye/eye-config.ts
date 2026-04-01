@@ -67,22 +67,11 @@ export const SCROLL_FALL_SQUASH_IMPACT_SPEED = 900;
 export const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
 
 // Appearance constants
-export const DEFAULT_SMALL_EYE_APPEARANCE_FPS = 24;
-export const DEFAULT_LARGE_EYE_APPEARANCE_FPS = 60;
 export const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
 export const DEFAULT_CLICK_REPULSE_RADIUS = 400;
 export const DEFAULT_CLICK_REPULSE_STRENGTH = 40;
 export const CLICK_WAVE_SPEED = 520;
 export const CLICK_WAVE_WIDTH = 90;
-
-// Focus constants
-export const DEFAULT_FOCUS_MIN_DELAY = 1.4;
-export const DEFAULT_FOCUS_MAX_DELAY = 3.8;
-export const DEFAULT_FOCUS_UP_DURATION = 0.24;
-export const DEFAULT_FOCUS_DOWN_DURATION = 0.38;
-export const DEFAULT_FOCUS_SCALE = 1.35;
-export const DEFAULT_FOCUS_EASE_UP: FocusEaseName = "out-cubic";
-export const DEFAULT_FOCUS_EASE_DOWN: FocusEaseName = "in-out-sine";
 
 // Shadow and appearance constants
 export const DEFAULT_SHADOW_OPACITY = 0.4;
