@@ -84,7 +84,13 @@ export function repulsionTarget(
   const dx = baseX - runtime.mouseX;
   const dy = baseY - runtime.mouseY;
   const distanceSquared = dx * dx + dy * dy;
-  const reach = mouseRadius + eye.radius;
+  
+  // 1. Per-eye variation: each eye has slightly different sensitivity
+  const eyeVariation = hash01(eye.x * 0.01 + eye.y * 0.02 + 5.73);
+  const variationAmount = Math.max(0, Math.min(runtime.repulsionVariation, 1));
+  const effectiveRadius = mouseRadius * (0.8 + eyeVariation * variationAmount * 0.5);
+  
+  const reach = effectiveRadius + eye.radius;
 
   if (distanceSquared >= reach * reach) {
     return { x: 0, y: 0 };
@@ -98,7 +104,20 @@ export function repulsionTarget(
   if (distanceSquared > 0.0001) {
     const distance = Math.sqrt(distanceSquared);
     const overlap = reach - distance;
-    const push = overlap * pushStrength * weight;
+    
+    // 2. Organic wobble: repulsion zone is not a perfect circle
+    const angle = Math.atan2(dy, dx);
+    const wobbleLobes = Math.max(2, Math.floor(runtime.repulsionWobble));
+    const wobbleAmount = Math.max(0, Math.min(runtime.repulsionWobbleAmount, 0.5));
+    const wobble = Math.sin(angle * wobbleLobes + eye.x * 0.03) * wobbleAmount;
+    const effectiveOverlap = overlap * (1 + wobble);
+    
+    // 3. Movement influence: stronger repulsion in direction of mouse movement
+    const moveDot = (dx * runtime.mouseVelocityX + dy * runtime.mouseVelocityY) / (distance * 100);
+    const moveInfluence = Math.max(0, Math.min(runtime.repulsionMovementInfluence, 1));
+    const moveMultiplier = 1 + moveDot * moveInfluence;
+    
+    const push = effectiveOverlap * pushStrength * weight * moveMultiplier;
     return { x: (dx / distance) * push, y: (dy / distance) * push };
   }
 

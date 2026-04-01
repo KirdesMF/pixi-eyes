@@ -53,6 +53,18 @@ export function updateConfig(
   if (config.repulsionRadius !== undefined) {
     runtime.repulsionRadius = Math.max(0, config.repulsionRadius);
   }
+  if (config.repulsionVariation !== undefined) {
+    runtime.repulsionVariation = Math.max(0, Math.min(1, config.repulsionVariation));
+  }
+  if (config.repulsionWobble !== undefined) {
+    runtime.repulsionWobble = Math.max(2, Math.floor(config.repulsionWobble));
+  }
+  if (config.repulsionWobbleAmount !== undefined) {
+    runtime.repulsionWobbleAmount = Math.max(0, Math.min(0.5, config.repulsionWobbleAmount));
+  }
+  if (config.repulsionMovementInfluence !== undefined) {
+    runtime.repulsionMovementInfluence = Math.max(0, Math.min(1, config.repulsionMovementInfluence));
+  }
   if (config.clickRepulseRadius !== undefined) {
     runtime.clickRepulseRadius = Math.max(0, config.clickRepulseRadius);
   }

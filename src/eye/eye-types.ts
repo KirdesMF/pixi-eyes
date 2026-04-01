@@ -30,6 +30,10 @@ export type EyeFieldConfig = {
   minEyeSize?: number;
   maxEyeSize?: number;
   repulsionRadius?: number;
+  repulsionVariation?: number;
+  repulsionWobble?: number;
+  repulsionWobbleAmount?: number;
+  repulsionMovementInfluence?: number;
   clickRepulseRadius?: number;
   clickRepulseStrength?: number;
   clickRepulseEase?: ClickRepulseEaseName;
