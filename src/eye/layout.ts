@@ -75,6 +75,20 @@ function shapeBoundaryDistance(shape: LayoutShapeName, angle: number, extent: nu
     return safeExtent / Math.max(Math.abs(directionX), Math.abs(directionY), 0.0001);
   }
 
+  if (shape === "infinity") {
+    // Lemniscate of Gerono (infinity symbol)
+    // r = a * sqrt(cos(2*angle)) / (sin(angle)^2 + 1)
+    // Scaled to fit within extent
+    const cos2Angle = Math.cos(2 * angle);
+    if (cos2Angle <= 0) {
+      return safeExtent * 0.1; // Very small in invalid regions
+    }
+    const sinAngle = Math.sin(angle);
+    const denominator = sinAngle * sinAngle + 1;
+    const radius = (safeExtent * 0.7 * Math.sqrt(cos2Angle)) / denominator;
+    return Math.max(radius, safeExtent * 0.15);
+  }
+
   const vertices = triangleLayoutVertices(safeExtent);
   let bestDistance = Number.POSITIVE_INFINITY;
 

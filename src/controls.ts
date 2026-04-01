@@ -42,6 +42,7 @@ export const LAYOUT_SHAPE_OPTIONS: Array<{ label: string; value: LayoutShapeName
   { label: "Circle", value: "circle" },
   { label: "Square", value: "square" },
   { label: "Triangle", value: "triangle" },
+  { label: "Infinity ∞", value: "infinity" },
 ];
 
 export const CONTROL_DEFINITIONS: ControlDefinition[] = [
