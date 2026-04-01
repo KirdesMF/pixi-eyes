@@ -194,20 +194,18 @@ export function updateSingleEye(
   // Update pupil scale animation for human eyes
   updateHumanPupilScale(eye, runtime, eyeSeconds);
 
-  // Calculate edge iris color based on distance from center
-  const distanceFromCenter = Math.sqrt(eye.x * eye.x + eye.y * eye.y);
-  const maxDistance = runtime.clusterRadius;
-  const normalizedDistance = maxDistance > 0 ? distanceFromCenter / maxDistance : 0;
+  // Calculate mouse proximity iris color
+  const dx = eye.x - runtime.mouseX;
+  const dy = eye.y - runtime.mouseY;
+  const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
   
-  // Calculate edge factor (0 = center, 1 = edge)
-  const edgeThreshold = 1 - (runtime.edgeIrisWidth / maxDistance);
-  const edgeStart = edgeThreshold - runtime.edgeIrisBlend;
-  const edgeEnd = edgeThreshold + runtime.edgeIrisBlend;
-  const edgeT = clamp((normalizedDistance - edgeStart) / Math.max(edgeEnd - edgeStart, 0.001), 0, 1);
-  const edgeFactor = smoothstep(edgeT);
+  // Calculate proximity factor (1 = close, 0 = far)
+  const maxDist = runtime.mouseIrisRadius;
+  const proximityT = 1 - clamp(distanceToMouse / maxDist, 0, 1);
+  const blendFactor = smoothstep(proximityT);
   
-  // Interpolate iris color
-  eye.iris.tint = lerpColor(runtime.irisColor, runtime.edgeIrisColor, edgeFactor);
+  // Interpolate iris color based on mouse proximity
+  eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, blendFactor);
 
   applyHumanPupilAppearance(eye, runtime);
 }

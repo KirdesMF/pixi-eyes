@@ -131,16 +131,16 @@ export function updateConfig(
     runtime.irisColor = config.irisColor;
     result.shouldRefreshAppearance = true;
   }
-  if (config.edgeIrisColor !== undefined && Number.isFinite(config.edgeIrisColor)) {
-    runtime.edgeIrisColor = config.edgeIrisColor;
+  if (config.mouseIrisColor !== undefined && Number.isFinite(config.mouseIrisColor)) {
+    runtime.mouseIrisColor = config.mouseIrisColor;
     result.shouldRefreshAppearance = true;
   }
-  if (config.edgeIrisWidth !== undefined) {
-    runtime.edgeIrisWidth = Math.max(10, Math.min(50, config.edgeIrisWidth));
+  if (config.mouseIrisRadius !== undefined) {
+    runtime.mouseIrisRadius = Math.max(50, Math.min(200, config.mouseIrisRadius));
     result.shouldRefreshAppearance = true;
   }
-  if (config.edgeIrisBlend !== undefined) {
-    runtime.edgeIrisBlend = Math.max(0, Math.min(1, config.edgeIrisBlend));
+  if (config.mouseIrisBlend !== undefined) {
+    runtime.mouseIrisBlend = Math.max(0, Math.min(1, config.mouseIrisBlend));
     result.shouldRefreshAppearance = true;
   }
   if (config.eyeShapeColor !== undefined && Number.isFinite(config.eyeShapeColor)) {

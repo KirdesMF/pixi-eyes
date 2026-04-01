@@ -119,9 +119,9 @@ export type EyeFieldRuntime = {
   dropShadowSpread: number;
   roundInnerShadowColor: number;
   irisColor: number;
-  edgeIrisColor: number;
-  edgeIrisWidth: number;
-  edgeIrisBlend: number;
+  mouseIrisColor: number;
+  mouseIrisRadius: number;
+  mouseIrisBlend: number;
   eyeShapeColor: number;
   roundTranslateStrength: number;
   roundHighlightScale: number;

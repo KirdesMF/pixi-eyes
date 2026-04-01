@@ -39,9 +39,9 @@ import {
   DEFAULT_ROUND_GLOBE_HIGHLIGHT_ROTATION_DEGREES,
   DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY,
   DEFAULT_IRIS_COLOR,
-  DEFAULT_EDGE_IRIS_COLOR,
-  DEFAULT_EDGE_IRIS_WIDTH,
-  DEFAULT_EDGE_IRIS_BLEND,
+  DEFAULT_MOUSE_IRIS_COLOR,
+  DEFAULT_MOUSE_IRIS_RADIUS,
+  DEFAULT_MOUSE_IRIS_BLEND,
 } from "./eye-config";
 
 export function createRuntime(count: number): EyeFieldRuntime {
@@ -97,9 +97,9 @@ export function createRuntime(count: number): EyeFieldRuntime {
     dropShadowSpread: DEFAULT_DROP_SHADOW_SPREAD,
     roundInnerShadowColor: DEFAULT_ROUND_INNER_SHADOW_COLOR,
     irisColor: DEFAULT_IRIS_COLOR,
-    edgeIrisColor: DEFAULT_EDGE_IRIS_COLOR,
-    edgeIrisWidth: DEFAULT_EDGE_IRIS_WIDTH,
-    edgeIrisBlend: DEFAULT_EDGE_IRIS_BLEND,
+    mouseIrisColor: DEFAULT_MOUSE_IRIS_COLOR,
+    mouseIrisRadius: DEFAULT_MOUSE_IRIS_RADIUS,
+    mouseIrisBlend: DEFAULT_MOUSE_IRIS_BLEND,
     eyeShapeColor: 0xffffff,
     roundTranslateStrength: DEFAULT_ROUND_TRANSLATE_STRENGTH,
     roundHighlightScale: DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE,
