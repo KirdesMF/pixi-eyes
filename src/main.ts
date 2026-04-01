@@ -38,7 +38,10 @@ function getNumberDisplayValue(
   return String(value);
 }
 
-function renderControl(control: typeof CONTROL_DEFINITIONS[number], value: number | string): string {
+function renderControl(
+  control: (typeof CONTROL_DEFINITIONS)[number],
+  value: number | string,
+): string {
   const { id, label, type, min, max, step, default: def, options } = control;
 
   if (type === "number") {
@@ -124,7 +127,7 @@ appNode.innerHTML = `
         </div>
       </aside>
       <section class="overflow-hidden rounded-2xl border border-white/20 bg-black p-3">
-        <div id="pixi-stage" class="h-[52svh] min-h-[110px] overflow-hidden rounded-2xl border border-white/20 bg-white sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-[190px]"></div>
+        <div id="pixi-stage" class="h-[52svh] min-h-27.5 overflow-hidden rounded-2xl border border-white/20 bg-white sm:h-[62svh] lg:h-[calc(100svh-3.75rem)] lg:min-h-47"></div>
       </section>
     </section>
     <div aria-hidden="true" class="h-[140svh]"></div>
@@ -198,8 +201,6 @@ function getSceneConfig() {
     initialScrollFallExitTopFactor: toNum(s["scroll-fall-exit-top-factor"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
     initialMaxEyeSize: toNum(s["max-eye-size"]),
-    initialCatMix: toNum(s["cat-mix"]),
-    initialCatMorphRadius: toNum(s["cat-morph-radius"]),
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
     initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
     initialClickRepulseStrength: toNum(s["click-repulse-strength"]),
@@ -222,68 +223,20 @@ function getSceneConfig() {
     initialStaggerSeconds: toNum(s["stagger-seconds"]),
     initialShadowOpacity: toNum(s["shadow-opacity"]),
     initialRoundInnerShadowColor: toHex(s["round-inner-shadow-color"]),
-    initialCatInnerShadowColor: toHex(s["cat-inner-shadow-color"]),
     initialDropShadowColor: toHex(s["drop-shadow-color"]),
     initialDropShadowOpacity: toNum(s["drop-shadow-opacity"]),
     initialDropShadowBlur: toNum(s["drop-shadow-blur"]),
     initialDropShadowSpread: toNum(s["drop-shadow-spread"]),
     initialIrisColor: toHex(s["iris-color"]),
-    initialCatEyeColor: toHex(s["cat-eye-color"]),
+    initialEyeShapeColor: toHex(s["eye-shape-color"]),
     initialRoundTranslateStrength: toNum(s["round-translate-strength"]),
-    initialCatTranslateStrength: toNum(s["cat-translate-strength"]),
     initialRoundHighlightScale: toNum(s["round-highlight-scale"]),
     initialRoundHighlightOffsetX: toNum(s["round-highlight-offset-x"]),
     initialRoundHighlightOffsetY: toNum(s["round-highlight-offset-y"]),
     initialRoundHighlightRotationDegrees: toNum(s["round-highlight-rotation"]),
     initialRoundHighlightOpacity: toNum(s["round-highlight-opacity"]),
-    initialCatHighlightScale: toNum(s["cat-highlight-scale"]),
-    initialCatHighlightOffsetX: toNum(s["cat-highlight-offset-x"]),
-    initialCatHighlightOffsetY: toNum(s["cat-highlight-offset-y"]),
-    initialCatHighlightRotationDegrees: toNum(s["cat-highlight-rotation"]),
-    initialCatHighlightOpacity: toNum(s["cat-highlight-opacity"]),
-    initialCatPupilHighlightMorphScale: toNum(s["cat-pupil-highlight-morph-scale"]),
-    initialCatBlinkSideColor: toHex(s["cat-blink-side-color"]),
-    initialCatBlinkSideOpacity: toNum(s["cat-blink-side-opacity"]),
-    initialCatBlinkSideStrokeColor: toHex(s["cat-blink-side-stroke-color"]),
-    initialCatBlinkSideStrokeWidth: toNum(s["cat-blink-side-stroke-width"]),
-    initialCatBlinkSideStrokeOpacity: toNum(s["cat-blink-side-stroke-opacity"]),
-    initialCatBlinkBottomColor: toHex(s["cat-blink-bottom-color"]),
-    initialCatBlinkBottomOpacity: toNum(s["cat-blink-bottom-opacity"]),
-    initialCatBlinkBottomStrokeColor: toHex(s["cat-blink-bottom-stroke-color"]),
-    initialCatBlinkBottomStrokeWidth: toNum(s["cat-blink-bottom-stroke-width"]),
-    initialCatBlinkBottomStrokeOpacity: toNum(s["cat-blink-bottom-stroke-opacity"]),
-    initialCatBlinkMinDelay: toNum(s["cat-blink-min-delay"]),
-    initialCatBlinkMaxDelay: toNum(s["cat-blink-max-delay"]),
-    initialCatBlinkInDuration: toNum(s["cat-blink-in-duration"]),
-    initialCatBlinkHoldDuration: toNum(s["cat-blink-hold-duration"]),
-    initialCatBlinkOutDuration: toNum(s["cat-blink-out-duration"]),
-    initialCatBlinkSideDelay: toNum(s["cat-blink-side-delay"]),
-    initialCatBlinkEaseIn: String(s["cat-blink-ease-in"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
-    initialCatBlinkEaseOut: String(s["cat-blink-ease-out"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
+    initialRoundHighlightColor: toHex(s["round-highlight-color"]),
     initialBackgroundColor: toHex(s["background-color"]),
-    initialFocusScale: toNum(s["focus-scale"]),
-    initialFocusUpDuration: toNum(s["focus-up-duration"]),
-    initialFocusDownDuration: toNum(s["focus-down-duration"]),
-    initialFocusMinDelay: toNum(s["focus-min-delay"]),
-    initialFocusMaxDelay: toNum(s["focus-max-delay"]),
-    initialFocusEaseUp: String(s["focus-ease-up"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
-    initialFocusEaseDown: String(s["focus-ease-down"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
   };
 }
 

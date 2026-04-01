@@ -140,7 +140,8 @@ export function sampleSharedAttentionTarget(runtime: EyeFieldRuntime): { x: numb
     runtime.mouseX * 0.017 +
     runtime.mouseY * 0.023;
   const angle = hash01(seed) * Math.PI * 2;
-  const magnitude = MAX_LOOK * lerp(0.58, 0.92, hash01(seed * 2.417 + 0.31));
+  // Use full MAX_LOOK range (0.8 to 1.0) to match cursor tracking range
+  const magnitude = MAX_LOOK * lerp(0.8, 1.0, hash01(seed * 2.417 + 0.31));
 
   return {
     x: Math.cos(angle) * magnitude,
@@ -183,13 +184,13 @@ export function sampleEyeSharedAttentionLook(
   const eyeSeed =
     runtime.sharedAttentionX * 0.173 +
     runtime.sharedAttentionY * 0.191 +
-    eye.blinkCycleOffset * 7.913 +
     eye.focusCycleOffset * 11.417 +
     eye.x * 0.0031 +
     eye.y * 0.0023;
   const angleSpread = lerp(-Math.PI * 0.9, Math.PI * 0.9, hash01(eyeSeed));
   const angle = baseAngle + angleSpread;
-  const magnitude = MAX_LOOK * lerp(0.32, 0.96, hash01(eyeSeed * 2.137 + 0.41));
+  // Use full MAX_LOOK range (0.75 to 1.0) to match cursor tracking range
+  const magnitude = MAX_LOOK * lerp(0.75, 1.0, hash01(eyeSeed * 2.137 + 0.41));
 
   return {
     x: Math.cos(angle) * magnitude,

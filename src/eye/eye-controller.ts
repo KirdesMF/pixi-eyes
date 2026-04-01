@@ -2,30 +2,25 @@
 
 import { Rectangle } from "pixi.js";
 
-import { clamp, lerp, smoothTowards, applyFocusEase } from "../shared/math";
+import { clamp, lerp, smoothstep, smoothTowards } from "../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "./eye-state";
 import {
   SCLERA_RADIUS,
   MAX_LOOK,
-  CAT_PUPIL_MORPH_SPEED,
-  CAT_PUPIL_MORPH_RADIUS_FACTOR,
-  CAT_PUPIL_MORPH_RADIUS_MIN,
 } from "./eye-config";
-import { updateScrollFallState } from "./behaviors/eye-fall";
-import { updateFloatingBehavior } from "./behaviors/eye-floating";
-import { resolveScaleInProgress } from "./eye-factory";
 import {
   totalOffset,
   sampleEyeSharedAttentionLook,
   pupilFollowSpeed,
 } from "./behaviors/eye-tracking";
+import { updateFloatingBehavior } from "./behaviors/eye-floating";
+import { updateScrollFallState } from "./behaviors/eye-fall";
+import { resolveScaleInProgress } from "./eye-factory";
 import {
   applyHumanPupilAppearance,
+  updateHumanPupilScale,
   updateHumanEyeDeformation,
-  updateHumanEyeFocusPulse,
 } from "./render/human-eye-view";
-import { applyCatPupilAppearance } from "./render/cat-eye-view";
-import { updateCatBlink } from "./behaviors/eye-blink";
 
 export function updateLayoutTransition(
   eye: EyeInstance,
@@ -39,7 +34,7 @@ export function updateLayoutTransition(
   const duration = Math.max(runtime.layoutTransitionDuration, 0.001);
   eye.layoutTransitionElapsed = Math.min(eye.layoutTransitionElapsed + dtSeconds, duration);
   const progress = clamp(eye.layoutTransitionElapsed / duration, 0, 1);
-  const easedProgress = applyFocusEase(runtime.layoutTransitionEase, progress);
+  const easedProgress = smoothstep(progress);
   eye.x = lerp(eye.layoutStartX, eye.targetX, easedProgress);
   eye.y = lerp(eye.layoutStartY, eye.targetY, easedProgress);
 
@@ -80,23 +75,18 @@ export function applyStaticEyeSettings(eye: EyeInstance, runtime: EyeFieldRuntim
   eye.dropShadow.alpha = runtime.dropShadowOpacity;
   eye.dropShadow.position.set(0, 0);
   eye.dropShadow.scale.set(0.92 + runtime.dropShadowSpread * 0.12);
-  eye.eyeShadow.tint =
-    eye.type === "cat" ? runtime.catInnerShadowColor : runtime.roundInnerShadowColor;
+  eye.eyeShadow.tint = runtime.roundInnerShadowColor;
   eye.eyeShadow.alpha = runtime.shadowOpacity;
-  eye.eyeFill.tint = eye.type === "cat" ? runtime.catEyeColor : 0xffffff;
+  eye.eyeFill.tint = runtime.eyeShapeColor;
+  eye.globeHighlight.rotation = (runtime.roundHighlightRotationDegrees * Math.PI) / 180;
+  eye.globeHighlight.alpha = runtime.roundHighlightOpacity;
+  eye.iris.alpha = 1;
   eye.iris.tint = runtime.irisColor;
-  eye.globeHighlight.rotation =
-    eye.type === "cat"
-      ? (runtime.catHighlightRotationDegrees * Math.PI) / 180
-      : (runtime.roundHighlightRotationDegrees * Math.PI) / 180;
-  eye.globeHighlight.alpha =
-    eye.type === "cat" ? runtime.catHighlightOpacity : runtime.roundHighlightOpacity;
-  eye.iris.alpha = eye.type === "cat" ? 0 : 1;
-  eye.irisMask.alpha = 0.001;
-  eye.irisShadow.alpha = 0;
-  eye.blinkGroup.visible = eye.type === "cat";
-  eye.pupilGroup.mask = eye.type === "cat" ? null : eye.irisMask;
-  eye.irisGroup.mask = eye.irisClipMask;
+  eye.blinkGroup.visible = false;
+}
+
+function renderedEyeRadius(eye: EyeInstance): number {
+  return SCLERA_RADIUS * Math.max(eye.renderScale, 0.001);
 }
 
 export function updateSingleEye(
@@ -111,14 +101,21 @@ export function updateSingleEye(
 
   const eyeSeconds = dtSeconds;
   const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
+
+  // Update scroll fall behavior (includes squash calculation)
   updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
-  updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
+
+  // Apply squash scale from fall animation
   const squashScaleX = eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
   const squashScaleY = eye.fallSquash >= 0 ? 1 - eye.fallSquash * 0.75 : 1 - eye.fallSquash * 0.5;
+
   eye.root.scale.set(
     eye.renderScale * introScaleProgress * squashScaleX,
     eye.renderScale * introScaleProgress * squashScaleY,
   );
+
+  // Update parallax and repulsion
+  updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
 
   const interactionOffset = totalOffset(eye);
   const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX;
@@ -129,14 +126,14 @@ export function updateSingleEye(
   const visibleRadius =
     renderedEyeRadius(eye) *
     introScaleProgress *
-    Math.max(Math.abs(squashScaleX), Math.abs(squashScaleY), 0.001);
-  const drawX = worldBounds.x + worldBounds.width * 0.5 + interactionDrawX;
-  const drawY = worldBounds.y + worldBounds.height * 0.5 + interactionDrawY;
+    Math.max(Math.abs(eye.currentScaleX), Math.abs(eye.currentScaleY), 0.001);
+  const drawX = worldBounds.width * 0.5 + interactionDrawX;
+  const drawY = worldBounds.height * 0.5 + interactionDrawY;
   const isVisible =
-    drawX - visibleRadius < worldBounds.x + worldBounds.width &&
-    drawX + visibleRadius > worldBounds.x &&
-    drawY - visibleRadius < worldBounds.y + worldBounds.height &&
-    drawY + visibleRadius > worldBounds.y;
+    drawX - visibleRadius < worldBounds.width &&
+    drawX + visibleRadius > 0 &&
+    drawY - visibleRadius < worldBounds.height &&
+    drawY + visibleRadius > 0;
 
   eye.root.visible = isVisible;
 
@@ -176,11 +173,7 @@ export function updateSingleEye(
   eye.lookX = smoothTowards(eye.lookX, desiredLook.x, lookSpeed, eyeSeconds);
   eye.lookY = smoothTowards(eye.lookY, desiredLook.y, lookSpeed, eyeSeconds);
 
-  if (eye.type === "cat") {
-    updateCatEye(eye, runtime, eyeSeconds, isScrollFallLocked);
-  } else {
-    updateHumanEye(eye, runtime, eyeSeconds, isScrollFallLocked);
-  }
+  updateHumanEyeDeformation(eye, eyeSeconds);
 
   const shouldThrottleAppearance = eye.lowDetail && runtime.scrollFallBlend <= 0.0001;
   if (
@@ -193,78 +186,11 @@ export function updateSingleEye(
   }
 
   eye.appearanceAccumulator = 0;
-  applyPupilAppearance(eye, runtime);
-}
-
-function updateCatEye(
-  eye: EyeInstance,
-  runtime: EyeFieldRuntime,
-  eyeSeconds: number,
-  isScrollFallLocked: boolean,
-): void {
-  if (isScrollFallLocked) {
-    eye.catMorph = smoothTowards(eye.catMorph, 0, CAT_PUPIL_MORPH_SPEED, eyeSeconds);
-    eye.catBlink = 0;
-    eye.catBlinkBottom = 0;
-    eye.catBlinkSide = 0;
-    eye.currentScaleX = 1;
-    eye.currentScaleY = 1;
-    eye.currentAngle = 0;
-    eye.focusPulseScale = 1;
-  } else {
-    const morphCenterX = eye.x + eye.parallaxX;
-    const morphCenterY = eye.y + eye.parallaxY;
-    const scaleRadius = Math.max(runtime.catMorphRadius * eye.scale, runtime.catMorphRadius * 0.6);
-    const morphRadius = Math.max(
-      scaleRadius,
-      SCLERA_RADIUS * eye.root.scale.x * CAT_PUPIL_MORPH_RADIUS_FACTOR,
-      CAT_PUPIL_MORPH_RADIUS_MIN,
-    );
-    const pointerDistance = Math.hypot(
-      runtime.mouseX - morphCenterX,
-      runtime.mouseY - morphCenterY,
-    );
-    const morphTarget =
-      runtime.trackingBlend <= 0.0001
-        ? 0
-        : smoothstep(1 - clamp(pointerDistance / morphRadius, 0, 1)) * runtime.trackingBlend;
-
-    eye.catMorph = smoothTowards(eye.catMorph, morphTarget, CAT_PUPIL_MORPH_SPEED, eyeSeconds);
-
-    updateCatBlink(eye, runtime, eyeSeconds, isScrollFallLocked);
-
-    eye.currentScaleX = 1;
-    eye.currentScaleY = 1;
-    eye.currentAngle = 0;
-    eye.focusPulseScale = 1;
-  }
-}
-
-function updateHumanEye(
-  eye: EyeInstance,
-  runtime: EyeFieldRuntime,
-  eyeSeconds: number,
-  isScrollFallLocked: boolean,
-): void {
-  eye.catMorph = smoothTowards(eye.catMorph, 0, CAT_PUPIL_MORPH_SPEED, eyeSeconds);
-  eye.catBlink = 0;
-  eye.catBlinkBottom = 0;
-  eye.catBlinkSide = 0;
-
-  updateHumanEyeDeformation(eye, eyeSeconds);
-  updateHumanEyeFocusPulse(eye, runtime, isScrollFallLocked);
-}
-
-function applyPupilAppearance(eye: EyeInstance, runtime: EyeFieldRuntime): void {
-  if (eye.type === "cat") {
-    applyCatPupilAppearance(eye, runtime);
-  } else {
-    applyHumanPupilAppearance(eye, runtime);
-  }
-}
-
-function renderedEyeRadius(eye: EyeInstance): number {
-  return SCLERA_RADIUS * Math.max(eye.renderScale, 0.001);
+  
+  // Update pupil scale animation for human eyes
+  updateHumanPupilScale(eye, runtime, eyeSeconds);
+  
+  applyHumanPupilAppearance(eye, runtime);
 }
 
 function clampMagnitude(x: number, y: number, maxLength: number): { x: number; y: number } {
@@ -275,8 +201,4 @@ function clampMagnitude(x: number, y: number, maxLength: number): { x: number; y
 
   const scale = maxLength / length;
   return { x: x * scale, y: y * scale };
-}
-
-function smoothstep(value: number): number {
-  return value * value * (3 - 2 * value);
 }

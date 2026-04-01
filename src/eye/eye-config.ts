@@ -20,8 +20,6 @@ export const DEFAULT_LAYOUT_TRANSITION_DURATION = 0.8;
 export const DEFAULT_LAYOUT_TRANSITION_EASE: FocusEaseName = "out-cubic";
 export const DEFAULT_MIN_EYE_SIZE = 10;
 export const DEFAULT_MAX_EYE_SIZE = 90;
-export const DEFAULT_CAT_MIX = 0.35;
-export const DEFAULT_CAT_MORPH_RADIUS = 120;
 export const DEFAULT_STAGGER_SECONDS = 0.002;
 export const DEFAULT_RANDOMIZE_STAGGER = false;
 
@@ -85,26 +83,6 @@ export const DEFAULT_FOCUS_SCALE = 1.35;
 export const DEFAULT_FOCUS_EASE_UP: FocusEaseName = "out-cubic";
 export const DEFAULT_FOCUS_EASE_DOWN: FocusEaseName = "in-out-sine";
 
-// Cat blink constants
-export const DEFAULT_CAT_BLINK_MIN_DELAY = 5;
-export const DEFAULT_CAT_BLINK_MAX_DELAY = 8;
-export const DEFAULT_CAT_BLINK_IN_DURATION = 0.25;
-export const DEFAULT_CAT_BLINK_HOLD_DURATION = 0.06;
-export const DEFAULT_CAT_BLINK_OUT_DURATION = 0.25;
-export const DEFAULT_CAT_BLINK_SIDE_DELAY = 0.1;
-export const DEFAULT_CAT_BLINK_EASE_IN: FocusEaseName = "out-cubic";
-export const DEFAULT_CAT_BLINK_EASE_OUT: FocusEaseName = "in-out-sine";
-export const DEFAULT_CAT_BLINK_SIDE_COLOR = 0x000000;
-export const DEFAULT_CAT_BLINK_BOTTOM_COLOR = 0x111113;
-export const DEFAULT_CAT_BLINK_SIDE_OPACITY = 1;
-export const DEFAULT_CAT_BLINK_BOTTOM_OPACITY = 0.66;
-export const DEFAULT_CAT_BLINK_SIDE_STROKE_COLOR = 0x66dc1a;
-export const DEFAULT_CAT_BLINK_BOTTOM_STROKE_COLOR = 0x66dc1a;
-export const DEFAULT_CAT_BLINK_SIDE_STROKE_OPACITY = 0.6;
-export const DEFAULT_CAT_BLINK_BOTTOM_STROKE_OPACITY = 0.26;
-export const DEFAULT_CAT_BLINK_SIDE_STROKE_WIDTH = 4;
-export const DEFAULT_CAT_BLINK_BOTTOM_STROKE_WIDTH = 2;
-
 // Shadow and appearance constants
 export const DEFAULT_SHADOW_OPACITY = 0.4;
 export const DEFAULT_DROP_SHADOW_COLOR = 0x4a4545;
@@ -112,41 +90,25 @@ export const DEFAULT_DROP_SHADOW_OPACITY = 0.4;
 export const DEFAULT_DROP_SHADOW_BLUR = 1.2;
 export const DEFAULT_DROP_SHADOW_SPREAD = 0.7;
 export const DEFAULT_ROUND_INNER_SHADOW_COLOR = 0xa8abad;
-export const DEFAULT_CAT_INNER_SHADOW_COLOR = 0x3d8a0a;
-export const DEFAULT_ROUND_TRANSLATE_STRENGTH = 0.9;
-export const DEFAULT_CAT_TRANSLATE_STRENGTH = 0.75;
+export const DEFAULT_ROUND_TRANSLATE_STRENGTH = 1.15;
 export const DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE = 0.45;
 export const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_X = 10;
 export const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_Y = -12.5;
 export const DEFAULT_ROUND_GLOBE_HIGHLIGHT_ROTATION_DEGREES = 41.25;
 export const DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY = 0.7;
-export const DEFAULT_CAT_GLOBE_HIGHLIGHT_ROTATION_DEGREES = 34;
-export const DEFAULT_CAT_GLOBE_HIGHLIGHT_SCALE = 0.47;
-export const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_X_FACTOR = 0.37;
-export const DEFAULT_CAT_GLOBE_HIGHLIGHT_OFFSET_Y_FACTOR = -0.62;
-export const DEFAULT_CAT_GLOBE_HIGHLIGHT_OPACITY = 0.7;
-export const DEFAULT_CAT_PUPIL_HIGHLIGHT_MORPH_SCALE = 4;
 
 // Eye geometry constants
 export const SCLERA_RADIUS = 24;
 export const IRIS_RADIUS = 16;
-export const PUPIL_RADIUS = 8.5;
-export const CAT_PUPIL_SLIT_HANDLE_FACTOR = 0.74;
+export const PUPIL_RADIUS = 11;
 export const MAX_LOOK = 12;
-export const PUPIL_CLIP_MARGIN = 0.6;
+export const PUPIL_CLIP_MARGIN = 0.2;
 export const MAX_SQUASH = 0.2;
 export const SQUEEZE_SPEED = 12;
-export const PUPIL_INNER_TRAVEL = 0.42;
+export const PUPIL_INNER_TRAVEL = 6.5;
 export const CIRCLE_KAPPA = 0.5522847498307936;
 
-// Cat pupil constants (re-export from eye-assets for convenience)
+// Re-export from eye-assets for convenience
 export {
-  CAT_IRIS_SCALE,
-  CAT_PUPIL_HALF_WIDTH,
-  CAT_PUPIL_HALF_HEIGHT,
-  CAT_PUPIL_HIGHLIGHT_SCALE,
-  CAT_PUPIL_MORPH_SPEED,
-  CAT_PUPIL_MORPH_RADIUS_FACTOR,
-  CAT_PUPIL_MORPH_RADIUS_MIN,
   HIGHLIGHT_RADIUS,
 } from "./eye-assets";

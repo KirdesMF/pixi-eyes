@@ -1,6 +1,9 @@
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
 import { createEyeField } from "../eye/eye-field";
 import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "../eye/eye-types";
+import { getCapturePoseConfigs, downloadBase64 } from "../debug/capture";
+import { runBenchmark } from "../debug/benchmark";
+import { BatchLogger } from "../debug/batch-logger";
 
 interface MetricsSnapshot {
   fps: number;
@@ -16,8 +19,6 @@ interface HeroSceneOptions {
   initialScrollFallExitTopFactor: number;
   initialMinEyeSize: number;
   initialMaxEyeSize: number;
-  initialCatMix: number;
-  initialCatMorphRadius: number;
   initialRepulsionRadius: number;
   initialClickRepulseRadius: number;
   initialClickRepulseStrength: number;
@@ -29,48 +30,16 @@ interface HeroSceneOptions {
   initialDropShadowBlur: number;
   initialDropShadowSpread: number;
   initialRoundInnerShadowColor: number;
-  initialCatInnerShadowColor: number;
   initialIrisColor: number;
-  initialCatEyeColor: number;
+  initialEyeShapeColor: number;
   initialRoundTranslateStrength: number;
-  initialCatTranslateStrength: number;
   initialRoundHighlightScale: number;
   initialRoundHighlightOffsetX: number;
   initialRoundHighlightOffsetY: number;
   initialRoundHighlightRotationDegrees: number;
   initialRoundHighlightOpacity: number;
-  initialCatHighlightScale: number;
-  initialCatHighlightOffsetX: number;
-  initialCatHighlightOffsetY: number;
-  initialCatHighlightRotationDegrees: number;
-  initialCatHighlightOpacity: number;
-  initialCatPupilHighlightMorphScale: number;
-  initialCatBlinkSideColor: number;
-  initialCatBlinkSideOpacity: number;
-  initialCatBlinkSideStrokeColor: number;
-  initialCatBlinkSideStrokeWidth: number;
-  initialCatBlinkSideStrokeOpacity: number;
-  initialCatBlinkBottomColor: number;
-  initialCatBlinkBottomOpacity: number;
-  initialCatBlinkBottomStrokeColor: number;
-  initialCatBlinkBottomStrokeWidth: number;
-  initialCatBlinkBottomStrokeOpacity: number;
-  initialCatBlinkMinDelay: number;
-  initialCatBlinkMaxDelay: number;
-  initialCatBlinkInDuration: number;
-  initialCatBlinkHoldDuration: number;
-  initialCatBlinkOutDuration: number;
-  initialCatBlinkSideDelay: number;
-  initialCatBlinkEaseIn: FocusEaseName;
-  initialCatBlinkEaseOut: FocusEaseName;
+  initialRoundHighlightColor: number;
   initialBackgroundColor: number;
-  initialFocusScale: number;
-  initialFocusUpDuration: number;
-  initialFocusDownDuration: number;
-  initialFocusMinDelay: number;
-  initialFocusMaxDelay: number;
-  initialFocusEaseUp: FocusEaseName;
-  initialFocusEaseDown: FocusEaseName;
   mountNode: HTMLElement;
   onMetrics: (metrics: MetricsSnapshot) => void;
 }
@@ -93,8 +62,6 @@ export const createHeroScene = async ({
   initialScrollFallExitTopFactor,
   initialMinEyeSize,
   initialMaxEyeSize,
-  initialCatMix,
-  initialCatMorphRadius,
   initialRepulsionRadius,
   initialClickRepulseRadius,
   initialClickRepulseStrength,
@@ -106,51 +73,28 @@ export const createHeroScene = async ({
   initialDropShadowBlur,
   initialDropShadowSpread,
   initialRoundInnerShadowColor,
-  initialCatInnerShadowColor,
   initialIrisColor,
-  initialCatEyeColor,
+  initialEyeShapeColor,
   initialRoundTranslateStrength,
-  initialCatTranslateStrength,
   initialRoundHighlightScale,
   initialRoundHighlightOffsetX,
   initialRoundHighlightOffsetY,
   initialRoundHighlightRotationDegrees,
   initialRoundHighlightOpacity,
-  initialCatHighlightScale,
-  initialCatHighlightOffsetX,
-  initialCatHighlightOffsetY,
-  initialCatHighlightRotationDegrees,
-  initialCatHighlightOpacity,
-  initialCatPupilHighlightMorphScale,
-  initialCatBlinkSideColor,
-  initialCatBlinkSideOpacity,
-  initialCatBlinkSideStrokeColor,
-  initialCatBlinkSideStrokeWidth,
-  initialCatBlinkSideStrokeOpacity,
-  initialCatBlinkBottomColor,
-  initialCatBlinkBottomOpacity,
-  initialCatBlinkBottomStrokeColor,
-  initialCatBlinkBottomStrokeWidth,
-  initialCatBlinkBottomStrokeOpacity,
-  initialCatBlinkMinDelay,
-  initialCatBlinkMaxDelay,
-  initialCatBlinkInDuration,
-  initialCatBlinkHoldDuration,
-  initialCatBlinkOutDuration,
-  initialCatBlinkSideDelay,
-  initialCatBlinkEaseIn,
-  initialCatBlinkEaseOut,
+  initialRoundHighlightColor,
   initialBackgroundColor,
-  initialFocusScale,
-  initialFocusUpDuration,
-  initialFocusDownDuration,
-  initialFocusMinDelay,
-  initialFocusMaxDelay,
-  initialFocusEaseUp,
-  initialFocusEaseDown,
   mountNode,
   onMetrics,
 }: HeroSceneOptions) => {
+  const urlParams = new URLSearchParams(window.location.search);
+
+  // Mask isolation test (Phase 11)
+  const nomaskMode = urlParams.get("nomask") === "1";
+  if (nomaskMode) {
+    console.log("[TEST] MASK ISOLATION MODE ENABLED (?nomask=1)");
+    console.log("[TEST] Comparing with normal mode to measure mask overhead");
+  }
+
   const app = new Application();
 
   await app.init({
@@ -173,14 +117,18 @@ export const createHeroScene = async ({
   let scrollFallEnterTopFactor = initialScrollFallEnterTopFactor;
   let scrollFallExitTopFactor = initialScrollFallExitTopFactor;
   const eyeField = createEyeField({ count: initialCount, renderer: app.renderer, worldBounds });
+
+  // Batch logger for performance measurement (Phase 9 optimization)
+  const batchLogger = new BatchLogger(app, 1000);
+  if (urlParams.get("batchlog") === "1" || nomaskMode) {
+    batchLogger.start();
+  }
   eyeField.setConfig({
     layoutShape: initialLayoutShape,
     layoutTransitionDuration: initialLayoutTransitionDuration,
     layoutTransitionEase: initialLayoutTransitionEase,
     minEyeSize: initialMinEyeSize,
     maxEyeSize: initialMaxEyeSize,
-    catMix: initialCatMix,
-    catMorphRadius: initialCatMorphRadius,
     repulsionRadius: initialRepulsionRadius,
     clickRepulseRadius: initialClickRepulseRadius,
     clickRepulseStrength: initialClickRepulseStrength,
@@ -192,47 +140,15 @@ export const createHeroScene = async ({
     dropShadowBlur: initialDropShadowBlur,
     dropShadowSpread: initialDropShadowSpread,
     roundInnerShadowColor: initialRoundInnerShadowColor,
-    catInnerShadowColor: initialCatInnerShadowColor,
     irisColor: initialIrisColor,
-    catEyeColor: initialCatEyeColor,
+    eyeShapeColor: initialEyeShapeColor,
     roundTranslateStrength: initialRoundTranslateStrength,
-    catTranslateStrength: initialCatTranslateStrength,
     roundHighlightScale: initialRoundHighlightScale,
     roundHighlightOffsetX: initialRoundHighlightOffsetX,
     roundHighlightOffsetY: initialRoundHighlightOffsetY,
     roundHighlightRotationDegrees: initialRoundHighlightRotationDegrees,
     roundHighlightOpacity: initialRoundHighlightOpacity,
-    catHighlightScale: initialCatHighlightScale,
-    catHighlightOffsetX: initialCatHighlightOffsetX,
-    catHighlightOffsetY: initialCatHighlightOffsetY,
-    catHighlightRotationDegrees: initialCatHighlightRotationDegrees,
-    catHighlightOpacity: initialCatHighlightOpacity,
-    catPupilHighlightMorphScale: initialCatPupilHighlightMorphScale,
-    catBlinkSideColor: initialCatBlinkSideColor,
-    catBlinkSideOpacity: initialCatBlinkSideOpacity,
-    catBlinkSideStrokeColor: initialCatBlinkSideStrokeColor,
-    catBlinkSideStrokeWidth: initialCatBlinkSideStrokeWidth,
-    catBlinkSideStrokeOpacity: initialCatBlinkSideStrokeOpacity,
-    catBlinkBottomColor: initialCatBlinkBottomColor,
-    catBlinkBottomOpacity: initialCatBlinkBottomOpacity,
-    catBlinkBottomStrokeColor: initialCatBlinkBottomStrokeColor,
-    catBlinkBottomStrokeWidth: initialCatBlinkBottomStrokeWidth,
-    catBlinkBottomStrokeOpacity: initialCatBlinkBottomStrokeOpacity,
-    catBlinkMinDelay: initialCatBlinkMinDelay,
-    catBlinkMaxDelay: initialCatBlinkMaxDelay,
-    catBlinkInDuration: initialCatBlinkInDuration,
-    catBlinkHoldDuration: initialCatBlinkHoldDuration,
-    catBlinkOutDuration: initialCatBlinkOutDuration,
-    catBlinkSideDelay: initialCatBlinkSideDelay,
-    catBlinkEaseIn: initialCatBlinkEaseIn,
-    catBlinkEaseOut: initialCatBlinkEaseOut,
-    focusScale: initialFocusScale,
-    focusUpDuration: initialFocusUpDuration,
-    focusDownDuration: initialFocusDownDuration,
-    focusMinDelay: initialFocusMinDelay,
-    focusMaxDelay: initialFocusMaxDelay,
-    focusEaseUp: initialFocusEaseUp,
-    focusEaseDown: initialFocusEaseDown,
+    roundHighlightColor: initialRoundHighlightColor,
   });
   let pointerX = worldBounds.width * 0.5;
   let pointerY = worldBounds.height * 0.5;
@@ -313,6 +229,7 @@ export const createHeroScene = async ({
 
   const handleTick = ({ elapsedMS, FPS }: { elapsedMS: number; FPS: number }) => {
     const metrics = eyeField.update(elapsedMS / 1000);
+    batchLogger.update();
     const smoothing = 1 - Math.exp(-elapsedMS / 280);
     smoothedFps += (FPS - smoothedFps) * smoothing;
     metricsElapsedMs += elapsedMS;
@@ -324,6 +241,90 @@ export const createHeroScene = async ({
   };
 
   app.ticker.add(handleTick);
+
+  const captureMode = urlParams.get("capture") === "1";
+  const benchmarkMode = urlParams.get("benchmark") === "1";
+
+  if (captureMode) {
+    const configs = getCapturePoseConfigs();
+    const runtime = eyeField._runtime;
+
+    const savedMinEyeSize = runtime.minEyeSize;
+    const savedMaxEyeSize = runtime.maxEyeSize;
+    const savedPointerActive = runtime.pointerActive;
+    const savedTrackingBlend = runtime.trackingBlend;
+    const savedMouseX = runtime.mouseX;
+    const savedMouseY = runtime.mouseY;
+    const savedTargetMouseX = runtime.targetMouseX;
+    const savedTargetMouseY = runtime.targetMouseY;
+
+    const savedEyeStates = runtime.eyes.map((eye) => ({
+      lookX: eye.lookX,
+      lookY: eye.lookY,
+      needsAppearanceRefresh: eye.needsAppearanceRefresh,
+    }));
+
+    async function runCaptures(): Promise<void> {
+      for (const pose of configs) {
+        runtime.pointerActive = pose.pointerActive;
+        runtime.trackingBlend = pose.trackingBlend;
+        runtime.mouseX = pose.mouseX;
+        runtime.mouseY = pose.mouseY;
+        runtime.targetMouseX = pose.mouseX;
+        runtime.targetMouseY = pose.mouseY;
+
+        eyeField.setConfig({
+          minEyeSize: pose.minEyeSize,
+          maxEyeSize: pose.maxEyeSize,
+        });
+
+        runtime.eyes.forEach((eye) => {
+          eye.needsAppearanceRefresh = true;
+          eye.appearanceAccumulator = eye.appearanceUpdateInterval;
+        });
+
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+
+        const base64 = await app.renderer.extract.base64(eyeField.root);
+        downloadBase64(base64, `${pose.name}.png`);
+      }
+
+      runtime.minEyeSize = savedMinEyeSize;
+      runtime.maxEyeSize = savedMaxEyeSize;
+      runtime.pointerActive = savedPointerActive;
+      runtime.trackingBlend = savedTrackingBlend;
+      runtime.mouseX = savedMouseX;
+      runtime.mouseY = savedMouseY;
+      runtime.targetMouseX = savedTargetMouseX;
+      runtime.targetMouseY = savedTargetMouseY;
+
+      runtime.eyes.forEach((eye, i) => {
+        const saved = savedEyeStates[i];
+        if (!saved) return;
+        eye.lookX = saved.lookX;
+        eye.lookY = saved.lookY;
+        eye.needsAppearanceRefresh = saved.needsAppearanceRefresh;
+      });
+
+      eyeField.setConfig({
+        minEyeSize: savedMinEyeSize,
+        maxEyeSize: savedMaxEyeSize,
+      });
+    }
+
+    void runCaptures();
+  }
+
+  if (benchmarkMode) {
+    setTimeout(() => {
+      void runBenchmark(app, 5000);
+    }, 2000);
+  }
 
   return {
     setCount: (nextCount: number) => {
@@ -338,8 +339,6 @@ export const createHeroScene = async ({
       layoutTransitionEase?: FocusEaseName;
       minEyeSize?: number;
       maxEyeSize?: number;
-      catMix?: number;
-      catMorphRadius?: number;
       repulsionRadius?: number;
       clickRepulseRadius?: number;
       clickRepulseStrength?: number;
@@ -351,48 +350,16 @@ export const createHeroScene = async ({
       dropShadowBlur?: number;
       dropShadowSpread?: number;
       roundInnerShadowColor?: number;
-      catInnerShadowColor?: number;
       irisColor?: number;
-      catEyeColor?: number;
+      eyeShapeColor?: number;
       roundTranslateStrength?: number;
-      catTranslateStrength?: number;
       roundHighlightScale?: number;
       roundHighlightOffsetX?: number;
       roundHighlightOffsetY?: number;
       roundHighlightRotationDegrees?: number;
       roundHighlightOpacity?: number;
-      catHighlightScale?: number;
-      catHighlightOffsetX?: number;
-      catHighlightOffsetY?: number;
-      catHighlightRotationDegrees?: number;
-      catHighlightOpacity?: number;
-      catPupilHighlightMorphScale?: number;
-      catBlinkSideColor?: number;
-      catBlinkSideOpacity?: number;
-      catBlinkSideStrokeColor?: number;
-      catBlinkSideStrokeWidth?: number;
-      catBlinkSideStrokeOpacity?: number;
-      catBlinkBottomColor?: number;
-      catBlinkBottomOpacity?: number;
-      catBlinkBottomStrokeColor?: number;
-      catBlinkBottomStrokeWidth?: number;
-      catBlinkBottomStrokeOpacity?: number;
-      catBlinkMinDelay?: number;
-      catBlinkMaxDelay?: number;
-      catBlinkInDuration?: number;
-      catBlinkHoldDuration?: number;
-      catBlinkOutDuration?: number;
-      catBlinkSideDelay?: number;
-      catBlinkEaseIn?: FocusEaseName;
-      catBlinkEaseOut?: FocusEaseName;
+      roundHighlightColor?: number;
       backgroundColor?: number;
-      focusScale?: number;
-      focusUpDuration?: number;
-      focusDownDuration?: number;
-      focusMinDelay?: number;
-      focusMaxDelay?: number;
-      focusEaseUp?: FocusEaseName;
-      focusEaseDown?: FocusEaseName;
     }) => {
       const nextEnterTopFactor =
         typeof config.scrollFallEnterTopFactor === "number"
@@ -423,6 +390,8 @@ export const createHeroScene = async ({
       app.ticker.remove(handleTick);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
+      batchLogger.printReport(); // Final report in console
+      batchLogger.stop();
       eyeField.destroy();
       app.destroy(true, { children: true });
     },

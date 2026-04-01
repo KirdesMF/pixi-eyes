@@ -2,6 +2,69 @@
 
 Captured before starting the `refactor-main-foundation` branch.
 
+## How to capture
+
+### Visual captures (screenshots)
+
+```
+bun run dev
+```
+
+Then open `http://localhost:5173/?capture=1`.
+
+This will automatically download 9 PNG files:
+- `round-eye-rest.png` — 1 round eye, no tracking
+- `round-eye-track.png` — 1 round eye, tracking offset
+- `cat-eye-rest.png` — 1 cat eye, morph=0
+- `cat-eye-morph-mid.png` — 1 cat eye, morph≈0.5
+- `cat-eye-morph-max.png` — 1 cat eye, morph=1.0
+- `cat-eye-blink-closed.png` — 1 cat eye, fully closed
+- `cat-eye-blink-half.png` — 1 cat eye, half closed
+- `dense-scene.png` — 50 eyes mixed, no tracking
+- `dense-scene-track.png` — 50 eyes mixed, tracking active
+
+Save these files in `refactor-baseline/screenshots/`.
+
+### Performance benchmark
+
+```
+bun run dev
+```
+
+Then open `http://localhost:5173/?benchmark=1`.
+
+This runs a 5-second benchmark after 2s warmup and downloads a JSON file:
+- `perf-chrome.json` on Chrome
+- `perf-safari.json` on Safari
+
+The JSON contains:
+- `fpsAvg` — average FPS
+- `fpsP5` — 5th percentile FPS
+- `fpsP95` — 95th percentile FPS
+- `frameTimeAvg` — average frame time (ms)
+- `frameTimeMax` — max frame time (ms)
+- `drawCallsAvg` — average batch flushes per frame
+
+## Baseline perf numbers
+
+### Chrome (fill after first capture)
+
+- fpsAvg: 68
+- fpsP5: 47.4
+- fpsP95: 85.5
+- frameTimeAvg: 15.2ms
+- frameTimeMax: 24.7ms
+- drawCallsAvg: _ (metric not yet reliable)
+
+### Safari (fill after manual capture)
+
+- fpsAvg: _
+- fpsP5: _
+- fpsP95: _
+- frameTimeAvg: _
+- frameTimeMax: _
+- drawCallsAvg: _
+
 ## Current Settings (defaults)
 
 - instance-count: default

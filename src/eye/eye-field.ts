@@ -3,15 +3,17 @@
 import { Container, Rectangle, type Renderer } from "pixi.js";
 
 import type { EyeFieldConfig, EyeFieldMetrics } from "./eye-types";
+import type { EyeFieldRuntime } from "./eye-state";
 import {
   createSharedContexts,
   createSharedTextures,
   createDropShadowTexture,
   destroySharedTextures,
   destroySharedContexts,
+  selectBucket,
 } from "./eye-assets";
-import { packEyePositions, resolvePackedRadii, resolveEyeType, staggerDelay } from "./layout";
-import { createEyeInstance, resolveScaleInProgress } from "./eye-factory";
+import { packEyePositions, resolvePackedRadii, staggerDelay } from "./layout";
+import { createEyeInstance } from "./eye-factory";
 import { startLayoutTransition, applyStaticEyeSettings, updateSingleEye } from "./eye-controller";
 import {
   sampleSharedAttentionTarget,
@@ -39,6 +41,7 @@ export type EyeField = {
   pointerDown: (x: number, y: number) => void;
   update: (dtSeconds: number) => EyeFieldMetrics;
   destroy: () => void;
+  _runtime: EyeFieldRuntime;
 };
 
 export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions): EyeField {
@@ -48,15 +51,13 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
   let textures = createSharedTextures(renderer, contexts, runtime.dropShadowBlur);
 
   function refreshDropShadowTexture(): void {
-    const previousTexture = textures.dropShadowTexture;
-    textures = {
-      ...textures,
-      dropShadowTexture: createDropShadowTexture(renderer, runtime.dropShadowBlur),
-    };
+    for (const bucket of Object.values(textures.buckets)) {
+      bucket.dropShadowTexture.destroy(true);
+      bucket.dropShadowTexture = createDropShadowTexture(renderer, runtime.dropShadowBlur);
+    }
     runtime.eyes.forEach((eye) => {
-      eye.dropShadow.texture = textures.dropShadowTexture;
+      eye.dropShadow.texture = textures.buckets[selectBucket(eye.radius)].dropShadowTexture;
     });
-    previousTexture.destroy(true);
   }
 
   function rebuildEyes(): void {
@@ -78,11 +79,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     );
 
     positions.forEach((position, index) => {
-      const eyeType = resolveEyeType(index + 1, positions.length, runtime.catMix);
       const eye = createEyeInstance(
         contexts,
         textures,
-        eyeType,
         position.x,
         position.y,
         position.r,
@@ -99,7 +98,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       applyStaticEyeSettings(eye, runtime);
       runtime.eyes.push(eye);
       root.addChild(eye.root);
-      eye.root.scale.set(eye.renderScale * resolveScaleInProgress(eye, runtime.elapsed));
+      // Start with full scale - no scale-in animation
+      eye.root.scale.set(eye.renderScale);
+      eye.scaleInFinished = true;
     });
     root.sortChildren();
   }
@@ -130,7 +131,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
   }
 
   function layout(width: number, height: number): void {
-    runtime.clusterRadius = Math.max(Math.min(width, height) * 0.42, runtime.maxEyeSize * 0.5 + 40);
+    runtime.clusterRadius = Math.min(width, height) * 0.42;
     root.position.set(width * 0.5, height * 0.5);
     if (runtime.eyes.length === runtime.count && runtime.eyes.length > 0) {
       relayoutEyes();
@@ -193,8 +194,8 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.sharedAttentionBlend = 0;
       runtime.sharedAttentionX = 0;
       runtime.sharedAttentionY = 0;
-      runtime.mouseX = nextTargetMouseX;
-      runtime.mouseY = nextTargetMouseY;
+      // Don't reset mouseX/Y - let them smooth towards target naturally
+      // This prevents jump when mouse re-enters canvas
       runtime.targetMouseX = nextTargetMouseX;
       runtime.targetMouseY = nextTargetMouseY;
       runtime.eyes.forEach((eye) => {
@@ -207,7 +208,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
         eye.currentScaleX = 1;
         eye.currentScaleY = 1;
         eye.currentAngle = 0;
-        eye.catMorph = 0;
         eye.needsAppearanceRefresh = true;
         eye.appearanceAccumulator = eye.appearanceUpdateInterval;
       });
@@ -355,6 +355,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     setScrollFall,
     pointerDown,
     update,
+    _runtime: runtime,
     destroy: () => {
       if (root.destroyed) {
         return;

@@ -107,7 +107,7 @@ export function packEyePositions(
 ): PackedPosition[] {
   const placed: PackedPosition[] = [];
   const safeClusterRadius = Math.max(clusterRadius, 0);
-  const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 512));
+  const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 2048));
   const spiralStep = (spiralStepDegrees * Math.PI) / 180;
   const safeRadialExponent = Math.max(radialExponent, 0.01);
 
@@ -157,8 +157,21 @@ export function packEyePositions(
       }
     }
 
+    // If no valid position found, use best attempt OR spiral fallback
     if (!placedWithoutOverlap) {
-      placed.push({ x: bestX, y: bestY, r: radius });
+      if (bestClearance > Number.NEGATIVE_INFINITY) {
+        placed.push({ x: bestX, y: bestY, r: radius });
+      } else {
+        // Fallback: place on spiral anyway
+        const angle = (i + 1) * eyeSpiralOffset;
+        const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
+        const distance = Math.max(0, boundaryDistance - radius) * ((i / radii.length) ** safeRadialExponent);
+        placed.push({ 
+          x: Math.cos(angle) * distance, 
+          y: Math.sin(angle) * distance, 
+          r: radius 
+        });
+      }
     }
   }
 

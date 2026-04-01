@@ -15,7 +15,7 @@ const GLOBE_TEXTURE_PADDING = 4;
 const GLOBE_TEXTURE_RESOLUTION = 4;
 const DROP_SHADOW_TEXTURE_PADDING = 18;
 const IRIS_RADIUS = 16;
-const PUPIL_RADIUS = 8.5;
+const PUPIL_RADIUS = 11; // Slightly smaller pupil
 const HIGHLIGHT_RADIUS = 2.2;
 const CAT_PUPIL_HALF_WIDTH = PUPIL_RADIUS * 0.44;
 const CAT_PUPIL_HALF_HEIGHT = PUPIL_RADIUS * 1.84;
@@ -69,18 +69,43 @@ export type SharedContexts = {
   roundPupilContext: GraphicsContext;
   catPupilContext: GraphicsContext;
   highlightContext: GraphicsContext;
+  catBlinkSideContext: GraphicsContext;
+  catBlinkBottomContext: GraphicsContext;
 };
 
 /**
  * Shared textures for eye rendering.
  */
-export type SharedTextures = {
+export type TextureBucket = "small" | "medium" | "large";
+
+export const BUCKET_THRESHOLDS = {
+  small: { maxRadius: 20, resolution: 1 },
+  medium: { maxRadius: 45, resolution: 2 },
+  large: { maxRadius: Infinity, resolution: 4 },
+};
+
+export function selectBucket(radius: number): TextureBucket {
+  if (radius <= BUCKET_THRESHOLDS.small.maxRadius) return "small";
+  if (radius <= BUCKET_THRESHOLDS.medium.maxRadius) return "medium";
+  return "large";
+}
+
+export type BucketTextures = {
   dropShadowTexture: ReturnType<Renderer["generateTexture"]>;
   scleraFillTexture: ReturnType<Renderer["generateTexture"]>;
   scleraOutlineTexture: ReturnType<Renderer["generateTexture"]>;
   scleraShadowTexture: ReturnType<Renderer["generateTexture"]>;
   roundGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
   catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
+  irisFillTexture: ReturnType<Renderer["generateTexture"]>;
+  roundPupilTexture: ReturnType<Renderer["generateTexture"]>;
+  roundHighlightTexture: ReturnType<Renderer["generateTexture"]>;
+  catBlinkSideTexture: ReturnType<Renderer["generateTexture"]>;
+  catBlinkBottomTexture: ReturnType<Renderer["generateTexture"]>;
+};
+
+export type SharedTextures = {
+  buckets: Record<TextureBucket, BucketTextures>;
 };
 
 function shadowEdgePoint(sign: number): { x: number; y: number } {
@@ -174,6 +199,15 @@ export function createSharedContexts(): SharedContexts {
     .closePath()
     .fill(0x17110d);
   const highlightContext = new GraphicsContext().circle(0, 0, HIGHLIGHT_RADIUS).fill(0xfffbf2);
+  // Blink contexts need to match the texture frame size for proper UV mapping
+  // blinkFrameSize = 110, so we create a rect from -110 to +110
+  const blinkFrameSize = 110;
+  const catBlinkSideContext = new GraphicsContext()
+    .rect(-blinkFrameSize, -blinkFrameSize, blinkFrameSize * 2, blinkFrameSize * 2)
+    .fill({ color: 0xffffff, alpha: 1 });
+  const catBlinkBottomContext = new GraphicsContext()
+    .rect(-blinkFrameSize, -blinkFrameSize, blinkFrameSize * 2, blinkFrameSize * 2)
+    .fill({ color: 0xffffff, alpha: 1 });
 
   return {
     scleraFillContext,
@@ -187,16 +221,19 @@ export function createSharedContexts(): SharedContexts {
     roundPupilContext,
     catPupilContext,
     highlightContext,
+    catBlinkSideContext,
+    catBlinkBottomContext,
   };
 }
 
 function generateTextureFromContext(
   renderer: Renderer,
   context: GraphicsContext,
-  options?: { antialias?: boolean; padding?: number },
+  options?: { antialias?: boolean; padding?: number; resolution?: number },
 ) {
   const target = new Graphics(context);
   const padding = options?.padding ?? GLOBE_TEXTURE_PADDING;
+  const resolution = options?.resolution ?? GLOBE_TEXTURE_RESOLUTION;
   const textureFrame = new Rectangle(
     -(SCLERA_RADIUS + padding),
     -(SCLERA_RADIUS + padding),
@@ -206,7 +243,37 @@ function generateTextureFromContext(
   const texture = renderer.generateTexture({
     target,
     frame: textureFrame,
-    resolution: Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION),
+    resolution,
+    antialias: options?.antialias ?? true,
+    clearColor: [0, 0, 0, 0],
+    textureSourceOptions: {
+      scaleMode: "linear",
+      autoGenerateMipmaps: true,
+    },
+  });
+
+  target.destroy();
+
+  return texture;
+}
+
+/**
+ * Creates a texture from a context with a custom frame size.
+ * Used for blink textures which are larger than the standard globe textures.
+ */
+function generateTextureFromContextWithFrame(
+  renderer: Renderer,
+  context: GraphicsContext,
+  frameSize: number,
+  options?: { antialias?: boolean; resolution?: number },
+) {
+  const target = new Graphics(context);
+  const resolution = options?.resolution ?? GLOBE_TEXTURE_RESOLUTION;
+  const textureFrame = new Rectangle(-frameSize, -frameSize, frameSize * 2, frameSize * 2);
+  const texture = renderer.generateTexture({
+    target,
+    frame: textureFrame,
+    resolution,
     antialias: options?.antialias ?? true,
     clearColor: [0, 0, 0, 0],
     textureSourceOptions: {
@@ -223,9 +290,10 @@ function generateTextureFromContext(
 /**
  * Creates a drop shadow texture with blur.
  */
-export function createDropShadowTexture(renderer: Renderer, blur: number) {
+export function createDropShadowTexture(renderer: Renderer, blur: number, resolution?: number) {
   const blurStrength = Math.max(blur, 0);
   const padding = Math.max(DROP_SHADOW_TEXTURE_PADDING, blurStrength * 3 + 12);
+  const res = resolution ?? Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION);
   const target = new Container();
   const source = new Graphics().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
 
@@ -248,7 +316,7 @@ export function createDropShadowTexture(renderer: Renderer, blur: number) {
       (SCLERA_RADIUS + padding) * 2,
       (SCLERA_RADIUS + padding) * 2,
     ),
-    resolution: Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION),
+    resolution: res,
     antialias: true,
     clearColor: [0, 0, 0, 0],
     textureSourceOptions: {
@@ -270,19 +338,39 @@ export function createSharedTextures(
   contexts: SharedContexts,
   dropShadowBlur: number,
 ): SharedTextures {
+  const buckets: Record<TextureBucket, BucketTextures> = {
+    small: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.small.resolution),
+    medium: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.medium.resolution),
+    large: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.large.resolution),
+  };
+
+  return { buckets };
+}
+
+function generateBucketTextures(
+  renderer: Renderer,
+  contexts: SharedContexts,
+  dropShadowBlur: number,
+  resolution: number,
+): BucketTextures {
+  // Blink textures need a larger frame because blink shapes extend beyond the globe
+  // blinkSize = SCLERA_RADIUS * 3 + 30 = 102, so we need at least 102px frame
+  const blinkFrameSize = 110;
+  // Pupil texture needs a smaller frame sized for the pupil
+  const pupilFrameSize = PUPIL_RADIUS + 2;
   return {
-    dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur),
-    scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext),
-    scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext),
-    scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext),
-    roundGlobeHighlightTexture: generateTextureFromContext(
-      renderer,
-      contexts.roundGlobeHighlightContext,
-    ),
-    catGlobeHighlightTexture: generateTextureFromContext(
-      renderer,
-      contexts.catGlobeHighlightContext,
-    ),
+    dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur, resolution),
+    scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext, { resolution }),
+    scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext, { resolution }),
+    scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext, { resolution }),
+    roundGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.roundGlobeHighlightContext, { resolution }),
+    catGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.catGlobeHighlightContext, { resolution }),
+    // New static textures (replacing Graphics)
+    irisFillTexture: generateTextureFromContext(renderer, contexts.irisContext, { resolution }),
+    roundPupilTexture: generateTextureFromContextWithFrame(renderer, contexts.roundPupilContext, pupilFrameSize, { resolution }),
+    roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, { resolution }),
+    catBlinkSideTexture: generateTextureFromContextWithFrame(renderer, contexts.catBlinkSideContext, blinkFrameSize, { resolution }),
+    catBlinkBottomTexture: generateTextureFromContextWithFrame(renderer, contexts.catBlinkBottomContext, blinkFrameSize, { resolution }),
   };
 }
 
@@ -301,16 +389,25 @@ export function destroySharedContexts(contexts: SharedContexts): void {
   contexts.roundPupilContext.destroy();
   contexts.catPupilContext.destroy();
   contexts.highlightContext.destroy();
+  contexts.catBlinkSideContext.destroy();
+  contexts.catBlinkBottomContext.destroy();
 }
 
 /**
  * Destroys all shared textures.
  */
 export function destroySharedTextures(textures: SharedTextures): void {
-  textures.dropShadowTexture.destroy(true);
-  textures.scleraFillTexture.destroy(true);
-  textures.scleraOutlineTexture.destroy(true);
-  textures.scleraShadowTexture.destroy(true);
-  textures.roundGlobeHighlightTexture.destroy(true);
-  textures.catGlobeHighlightTexture.destroy(true);
+  for (const bucket of Object.values(textures.buckets)) {
+    bucket.dropShadowTexture.destroy(true);
+    bucket.scleraFillTexture.destroy(true);
+    bucket.scleraOutlineTexture.destroy(true);
+    bucket.scleraShadowTexture.destroy(true);
+    bucket.roundGlobeHighlightTexture.destroy(true);
+    bucket.catGlobeHighlightTexture.destroy(true);
+    bucket.irisFillTexture.destroy(true);
+    bucket.roundPupilTexture.destroy(true);
+    bucket.roundHighlightTexture.destroy(true);
+    bucket.catBlinkSideTexture.destroy(true);
+    bucket.catBlinkBottomTexture.destroy(true);
+  }
 }

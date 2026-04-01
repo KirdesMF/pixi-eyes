@@ -2,10 +2,10 @@
 
 import { Container, Graphics, Sprite } from "pixi.js";
 
-import type { EyeType, LayoutShapeName, FocusEaseName, ClickRepulseEaseName } from "./eye-types";
+import type { LayoutShapeName, FocusEaseName, ClickRepulseEaseName } from "./eye-types";
 
 export type EyeInstance = {
-  type: EyeType;
+  type: "human";
   root: Container;
   dropShadow: Sprite;
   eyeFill: Sprite;
@@ -13,18 +13,12 @@ export type EyeInstance = {
   eyeShadow: Sprite;
   globeHighlight: Sprite;
   irisClipMask: Graphics;
-  blinkClipMask: Graphics;
   blinkGroup: Container;
-  blinkLeft: Graphics;
-  blinkRight: Graphics;
-  blinkBottom: Graphics;
   irisGroup: Container;
   pupilGroup: Container;
-  iris: Graphics;
-  irisMask: Graphics;
-  irisShadow: Graphics;
-  pupil: Graphics;
-  highlight: Graphics;
+  iris: Sprite;
+  pupil: Sprite;
+  highlight: Sprite;
   x: number;
   y: number;
   layoutStartX: number;
@@ -40,9 +34,6 @@ export type EyeInstance = {
   appearanceUpdateInterval: number;
   appearanceAccumulator: number;
   needsAppearanceRefresh: boolean;
-  lastDrawnCatMorph: number;
-  lastDrawnCatBlinkBottom: number;
-  lastDrawnCatBlinkSide: number;
   delay: number;
   scaleInFinished: boolean;
   parallaxX: number;
@@ -54,10 +45,7 @@ export type EyeInstance = {
   currentScaleX: number;
   currentScaleY: number;
   currentAngle: number;
-  catMorph: number;
-  catBlink: number;
-  catBlinkBottom: number;
-  catBlinkSide: number;
+  pupilScale: number;
   fallDelayMix: number;
   fallRotationMix: number;
   fallDriftMix: number;
@@ -70,11 +58,8 @@ export type EyeInstance = {
   fallAngularVelocity: number;
   fallSquash: number;
   fallGrounded: boolean;
-  blinkDelayMix: number;
-  blinkCycleOffset: number;
   focusDelayMix: number;
   focusCycleOffset: number;
-  focusPulseScale: number;
 };
 
 export type EyeFieldRuntime = {
@@ -85,8 +70,6 @@ export type EyeFieldRuntime = {
   layoutTransitionEase: FocusEaseName;
   minEyeSize: number;
   maxEyeSize: number;
-  catMix: number;
-  catMorphRadius: number;
   packAttempts: number;
   spiralStepDegrees: number;
   radialExponent: number;
@@ -131,47 +114,15 @@ export type EyeFieldRuntime = {
   dropShadowBlur: number;
   dropShadowSpread: number;
   roundInnerShadowColor: number;
-  catInnerShadowColor: number;
   irisColor: number;
-  catEyeColor: number;
+  eyeShapeColor: number;
   roundTranslateStrength: number;
-  catTranslateStrength: number;
   roundHighlightScale: number;
   roundHighlightOffsetX: number;
   roundHighlightOffsetY: number;
   roundHighlightRotationDegrees: number;
   roundHighlightOpacity: number;
-  catHighlightScale: number;
-  catHighlightOffsetX: number;
-  catHighlightOffsetY: number;
-  catHighlightRotationDegrees: number;
-  catHighlightOpacity: number;
-  catPupilHighlightMorphScale: number;
-  catBlinkSideColor: number;
-  catBlinkSideOpacity: number;
-  catBlinkSideStrokeColor: number;
-  catBlinkSideStrokeWidth: number;
-  catBlinkSideStrokeOpacity: number;
-  catBlinkBottomColor: number;
-  catBlinkBottomOpacity: number;
-  catBlinkBottomStrokeColor: number;
-  catBlinkBottomStrokeWidth: number;
-  catBlinkBottomStrokeOpacity: number;
-  catBlinkMinDelay: number;
-  catBlinkMaxDelay: number;
-  catBlinkInDuration: number;
-  catBlinkHoldDuration: number;
-  catBlinkOutDuration: number;
-  catBlinkSideDelay: number;
-  catBlinkEaseIn: FocusEaseName;
-  catBlinkEaseOut: FocusEaseName;
-  focusScale: number;
-  focusUpDuration: number;
-  focusDownDuration: number;
-  focusMinDelay: number;
-  focusMaxDelay: number;
-  focusEaseUp: FocusEaseName;
-  focusEaseDown: FocusEaseName;
+  roundHighlightColor: number;
   eyes: EyeInstance[];
   waves: ClickWave[];
 };
