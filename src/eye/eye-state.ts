@@ -83,10 +83,6 @@ export type EyeFieldRuntime = {
   randomizeStagger: boolean;
   parallaxStrength: number;
   repulsionRadius: number;
-  repulsionVariation: number;
-  repulsionWobble: number;
-  repulsionWobbleAmount: number;
-  repulsionMovementInfluence: number;
   clickRepulseRadius: number;
   clickRepulseStrength: number;
   clickRepulseEase: ClickRepulseEaseName;
@@ -100,8 +96,6 @@ export type EyeFieldRuntime = {
   mouseY: number;
   targetMouseX: number;
   targetMouseY: number;
-  mouseVelocityX: number;
-  mouseVelocityY: number;
   pointerActive: boolean;
   scrollFallResumePointerActive: boolean;
   elapsed: number;

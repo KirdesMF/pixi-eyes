@@ -21,8 +21,6 @@ interface HeroSceneOptions {
   initialMinEyeSize: number;
   initialMaxEyeSize: number;
   initialRepulsionRadius: number;
-  initialRepulsionVariation: number;
-  initialRepulsionWobble: number;
   initialClickRepulseRadius: number;
   initialClickRepulseStrength: number;
   initialClickRepulseEase: ClickRepulseEaseName;
@@ -67,8 +65,6 @@ export const createHeroScene = async ({
   initialMinEyeSize,
   initialMaxEyeSize,
   initialRepulsionRadius,
-  initialRepulsionVariation,
-  initialRepulsionWobble,
   initialClickRepulseRadius,
   initialClickRepulseStrength,
   initialClickRepulseEase,
@@ -137,8 +133,6 @@ export const createHeroScene = async ({
     minEyeSize: initialMinEyeSize,
     maxEyeSize: initialMaxEyeSize,
     repulsionRadius: initialRepulsionRadius,
-    repulsionVariation: initialRepulsionVariation,
-    repulsionWobble: initialRepulsionWobble,
     clickRepulseRadius: initialClickRepulseRadius,
     clickRepulseStrength: initialClickRepulseStrength,
     clickRepulseEase: initialClickRepulseEase,
@@ -350,8 +344,6 @@ export const createHeroScene = async ({
       minEyeSize?: number;
       maxEyeSize?: number;
       repulsionRadius?: number;
-      repulsionVariation?: number;
-      repulsionWobble?: number;
       clickRepulseRadius?: number;
       clickRepulseStrength?: number;
       clickRepulseEase?: ClickRepulseEaseName;

@@ -295,11 +295,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.pointerEaseSpeed,
       dtSeconds,
     );
-    
-    // Calculate mouse velocity for organic repulsion
-    runtime.mouseVelocityX = (runtime.targetMouseX - runtime.mouseX) / dtSeconds;
-    runtime.mouseVelocityY = (runtime.targetMouseY - runtime.mouseY) / dtSeconds;
-    
     const sharedAttentionIdle =
       !isScrollFallLocked &&
       runtime.elapsed - runtime.lastPointerMoveAt >= runtime.sharedAttentionDelay;
