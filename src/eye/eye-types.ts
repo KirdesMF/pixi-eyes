@@ -45,6 +45,10 @@ export type EyeFieldConfig = {
   roundHighlightColor?: number;
   slitGlobeBaseColor?: number;
   slitMouseColor?: number;
+  dotEyeMix?: number;
+  dotPupilRatio?: number;
+  dotGlobeColor?: number;
+  dotMouseColor?: number;
 };
 
 /**

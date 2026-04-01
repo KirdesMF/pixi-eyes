@@ -154,6 +154,22 @@ export function updateConfig(
     runtime.slitMouseColor = config.slitMouseColor;
     result.shouldRefreshAppearance = true;
   }
+  if (config.dotEyeMix !== undefined) {
+    runtime.dotEyeMix = Math.max(0, Math.min(1, config.dotEyeMix));
+    result.shouldRebuild = true;
+  }
+  if (config.dotPupilRatio !== undefined) {
+    runtime.dotPupilRatio = Math.max(0.05, Math.min(0.5, config.dotPupilRatio));
+    result.shouldRefreshAppearance = true;
+  }
+  if (config.dotGlobeColor !== undefined && Number.isFinite(config.dotGlobeColor)) {
+    runtime.dotGlobeColor = config.dotGlobeColor;
+    result.shouldRefreshAppearance = true;
+  }
+  if (config.dotMouseColor !== undefined && Number.isFinite(config.dotMouseColor)) {
+    runtime.dotMouseColor = config.dotMouseColor;
+    result.shouldRefreshAppearance = true;
+  }
 
   // Color config
   if (config.dropShadowColor !== undefined && Number.isFinite(config.dropShadowColor)) {
