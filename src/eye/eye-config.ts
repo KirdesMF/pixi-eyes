@@ -4,7 +4,6 @@ import type {
   EyeFieldConfig,
   LayoutShapeName,
   FocusEaseName,
-  ClickRepulseEaseName,
 } from "./eye-types";
 
 export type { EyeFieldConfig };
@@ -33,7 +32,6 @@ export const DEFAULT_REPULSION_RADIUS = 90;
 export const DEFAULT_REPULSION_STRENGTH = 1;
 export const DEFAULT_REPULSION_PUSH_SPEED = 50; // Fast push for responsive repulsion
 export const DEFAULT_REPULSION_RETURN_SPEED = 3; // Slow return for trail effect
-export const DEFAULT_CLICK_REPULSE_EASE: ClickRepulseEaseName = "out-elastic";
 export const DEFAULT_SMALL_EYE_LOOK_SPEED = 16;
 export const DEFAULT_LARGE_EYE_LOOK_SPEED = 8;
 export const DEFAULT_TRACKING_BLEND_SPEED = 12;
@@ -69,10 +67,8 @@ export const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
 
 // Appearance constants
 export const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
-export const DEFAULT_CLICK_REPULSE_RADIUS = 200; // Radius for organic click ripple
-export const DEFAULT_CLICK_REPULSE_STRENGTH = 40; // Max strength at click center
-export const CLICK_RIPPLE_DECAY = 0.3; // Dissipation speed (lower = longer ripple)
-export const CLICK_RIPPLE_SIGMA = 0.0002; // Gaussian spread (distance^2 * sigma should be ~1-3 at edge)
+export const DEFAULT_CLICK_REPULSE_RADIUS = 0; // Disabled
+export const DEFAULT_CLICK_REPULSE_STRENGTH = 0; // Disabled
 
 // Shadow and appearance constants
 export const DEFAULT_SHADOW_OPACITY = 0.4;

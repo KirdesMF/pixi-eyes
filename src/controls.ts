@@ -1,4 +1,4 @@
-import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "./eye/eye-types";
+import type { FocusEaseName, LayoutShapeName } from "./eye/eye-types";
 
 export type ControlDefinition = {
   id: string;
@@ -18,24 +18,6 @@ export const EASE_OPTIONS: Array<{ label: string; value: FocusEaseName }> = [
   { label: "Out Sine", value: "out-sine" },
   { label: "In Out Sine", value: "in-out-sine" },
   { label: "Linear", value: "linear" },
-];
-
-export const CLICK_REPULSE_EASE_OPTIONS: Array<{ label: string; value: ClickRepulseEaseName }> = [
-  { label: "Smoothstep", value: "smoothstep" },
-  { label: "Linear", value: "linear" },
-  { label: "In Sine", value: "in-sine" },
-  { label: "Out Sine", value: "out-sine" },
-  { label: "In Out Sine", value: "in-out-sine" },
-  { label: "In Quad", value: "in-quad" },
-  { label: "Out Quad", value: "out-quad" },
-  { label: "In Out Quad", value: "in-out-quad" },
-  { label: "In Cubic", value: "in-cubic" },
-  { label: "Out Cubic", value: "out-cubic" },
-  { label: "In Out Cubic", value: "in-out-cubic" },
-  { label: "In Back", value: "in-back" },
-  { label: "Out Back", value: "out-back" },
-  { label: "In Out Back", value: "in-out-back" },
-  { label: "Out Elastic", value: "out-elastic" },
 ];
 
 export const LAYOUT_SHAPE_OPTIONS: Array<{ label: string; value: LayoutShapeName }> = [
@@ -319,34 +301,6 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     section: "Motion",
   },
   {
-    id: "click-repulse-radius",
-    label: "Click Radius",
-    type: "number",
-    min: 0,
-    max: 420,
-    step: 1,
-    default: 400,
-    section: "Field",
-  },
-  {
-    id: "click-repulse-strength",
-    label: "Click Strength",
-    type: "number",
-    min: 0,
-    max: 220,
-    step: 1,
-    default: 40,
-    section: "Field",
-  },
-  {
-    id: "click-repulse-ease",
-    label: "Click Ease",
-    type: "select",
-    default: "out-elastic",
-    options: CLICK_REPULSE_EASE_OPTIONS,
-    section: "Field",
-  },
-  {
     id: "stagger-seconds",
     label: "Stagger",
     type: "number",
@@ -538,14 +492,5 @@ export function sanitizeLayoutShape(
 ): LayoutShapeName {
   return LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value)
     ? (value as LayoutShapeName)
-    : fallback;
-}
-
-export function sanitizeClickRepulseEase(
-  value: string | undefined,
-  fallback: ClickRepulseEaseName,
-): ClickRepulseEaseName {
-  return CLICK_REPULSE_EASE_OPTIONS.some((option) => option.value === value)
-    ? (value as ClickRepulseEaseName)
     : fallback;
 }

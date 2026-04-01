@@ -2,7 +2,7 @@
 
 import { Container, Graphics, Sprite } from "pixi.js";
 
-import type { LayoutShapeName, FocusEaseName, ClickRepulseEaseName } from "./eye-types";
+import type { LayoutShapeName, FocusEaseName } from "./eye-types";
 
 export type EyeInstance = {
   type: "human";
@@ -83,9 +83,6 @@ export type EyeFieldRuntime = {
   randomizeStagger: boolean;
   parallaxStrength: number;
   repulsionRadius: number;
-  clickRepulseRadius: number;
-  clickRepulseStrength: number;
-  clickRepulseEase: ClickRepulseEaseName;
   repulsionStrength: number;
   repulsionPushSpeed: number;
   repulsionReturnSpeed: number;
@@ -131,11 +128,4 @@ export type EyeFieldRuntime = {
   roundHighlightOpacity: number;
   roundHighlightColor: number;
   eyes: EyeInstance[];
-  waves: ClickWave[];
-};
-
-export type ClickWave = {
-  x: number;
-  y: number;
-  elapsed: number;
 };

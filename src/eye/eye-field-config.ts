@@ -59,15 +59,6 @@ export function updateConfig(
   if (config.repulsionReturnSpeed !== undefined) {
     runtime.repulsionReturnSpeed = Math.max(0.1, config.repulsionReturnSpeed);
   }
-  if (config.clickRepulseRadius !== undefined) {
-    runtime.clickRepulseRadius = Math.max(0, config.clickRepulseRadius);
-  }
-  if (config.clickRepulseStrength !== undefined) {
-    runtime.clickRepulseStrength = Math.max(0, config.clickRepulseStrength);
-  }
-  if (config.clickRepulseEase !== undefined) {
-    runtime.clickRepulseEase = config.clickRepulseEase;
-  }
 
   // Stagger config
   if (config.staggerSeconds !== undefined) {

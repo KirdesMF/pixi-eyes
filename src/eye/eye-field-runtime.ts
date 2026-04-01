@@ -14,9 +14,6 @@ import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_PARALLAX_STRENGTH,
   DEFAULT_REPULSION_RADIUS,
-  DEFAULT_CLICK_REPULSE_RADIUS,
-  DEFAULT_CLICK_REPULSE_STRENGTH,
-  DEFAULT_CLICK_REPULSE_EASE,
   DEFAULT_REPULSION_STRENGTH,
   DEFAULT_REPULSION_PUSH_SPEED,
   DEFAULT_REPULSION_RETURN_SPEED,
@@ -61,9 +58,6 @@ export function createRuntime(count: number): EyeFieldRuntime {
     randomizeStagger: DEFAULT_RANDOMIZE_STAGGER,
     parallaxStrength: DEFAULT_PARALLAX_STRENGTH,
     repulsionRadius: DEFAULT_REPULSION_RADIUS,
-    clickRepulseRadius: DEFAULT_CLICK_REPULSE_RADIUS,
-    clickRepulseStrength: DEFAULT_CLICK_REPULSE_STRENGTH,
-    clickRepulseEase: DEFAULT_CLICK_REPULSE_EASE,
     repulsionStrength: DEFAULT_REPULSION_STRENGTH,
     repulsionPushSpeed: DEFAULT_REPULSION_PUSH_SPEED,
     repulsionReturnSpeed: DEFAULT_REPULSION_RETURN_SPEED,
@@ -109,6 +103,5 @@ export function createRuntime(count: number): EyeFieldRuntime {
     roundHighlightOpacity: DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY,
     roundHighlightColor: 0xfffbf2,
     eyes: [],
-    waves: [],
   };
 }

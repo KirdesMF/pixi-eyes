@@ -18,7 +18,6 @@ import { startLayoutTransition, applyStaticEyeSettings, updateSingleEye } from "
 import {
   sampleSharedAttentionTarget,
   sampleSharedAttentionDelay,
-  clickWaveLifetime,
 } from "./behaviors/eye-tracking";
 import { resetScrollFallState } from "./behaviors/eye-fall";
 import { smoothTowards } from "../shared/math";
@@ -238,7 +237,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     runtime.scrollFallTarget = nextTarget;
     runtime.scrollFallElapsed = 0;
     runtime.scrollReturnElapsed = nextTarget <= 0.5 ? 0 : Number.POSITIVE_INFINITY;
-    runtime.waves.length = 0;
     if (isActive) {
       runtime.scrollFallResumePointerActive = runtime.pointerActive;
       runtime.pointerActive = false;
@@ -266,11 +264,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     }
 
     setPointer(x, y, true);
-    runtime.waves.push({
-      x: runtime.mouseX,
-      y: runtime.mouseY,
-      elapsed: 0,
-    });
   }
 
   function update(dtSeconds: number): EyeFieldMetrics {
@@ -324,13 +317,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.scrollFallTarget <= 0.5
         ? runtime.scrollReturnElapsed + dtSeconds
         : Number.POSITIVE_INFINITY;
-    for (let waveIndex = runtime.waves.length - 1; waveIndex >= 0; waveIndex -= 1) {
-      const wave = runtime.waves[waveIndex];
-      wave.elapsed += dtSeconds;
-      if (wave.elapsed >= clickWaveLifetime(runtime.clickRepulseRadius)) {
-        runtime.waves.splice(waveIndex, 1);
-      }
-    }
 
     let visibleCount = 0;
 

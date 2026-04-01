@@ -6,8 +6,6 @@ import {
   MAX_LOOK,
   MICRO_SACCADE_AMPLITUDE,
   MICRO_SACCADE_DURATION,
-  CLICK_RIPPLE_DECAY,
-  CLICK_RIPPLE_SIGMA,
 } from "../eye-config";
 
 export function microSaccadeOffset(
@@ -106,61 +104,11 @@ export function repulsionTarget(
 }
 
 export function clickWaveTarget(
-  runtime: EyeFieldRuntime,
-  eye: EyeInstance,
+  _runtime: EyeFieldRuntime,
+  _eye: EyeInstance,
 ): { x: number; y: number } {
-  if (
-    eye.lowDetail ||
-    runtime.waves.length === 0 ||
-    runtime.scrollFallTarget > 0.5 ||
-    runtime.scrollFallBlend > 0.0001
-  ) {
-    return { x: 0, y: 0 };
-  }
-
-  const maxRadius = Math.max(runtime.clickRepulseRadius, 0);
-  const strength = Math.max(runtime.clickRepulseStrength, 0);
-
-  if (maxRadius <= 0 || strength <= 0) {
-    return { x: 0, y: 0 };
-  }
-
-  let totalX = 0;
-  let totalY = 0;
-  const baseX = eye.x + eye.parallaxX;
-  const baseY = eye.y + eye.parallaxY;
-
-  for (const wave of runtime.waves) {
-    const dx = baseX - wave.x;
-    const dy = baseY - wave.y;
-    const distanceSquared = dx * dx + dy * dy;
-    if (distanceSquared <= 0.0001) {
-      continue;
-    }
-
-    const distance = Math.sqrt(distanceSquared);
-    
-    // Gaussian falloff for organic ripple effect
-    // Eyes closer to click point are pushed more
-    const gaussian = Math.exp(-distance * distance * CLICK_RIPPLE_SIGMA);
-    
-    // Time-based decay for dissipation
-    const timeDecay = Math.exp(-wave.elapsed * CLICK_RIPPLE_DECAY);
-    
-    // Only affect eyes within radius
-    if (distance > maxRadius) {
-      continue;
-    }
-    
-    // Smooth falloff at edge of radius
-    const radiusFalloff = 1 - Math.pow(distance / maxRadius, 2);
-    
-    const push = gaussian * timeDecay * radiusFalloff * strength;
-    totalX += (dx / distance) * push;
-    totalY += (dy / distance) * push;
-  }
-
-  return { x: totalX, y: totalY };
+  // Click repulsion disabled
+  return { x: 0, y: 0 };
 }
 
 export function pupilFollowSpeed(runtime: EyeFieldRuntime, eye: EyeInstance): number {

@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
 import { createEyeField } from "../eye/eye-field";
-import type { ClickRepulseEaseName, FocusEaseName, LayoutShapeName } from "../eye/eye-types";
+import type { FocusEaseName, LayoutShapeName } from "../eye/eye-types";
 
 interface MetricsSnapshot {
   fps: number;
@@ -20,9 +20,6 @@ interface HeroSceneOptions {
   initialRepulsionRadius: number;
   initialRepulsionPushSpeed: number;
   initialRepulsionReturnSpeed: number;
-  initialClickRepulseRadius: number;
-  initialClickRepulseStrength: number;
-  initialClickRepulseEase: ClickRepulseEaseName;
   initialStaggerSeconds: number;
   initialShadowOpacity: number;
   initialDropShadowColor: number;
@@ -66,9 +63,6 @@ export const createHeroScene = async ({
   initialRepulsionRadius,
   initialRepulsionPushSpeed,
   initialRepulsionReturnSpeed,
-  initialClickRepulseRadius,
-  initialClickRepulseStrength,
-  initialClickRepulseEase,
   initialStaggerSeconds,
   initialShadowOpacity,
   initialDropShadowColor,
@@ -122,9 +116,6 @@ export const createHeroScene = async ({
     repulsionRadius: initialRepulsionRadius,
     repulsionPushSpeed: initialRepulsionPushSpeed,
     repulsionReturnSpeed: initialRepulsionReturnSpeed,
-    clickRepulseRadius: initialClickRepulseRadius,
-    clickRepulseStrength: initialClickRepulseStrength,
-    clickRepulseEase: initialClickRepulseEase,
     staggerSeconds: initialStaggerSeconds,
     shadowOpacity: initialShadowOpacity,
     dropShadowColor: initialDropShadowColor,
@@ -250,9 +241,6 @@ export const createHeroScene = async ({
       repulsionRadius?: number;
       repulsionPushSpeed?: number;
       repulsionReturnSpeed?: number;
-      clickRepulseRadius?: number;
-      clickRepulseStrength?: number;
-      clickRepulseEase?: ClickRepulseEaseName;
       staggerSeconds?: number;
       shadowOpacity?: number;
       dropShadowColor?: number;

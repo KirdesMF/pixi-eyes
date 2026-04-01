@@ -205,24 +205,6 @@ function getSceneConfig() {
     initialRepulsionRadius: toNum(s["repulsion-radius"]),
     initialRepulsionPushSpeed: toNum(s["repulsion-push-speed"]),
     initialRepulsionReturnSpeed: toNum(s["repulsion-return-speed"]),
-    initialClickRepulseRadius: toNum(s["click-repulse-radius"]),
-    initialClickRepulseStrength: toNum(s["click-repulse-strength"]),
-    initialClickRepulseEase: String(s["click-repulse-ease"]) as
-      | "smoothstep"
-      | "linear"
-      | "in-sine"
-      | "out-sine"
-      | "in-out-sine"
-      | "in-quad"
-      | "out-quad"
-      | "in-out-quad"
-      | "in-cubic"
-      | "out-cubic"
-      | "in-out-cubic"
-      | "in-back"
-      | "out-back"
-      | "in-out-back"
-      | "out-elastic",
     initialStaggerSeconds: toNum(s["stagger-seconds"]),
     initialShadowOpacity: toNum(s["shadow-opacity"]),
     initialRoundInnerShadowColor: toHex(s["round-inner-shadow-color"]),

@@ -1,22 +1,6 @@
 export type EyeType = "human";
 export type LayoutShapeName = "circle" | "square" | "triangle" | "infinity";
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
-export type ClickRepulseEaseName =
-  | "smoothstep"
-  | "linear"
-  | "in-sine"
-  | "out-sine"
-  | "in-out-sine"
-  | "in-quad"
-  | "out-quad"
-  | "in-out-quad"
-  | "in-cubic"
-  | "out-cubic"
-  | "in-out-cubic"
-  | "in-back"
-  | "out-back"
-  | "in-out-back"
-  | "out-elastic";
 
 /**
  * Configuration for an eye field instance.
@@ -32,9 +16,6 @@ export type EyeFieldConfig = {
   repulsionRadius?: number;
   repulsionPushSpeed?: number;
   repulsionReturnSpeed?: number;
-  clickRepulseRadius?: number;
-  clickRepulseStrength?: number;
-  clickRepulseEase?: ClickRepulseEaseName;
   staggerSeconds?: number;
   shadowOpacity?: number;
   dropShadowColor?: number;

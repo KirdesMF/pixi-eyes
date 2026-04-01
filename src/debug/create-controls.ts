@@ -5,7 +5,6 @@ import {
   sanitizeHexColor,
   sanitizeFocusEase,
   sanitizeLayoutShape,
-  sanitizeClickRepulseEase,
 } from "../controls";
 
 export type ControlBindings = {
@@ -132,7 +131,6 @@ export function createControlBindings(
 
   const SANITIZER_BY_ID: Record<string, (v: string) => string> = {
     "layout-shape": (v) => sanitizeLayoutShape(v, "circle"),
-    "click-repulse-ease": (v) => sanitizeClickRepulseEase(v, "out-elastic"),
   };
 
   for (const control of CONTROL_DEFINITIONS) {
