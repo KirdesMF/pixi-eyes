@@ -20,6 +20,7 @@ export const DEFAULT_LAYOUT_TRANSITION_DURATION = 0.8;
 export const DEFAULT_LAYOUT_TRANSITION_EASE: FocusEaseName = "out-cubic";
 export const DEFAULT_MIN_EYE_SIZE = 10;
 export const DEFAULT_MAX_EYE_SIZE = 90;
+export const DEFAULT_LAYOUT_JITTER = 0.25; // 25% organic disorder for natural look
 export const DEFAULT_STAGGER_SECONDS = 0.002;
 export const DEFAULT_RANDOMIZE_STAGGER = false;
 

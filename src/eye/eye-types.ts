@@ -26,6 +26,7 @@ export type EyeFieldConfig = {
   layoutShape?: LayoutShapeName;
   layoutTransitionDuration?: number;
   layoutTransitionEase?: FocusEaseName;
+  layoutJitter?: number;
   minEyeSize?: number;
   maxEyeSize?: number;
   repulsionRadius?: number;

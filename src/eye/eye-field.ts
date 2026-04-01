@@ -76,6 +76,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.radialExponent,
       0.73,
       runtime.layoutShape,
+      runtime.layoutJitter,
     );
 
     positions.forEach((position, index) => {
@@ -118,6 +119,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.radialExponent,
       0.73,
       runtime.layoutShape,
+      runtime.layoutJitter,
     );
 
     positions.forEach((position, index) => {

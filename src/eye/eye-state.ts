@@ -73,6 +73,7 @@ export type EyeFieldRuntime = {
   layoutShape: LayoutShapeName;
   layoutTransitionDuration: number;
   layoutTransitionEase: FocusEaseName;
+  layoutJitter: number;
   minEyeSize: number;
   maxEyeSize: number;
   packAttempts: number;

@@ -30,6 +30,10 @@ export function updateConfig(
   if (config.layoutTransitionEase !== undefined) {
     runtime.layoutTransitionEase = config.layoutTransitionEase;
   }
+  if (config.layoutJitter !== undefined) {
+    runtime.layoutJitter = Math.max(0, Math.min(1, config.layoutJitter));
+    result.shouldRelayout = true;
+  }
 
   // Eye count and sizes
   if (config.instanceCount !== undefined) {

@@ -104,12 +104,14 @@ export function packEyePositions(
   radialExponent: number,
   eyeSpiralOffset: number,
   shape: LayoutShapeName,
+  jitter: number = 0, // 0 = perfect alignment, 1 = maximum organic disorder
 ): PackedPosition[] {
   const placed: PackedPosition[] = [];
   const safeClusterRadius = Math.max(clusterRadius, 0);
   const maxAttempts = Math.max(1, Math.min(Math.floor(attempts), 2048));
   const spiralStep = (spiralStepDegrees * Math.PI) / 180;
   const safeRadialExponent = Math.max(radialExponent, 0.01);
+  const jitterAmount = Math.max(0, Math.min(jitter, 1)); // Clamp 0-1
 
   for (let i = 0; i < radii.length; i += 1) {
     const radius = radii[i];
@@ -124,8 +126,16 @@ export function packEyePositions(
       const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
       const maxDistance = Math.max(0, boundaryDistance - radius);
       const distance = maxDistance * t ** safeRadialExponent;
-      const candidateX = Math.cos(angle) * distance;
-      const candidateY = Math.sin(angle) * distance;
+      
+      // Apply jitter to angle and distance for organic feel
+      const jitterAngle = (hash01(i * 7.31) - 0.5) * jitterAmount * 0.4; // ±23° max
+      const jitterDistance = (hash01(i * 13.7 + 5) - 0.5) * jitterAmount * 0.3; // ±15% max
+      
+      const finalAngle = angle + jitterAngle;
+      const finalDistance = distance * (1 + jitterDistance);
+      
+      const candidateX = Math.cos(finalAngle) * finalDistance;
+      const candidateY = Math.sin(finalAngle) * finalDistance;
 
       let clearance = maxDistance - distance;
       let overlaps = false;

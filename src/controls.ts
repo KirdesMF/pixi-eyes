@@ -133,6 +133,17 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     section: "Field",
   },
   {
+    id: "layout-jitter",
+    label: "Jitter",
+    type: "number",
+    min: 0,
+    max: 1,
+    step: 0.05,
+    fractionDigits: 2,
+    default: 0.25,
+    section: "Field",
+  },
+  {
     id: "scroll-fall-exit-top-factor",
     label: "Fall Start",
     type: "number",

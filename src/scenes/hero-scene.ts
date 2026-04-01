@@ -15,6 +15,7 @@ interface HeroSceneOptions {
   initialLayoutShape: LayoutShapeName;
   initialLayoutTransitionDuration: number;
   initialLayoutTransitionEase: FocusEaseName;
+  initialLayoutJitter: number;
   initialScrollFallEnterTopFactor: number;
   initialScrollFallExitTopFactor: number;
   initialMinEyeSize: number;
@@ -58,6 +59,7 @@ export const createHeroScene = async ({
   initialLayoutShape,
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
+  initialLayoutJitter,
   initialScrollFallEnterTopFactor,
   initialScrollFallExitTopFactor,
   initialMinEyeSize,
@@ -127,6 +129,7 @@ export const createHeroScene = async ({
     layoutShape: initialLayoutShape,
     layoutTransitionDuration: initialLayoutTransitionDuration,
     layoutTransitionEase: initialLayoutTransitionEase,
+    layoutJitter: initialLayoutJitter,
     minEyeSize: initialMinEyeSize,
     maxEyeSize: initialMaxEyeSize,
     repulsionRadius: initialRepulsionRadius,
@@ -337,6 +340,7 @@ export const createHeroScene = async ({
       layoutShape?: LayoutShapeName;
       layoutTransitionDuration?: number;
       layoutTransitionEase?: FocusEaseName;
+      layoutJitter?: number;
       minEyeSize?: number;
       maxEyeSize?: number;
       repulsionRadius?: number;
