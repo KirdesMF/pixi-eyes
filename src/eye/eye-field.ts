@@ -15,11 +15,7 @@ import {
 import { packEyePositions, resolvePackedRadii, staggerDelay } from "./layout";
 import { createEyeInstance } from "./eye-factory";
 import { startLayoutTransition, applyStaticEyeSettings, updateSingleEye } from "./eye-controller";
-import {
-  sampleSharedAttentionTarget,
-  sampleSharedAttentionDelay,
-} from "./behaviors/eye-tracking";
-import { resetScrollFallState } from "./behaviors/eye-fall";
+import { sampleSharedAttentionTarget, sampleSharedAttentionDelay } from "./behaviors/eye-tracking";
 import { smoothTowards } from "../shared/math";
 import { updateConfig, applyAppearanceRefresh } from "./eye-field-config";
 import { createRuntime } from "./eye-field-runtime";
@@ -36,7 +32,6 @@ export type EyeField = {
   syncCount: (nextCount: number) => void;
   setConfig: (config: EyeFieldConfig) => void;
   setPointer: (x: number, y: number, isActive: boolean) => void;
-  setScrollFall: (isActive: boolean) => void;
   pointerDown: (x: number, y: number) => void;
   update: (dtSeconds: number) => EyeFieldMetrics;
   destroy: () => void;
@@ -170,20 +165,12 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
 
     if (!isActive) {
       runtime.pointerActive = false;
-      runtime.scrollFallResumePointerActive = false;
       return;
     }
 
     const nextTargetMouseX = x - root.position.x;
     const nextTargetMouseY = y - root.position.y;
 
-    if (runtime.scrollFallTarget > 0.5) {
-      runtime.pointerActive = false;
-      runtime.scrollFallResumePointerActive = true;
-      runtime.targetMouseX = nextTargetMouseX;
-      runtime.targetMouseY = nextTargetMouseY;
-      return;
-    }
     const movedDistance = Math.hypot(
       nextTargetMouseX - runtime.targetMouseX,
       nextTargetMouseY - runtime.targetMouseY,
@@ -224,42 +211,8 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     runtime.targetMouseY = nextTargetMouseY;
   }
 
-  function setScrollFall(isActive: boolean): void {
-    if (root.destroyed) {
-      return;
-    }
-
-    const nextTarget = isActive ? 1 : 0;
-    if (runtime.scrollFallTarget === nextTarget) {
-      return;
-    }
-
-    runtime.scrollFallTarget = nextTarget;
-    runtime.scrollFallElapsed = 0;
-    runtime.scrollReturnElapsed = nextTarget <= 0.5 ? 0 : Number.POSITIVE_INFINITY;
-    if (isActive) {
-      runtime.scrollFallResumePointerActive = runtime.pointerActive;
-      runtime.pointerActive = false;
-      runtime.eyes.forEach((eye) => {
-        resetScrollFallState(eye);
-        eye.needsAppearanceRefresh = true;
-        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
-      });
-    } else {
-      runtime.pointerActive = runtime.scrollFallResumePointerActive;
-      runtime.eyes.forEach((eye) => {
-        eye.needsAppearanceRefresh = true;
-        eye.appearanceAccumulator = eye.appearanceUpdateInterval;
-      });
-    }
-  }
-
   function pointerDown(x: number, y: number): void {
     if (root.destroyed) {
-      return;
-    }
-
-    if (runtime.scrollFallTarget > 0.5) {
       return;
     }
 
@@ -268,8 +221,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
 
   function update(dtSeconds: number): EyeFieldMetrics {
     runtime.elapsed += Math.max(dtSeconds, 0);
-    const isScrollFallLocked = runtime.scrollFallTarget > 0.5;
-    const trackingTarget = runtime.pointerActive && !isScrollFallLocked ? 1 : 0;
+    const trackingTarget = runtime.pointerActive ? 1 : 0;
     runtime.trackingBlend = smoothTowards(
       runtime.trackingBlend,
       trackingTarget,
@@ -289,7 +241,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       dtSeconds,
     );
     const sharedAttentionIdle =
-      !isScrollFallLocked &&
       runtime.elapsed - runtime.lastPointerMoveAt >= runtime.sharedAttentionDelay;
 
     if (sharedAttentionIdle && runtime.elapsed >= runtime.nextSharedAttentionAt) {
@@ -305,23 +256,11 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.sharedAttentionBlendSpeed,
       dtSeconds,
     );
-    runtime.scrollFallBlend = smoothTowards(
-      runtime.scrollFallBlend,
-      runtime.scrollFallTarget,
-      runtime.scrollFallBlendSpeed,
-      dtSeconds,
-    );
-    runtime.scrollFallElapsed =
-      runtime.scrollFallTarget > 0.5 ? runtime.scrollFallElapsed + dtSeconds : 0;
-    runtime.scrollReturnElapsed =
-      runtime.scrollFallTarget <= 0.5
-        ? runtime.scrollReturnElapsed + dtSeconds
-        : Number.POSITIVE_INFINITY;
 
     let visibleCount = 0;
 
     runtime.eyes.forEach((eye) => {
-      updateSingleEye(eye, runtime, worldBounds, dtSeconds, isScrollFallLocked);
+      updateSingleEye(eye, runtime, worldBounds, dtSeconds);
       if (eye.root.visible) {
         visibleCount += 1;
       }
@@ -340,7 +279,6 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     syncCount,
     setConfig,
     setPointer,
-    setScrollFall,
     pointerDown,
     update,
     _runtime: runtime,

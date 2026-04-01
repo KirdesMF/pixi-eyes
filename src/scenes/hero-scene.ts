@@ -13,8 +13,6 @@ interface HeroSceneOptions {
   initialLayoutTransitionDuration: number;
   initialLayoutTransitionEase: FocusEaseName;
   initialLayoutJitter: number;
-  initialScrollFallEnterTopFactor: number;
-  initialScrollFallExitTopFactor: number;
   initialMinEyeSize: number;
   initialMaxEyeSize: number;
   initialRepulsionRadius: number;
@@ -60,8 +58,6 @@ export const createHeroScene = async ({
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
   initialLayoutJitter,
-  initialScrollFallEnterTopFactor,
-  initialScrollFallExitTopFactor,
   initialMinEyeSize,
   initialMaxEyeSize,
   initialRepulsionRadius,
@@ -109,9 +105,6 @@ export const createHeroScene = async ({
   const worldBounds = new Rectangle(0, 0, mountNode.clientWidth, mountNode.clientHeight);
   const backdrop = new Graphics();
   let backgroundColor = initialBackgroundColor;
-  let isScrollFallActive = false;
-  let scrollFallEnterTopFactor = initialScrollFallEnterTopFactor;
-  let scrollFallExitTopFactor = initialScrollFallExitTopFactor;
   const eyeField = createEyeField({ count: initialCount, renderer: app.renderer, worldBounds });
 
   eyeField.setConfig({
@@ -194,32 +187,7 @@ export const createHeroScene = async ({
     resize();
   });
 
-  const intersectionObserver = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0];
-      if (!entry) {
-        return;
-      }
-
-      const enterTop = -window.innerHeight * scrollFallEnterTopFactor;
-      const exitTop = -window.innerHeight * scrollFallExitTopFactor;
-      const top = entry.boundingClientRect.top;
-
-      if (!isScrollFallActive && top <= exitTop) {
-        isScrollFallActive = true;
-        eyeField.setScrollFall(true);
-      } else if (isScrollFallActive && entry.isIntersecting && top >= enterTop) {
-        isScrollFallActive = false;
-        eyeField.setScrollFall(false);
-      }
-    },
-    {
-      threshold: [0, 0.1, 0.2, 0.35, 0.5, 0.7, 0.85, 1],
-    },
-  );
-
   resizeObserver.observe(mountNode);
-  intersectionObserver.observe(mountNode);
   resize();
 
   const handleTick = ({ elapsedMS, FPS }: { elapsedMS: number; FPS: number }) => {
@@ -242,8 +210,6 @@ export const createHeroScene = async ({
       eyeField.layout(worldBounds.width, worldBounds.height);
     },
     setConfig: (config: {
-      scrollFallEnterTopFactor?: number;
-      scrollFallExitTopFactor?: number;
       layoutShape?: LayoutShapeName;
       layoutTransitionDuration?: number;
       layoutTransitionEase?: FocusEaseName;
@@ -275,17 +241,6 @@ export const createHeroScene = async ({
       roundHighlightColor?: number;
       backgroundColor?: number;
     }) => {
-      const nextEnterTopFactor =
-        typeof config.scrollFallEnterTopFactor === "number"
-          ? Math.max(config.scrollFallEnterTopFactor, 0)
-          : scrollFallEnterTopFactor;
-      const nextExitTopFactor =
-        typeof config.scrollFallExitTopFactor === "number"
-          ? Math.max(config.scrollFallExitTopFactor, 0)
-          : scrollFallExitTopFactor;
-      scrollFallEnterTopFactor = Math.min(nextEnterTopFactor, nextExitTopFactor);
-      scrollFallExitTopFactor = Math.max(nextEnterTopFactor, nextExitTopFactor);
-
       if (typeof config.backgroundColor === "number") {
         backgroundColor = config.backgroundColor;
         drawBackdrop(backdrop, worldBounds.width, worldBounds.height, backgroundColor);
@@ -303,7 +258,6 @@ export const createHeroScene = async ({
       app.canvas.removeEventListener("pointerleave", handlePointerLeave);
       app.ticker.remove(handleTick);
       resizeObserver.disconnect();
-      intersectionObserver.disconnect();
       eyeField.destroy();
       app.destroy(true, { children: true });
     },

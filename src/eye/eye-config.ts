@@ -1,10 +1,6 @@
 // Eye configuration and constants
 
-import type {
-  EyeFieldConfig,
-  LayoutShapeName,
-  FocusEaseName,
-} from "./eye-types";
+import type { EyeFieldConfig, LayoutShapeName, FocusEaseName } from "./eye-types";
 
 export type { EyeFieldConfig };
 
@@ -42,30 +38,6 @@ export const DEFAULT_SHARED_ATTENTION_DELAY = 2.4;
 export const DEFAULT_SHARED_ATTENTION_RETARGET_MIN_DELAY = 1.6;
 export const DEFAULT_SHARED_ATTENTION_RETARGET_MAX_DELAY = 3.2;
 export const DEFAULT_SHARED_ATTENTION_BLEND_SPEED = 3.2;
-
-// Scroll fall constants
-export const DEFAULT_SCROLL_FALL_BLEND_SPEED = 2.8;
-export const SCROLL_FALL_DELAY_MAX = 0.46;
-export const SCROLL_FALL_BOTTOM_PADDING = 1;
-export const SCROLL_FALL_GRAVITY = 2600;
-export const SCROLL_FALL_INITIAL_DRIFT = 84;
-export const SCROLL_FALL_INITIAL_SPIN_DEGREES = 110;
-export const SCROLL_FALL_AIR_DAMPING = 1.9;
-export const SCROLL_FALL_SMALL_EYE_BOUNCE_RESTITUTION = 0.56;
-export const SCROLL_FALL_LARGE_EYE_BOUNCE_RESTITUTION = 0.18;
-export const SCROLL_FALL_SMALL_EYE_BOUNCE_CUTOFF = 52;
-export const SCROLL_FALL_LARGE_EYE_BOUNCE_CUTOFF = 168;
-export const SCROLL_FALL_GROUND_DAMPING = 10;
-export const SCROLL_FALL_RETURN_POSITION_SPEED = 7.4;
-export const SCROLL_FALL_RETURN_ROTATION_SPEED = 9.2;
-export const SCROLL_FALL_RETURN_VELOCITY_SPEED = 6.2;
-export const SCROLL_FALL_RETURN_DELAY_MAX = 0.24;
-export const SCROLL_FALL_SQUASH_MAX = 0.22;
-export const SCROLL_FALL_STRETCH_MAX = 0.12;
-export const SCROLL_FALL_SQUASH_IMPACT_SPEED = 900;
-export const SCROLL_FALL_SQUASH_RETURN_SPEED = 12;
-export const DEFAULT_SCROLL_FALL_EXIT_TOP_FACTOR = 0.18;
-export const DEFAULT_SCROLL_FALL_ENTER_TOP_FACTOR = 0.02;
 
 // Appearance constants
 export const DEFAULT_LOW_DETAIL_SCALE_THRESHOLD = 0.4;
@@ -113,6 +85,4 @@ export const MICRO_SACCADE_FREQUENCY = 0.8;
 export const MICRO_SACCADE_DURATION = 0.08;
 
 // Re-export from eye-assets for convenience
-export {
-  HIGHLIGHT_RADIUS,
-} from "./eye-assets";
+export { HIGHLIGHT_RADIUS } from "./eye-assets";

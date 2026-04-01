@@ -35,7 +35,7 @@ export function createEyeInstance(
   const globeHighlight = new Sprite(bt.roundGlobeHighlightTexture);
   const irisGroup = new Container();
   const pupilGroup = new Container();
-  
+
   // Use Sprites with shared textures for performance (Phase 9 optimization)
   const iris = new Sprite(bt.irisFillTexture);
   const pupil = new Sprite(bt.roundPupilTexture);
@@ -55,12 +55,12 @@ export function createEyeInstance(
   irisGroup.addChild(iris, pupilGroup);
 
   root.addChild(
-    dropShadow,      // dropShadowTexture - back layer
-    eyeFill,         // scleraFillTexture - globe base
-    irisGroup,       // iris + pupil + highlight (dynamic)
-    eyeShadow,       // scleraShadowTexture - inner shadow ON TOP
-    globeHighlight,  // globeHighlightTexture - specular
-    eyeOutline,      // scleraOutlineTexture - front layer
+    dropShadow, // dropShadowTexture - back layer
+    eyeFill, // scleraFillTexture - globe base
+    irisGroup, // iris + pupil + highlight (dynamic)
+    eyeShadow, // scleraShadowTexture - inner shadow ON TOP
+    globeHighlight, // globeHighlightTexture - specular
+    eyeOutline, // scleraOutlineTexture - front layer
   );
 
   const scale = Math.max(radius / Math.max(maxRadius, 0.001), 0.001);
@@ -111,18 +111,6 @@ export function createEyeInstance(
     currentAngle: 0,
     pupilScale: 1,
     irisProximity: 0,
-    fallDelayMix: hash01(index * 3.971 + count * 0.19),
-    fallRotationMix: hash01(index * 5.317 + count * 0.43),
-    fallDriftMix: hash01(index * 7.113 + count * 0.61),
-    fallStarted: false,
-    fallOffsetX: 0,
-    fallOffsetY: 0,
-    fallVelocityX: 0,
-    fallVelocityY: 0,
-    fallRotationDegrees: 0,
-    fallAngularVelocity: 0,
-    fallSquash: 0,
-    fallGrounded: false,
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
     focusCycleOffset: hash01(index * 17.413 + count * 2.31),
     // Micro-saccade initialization

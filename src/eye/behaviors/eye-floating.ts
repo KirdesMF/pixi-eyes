@@ -8,32 +8,25 @@ export function updateFloatingBehavior(
   eye: EyeInstance,
   runtime: EyeFieldRuntime,
   dtSeconds: number,
-  isScrollFallLocked: boolean,
 ): void {
-  if (isScrollFallLocked) {
-    eye.parallaxX = smoothTowards(eye.parallaxX, 0, runtime.pointerEaseSpeed, dtSeconds);
-    eye.parallaxY = smoothTowards(eye.parallaxY, 0, runtime.pointerEaseSpeed, dtSeconds);
-    eye.repelX = smoothTowards(eye.repelX, 0, runtime.repulsionReturnSpeed, dtSeconds);
-    eye.repelY = smoothTowards(eye.repelY, 0, runtime.repulsionReturnSpeed, dtSeconds);
-  } else {
-    const parallax = calculateParallaxOffset(runtime, eye);
-    eye.parallaxX = parallax.x;
-    eye.parallaxY = parallax.y;
+  const parallax = calculateParallaxOffset(runtime, eye);
+  eye.parallaxX = parallax.x;
+  eye.parallaxY = parallax.y;
 
-    const targetRepel = calculateRepulsionTarget(runtime, eye);
-    const waveRepel = clickWaveTarget(runtime, eye);
-    const targetX = targetRepel.x + waveRepel.x;
-    const targetY = targetRepel.y + waveRepel.y;
-    
-    // Use different speeds for push vs return
-    // Push (moving away from center): fast, responsive
-    // Return (moving back to center): slow, creates trail effect
-    const isPushing = Math.abs(targetX) > Math.abs(eye.repelX) || Math.abs(targetY) > Math.abs(eye.repelY);
-    const speed = isPushing ? runtime.repulsionPushSpeed : runtime.repulsionReturnSpeed;
-    
-    eye.repelX = smoothTowards(eye.repelX, targetX, speed, dtSeconds);
-    eye.repelY = smoothTowards(eye.repelY, targetY, speed, dtSeconds);
-  }
+  const targetRepel = calculateRepulsionTarget(runtime, eye);
+  const waveRepel = clickWaveTarget(runtime, eye);
+  const targetX = targetRepel.x + waveRepel.x;
+  const targetY = targetRepel.y + waveRepel.y;
+
+  // Use different speeds for push vs return
+  // Push (moving away from center): fast, responsive
+  // Return (moving back to center): slow, creates trail effect
+  const isPushing =
+    Math.abs(targetX) > Math.abs(eye.repelX) || Math.abs(targetY) > Math.abs(eye.repelY);
+  const speed = isPushing ? runtime.repulsionPushSpeed : runtime.repulsionReturnSpeed;
+
+  eye.repelX = smoothTowards(eye.repelX, targetX, speed, dtSeconds);
+  eye.repelY = smoothTowards(eye.repelY, targetY, speed, dtSeconds);
 }
 
 function calculateParallaxOffset(

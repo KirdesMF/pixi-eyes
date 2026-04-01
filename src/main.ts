@@ -198,8 +198,6 @@ function getSceneConfig() {
       | "out-sine"
       | "in-out-sine",
     initialLayoutJitter: toNum(s["layout-jitter"]),
-    initialScrollFallEnterTopFactor: toNum(s["scroll-fall-enter-top-factor"]),
-    initialScrollFallExitTopFactor: toNum(s["scroll-fall-exit-top-factor"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
     initialMaxEyeSize: toNum(s["max-eye-size"]),
     initialRepulsionRadius: toNum(s["repulsion-radius"]),

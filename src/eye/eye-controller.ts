@@ -4,10 +4,7 @@ import { Rectangle } from "pixi.js";
 
 import { clamp, lerp, smoothstep, smoothTowards, lerpColor } from "../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "./eye-state";
-import {
-  SCLERA_RADIUS,
-  MAX_LOOK,
-} from "./eye-config";
+import { SCLERA_RADIUS, MAX_LOOK } from "./eye-config";
 import {
   totalOffset,
   sampleEyeSharedAttentionLook,
@@ -15,7 +12,6 @@ import {
   microSaccadeOffset,
 } from "./behaviors/eye-tracking";
 import { updateFloatingBehavior } from "./behaviors/eye-floating";
-import { updateScrollFallState } from "./behaviors/eye-fall";
 import { resolveScaleInProgress } from "./eye-factory";
 import {
   applyHumanPupilAppearance,
@@ -95,7 +91,6 @@ export function updateSingleEye(
   runtime: EyeFieldRuntime,
   worldBounds: Rectangle,
   dtSeconds: number,
-  isScrollFallLocked: boolean,
 ): void {
   updateLayoutTransition(eye, runtime, dtSeconds);
   eye.appearanceAccumulator += dtSeconds;
@@ -103,29 +98,19 @@ export function updateSingleEye(
   const eyeSeconds = dtSeconds;
   const introScaleProgress = resolveScaleInProgress(eye, runtime.elapsed);
 
-  // Update scroll fall behavior (includes squash calculation)
-  updateScrollFallState(eye, runtime, worldBounds, dtSeconds);
-
-  // Apply squash scale from fall animation
-  const squashScaleX = eye.fallSquash >= 0 ? 1 + eye.fallSquash * 0.85 : 1 + eye.fallSquash * 0.4;
-  const squashScaleY = eye.fallSquash >= 0 ? 1 - eye.fallSquash * 0.75 : 1 - eye.fallSquash * 0.5;
-
-  eye.root.scale.set(
-    eye.renderScale * introScaleProgress * squashScaleX,
-    eye.renderScale * introScaleProgress * squashScaleY,
-  );
+  eye.root.scale.set(eye.renderScale * introScaleProgress, eye.renderScale * introScaleProgress);
 
   // Update parallax and repulsion
-  updateFloatingBehavior(eye, runtime, dtSeconds, isScrollFallLocked);
+  updateFloatingBehavior(eye, runtime, dtSeconds);
 
   // Get micro-saccade offset for natural eye movement
   const microSaccade = microSaccadeOffset(eye, runtime, dtSeconds);
 
   const interactionOffset = totalOffset(eye);
-  const interactionDrawX = eye.x + interactionOffset.x + eye.fallOffsetX + microSaccade.x;
-  const interactionDrawY = eye.y + interactionOffset.y + eye.fallOffsetY + microSaccade.y;
+  const interactionDrawX = eye.x + interactionOffset.x + microSaccade.x;
+  const interactionDrawY = eye.y + interactionOffset.y + microSaccade.y;
   eye.root.position.set(interactionDrawX, interactionDrawY);
-  eye.root.rotation = (eye.fallRotationDegrees * Math.PI) / 180;
+  eye.root.rotation = 0;
 
   const visibleRadius =
     renderedEyeRadius(eye) *
@@ -179,7 +164,7 @@ export function updateSingleEye(
 
   updateHumanEyeDeformation(eye, eyeSeconds);
 
-  const shouldThrottleAppearance = eye.lowDetail && runtime.scrollFallBlend <= 0.0001;
+  const shouldThrottleAppearance = eye.lowDetail;
   if (
     shouldThrottleAppearance &&
     eye.scaleInFinished &&
@@ -198,11 +183,11 @@ export function updateSingleEye(
   const dx = eye.x - runtime.mouseX;
   const dy = eye.y - runtime.mouseY;
   const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Calculate target proximity factor (1 = close, 0 = far)
   const maxDist = runtime.mouseIrisRadius;
   const targetProximity = 1 - clamp(distanceToMouse / maxDist, 0, 1);
-  
+
   // Smooth transition: approach target when close, decay when far
   const decaySpeed = runtime.mouseIrisDecay;
   if (targetProximity > eye.irisProximity) {
@@ -213,7 +198,7 @@ export function updateSingleEye(
     eye.irisProximity += (targetProximity - eye.irisProximity) * decaySpeed;
   }
   eye.irisProximity = clamp(eye.irisProximity, 0, 1);
-  
+
   // Interpolate iris color based on proximity
   eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);
 

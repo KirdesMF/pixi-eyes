@@ -37,7 +37,7 @@ bun run build
 
 - Responsive Pixi hero canvas with a left-side tuning panel
 - Mixed round and cat eyes in the same field
-- Pointer-driven gaze, repulsion, click wave, idle shared-attention, and scroll-triggered fall/return behavior
+- Pointer-driven gaze, repulsion, click wave, and idle shared-attention behavior
 - Procedural cat pupil morph and blink system
 - Live JSON export for tuned settings
 - Shared generated textures for the static globe layers, with procedural inner eye motion preserved

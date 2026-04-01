@@ -127,28 +127,6 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     section: "Field",
   },
   {
-    id: "scroll-fall-exit-top-factor",
-    label: "Fall Start",
-    type: "number",
-    min: 0,
-    max: 0.5,
-    step: 0.01,
-    fractionDigits: 2,
-    default: 0.18,
-    section: "Field",
-  },
-  {
-    id: "scroll-fall-enter-top-factor",
-    label: "Return Start",
-    type: "number",
-    min: 0,
-    max: 0.5,
-    step: 0.01,
-    fractionDigits: 2,
-    default: 0.02,
-    section: "Field",
-  },
-  {
     id: "min-eye-size",
     label: "Base Min",
     type: "number",
@@ -505,12 +483,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
   },
 ];
 
-export const SECTIONS = [
-  "Field",
-  "Appearance",
-  "Motion",
-  "Round Light",
-] as const;
+export const SECTIONS = ["Field", "Appearance", "Motion", "Round Light"] as const;
 export type SectionName = (typeof SECTIONS)[number];
 
 export function sanitizeHexColor(value: string | undefined, fallback: string): string {

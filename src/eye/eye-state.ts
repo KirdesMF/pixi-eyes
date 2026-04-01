@@ -47,18 +47,6 @@ export type EyeInstance = {
   currentAngle: number;
   pupilScale: number;
   irisProximity: number; // For smooth color transition (0 = base, 1 = mouse color)
-  fallDelayMix: number;
-  fallRotationMix: number;
-  fallDriftMix: number;
-  fallStarted: boolean;
-  fallOffsetX: number;
-  fallOffsetY: number;
-  fallVelocityX: number;
-  fallVelocityY: number;
-  fallRotationDegrees: number;
-  fallAngularVelocity: number;
-  fallSquash: number;
-  fallGrounded: boolean;
   focusDelayMix: number;
   focusCycleOffset: number;
   // Micro-saccade state for natural eye movement
@@ -96,7 +84,6 @@ export type EyeFieldRuntime = {
   targetMouseX: number;
   targetMouseY: number;
   pointerActive: boolean;
-  scrollFallResumePointerActive: boolean;
   elapsed: number;
   trackingBlend: number;
   sharedAttentionDelay: number;
@@ -108,11 +95,6 @@ export type EyeFieldRuntime = {
   sharedAttentionY: number;
   lastPointerMoveAt: number;
   nextSharedAttentionAt: number;
-  scrollFallBlend: number;
-  scrollFallTarget: number;
-  scrollFallElapsed: number;
-  scrollReturnElapsed: number;
-  scrollFallBlendSpeed: number;
   shadowOpacity: number;
   dropShadowColor: number;
   dropShadowOpacity: number;

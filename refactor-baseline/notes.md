@@ -13,6 +13,7 @@ bun run dev
 Then open `http://localhost:5173/?capture=1`.
 
 This will automatically download 9 PNG files:
+
 - `round-eye-rest.png` — 1 round eye, no tracking
 - `round-eye-track.png` — 1 round eye, tracking offset
 - `cat-eye-rest.png` — 1 cat eye, morph=0
@@ -34,10 +35,12 @@ bun run dev
 Then open `http://localhost:5173/?benchmark=1`.
 
 This runs a 5-second benchmark after 2s warmup and downloads a JSON file:
+
 - `perf-chrome.json` on Chrome
 - `perf-safari.json` on Safari
 
 The JSON contains:
+
 - `fpsAvg` — average FPS
 - `fpsP5` — 5th percentile FPS
 - `fpsP95` — 95th percentile FPS
@@ -54,25 +57,23 @@ The JSON contains:
 - fpsP95: 85.5
 - frameTimeAvg: 15.2ms
 - frameTimeMax: 24.7ms
-- drawCallsAvg: _ (metric not yet reliable)
+- drawCallsAvg: \_ (metric not yet reliable)
 
 ### Safari (fill after manual capture)
 
-- fpsAvg: _
-- fpsP5: _
-- fpsP95: _
-- frameTimeAvg: _
-- frameTimeMax: _
-- drawCallsAvg: _
+- fpsAvg: \_
+- fpsP5: \_
+- fpsP95: \_
+- frameTimeAvg: \_
+- frameTimeMax: \_
+- drawCallsAvg: \_
 
 ## Current Settings (defaults)
 
 - instance-count: default
 - layout-shape: circle
 - layout-transition-duration: default
-- layout-transition-ease: out-cubic
-- scroll-fall-enter-top-factor: default
-- scroll-fall-exit-top-factor: default
+- layout-jitter: default
 - min-eye-size: default
 - max-eye-size: default
 - cat-mix: default
@@ -137,7 +138,6 @@ The JSON contains:
 - [ ] Group of eyes
 - [ ] Mouse tracking behavior
 - [ ] Blink animation (human + cat)
-- [ ] Fall / squash behavior on scroll
 - [ ] Highlight / reflection on eyes
 - [ ] Shadow rendering (inner + drop)
 
@@ -145,7 +145,6 @@ The JSON contains:
 
 - Mouse movement: eyes follow cursor
 - Click: repulse effect
-- Scroll: fall animation when leaving viewport
 
 ## Notes
 
