@@ -1,4 +1,4 @@
-export type EyeType = "human";
+export type EyeType = "human" | "simple";
 export type LayoutShapeName = "circle" | "square" | "triangle" | "infinity";
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
 

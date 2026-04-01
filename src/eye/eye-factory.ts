@@ -1,5 +1,6 @@
 import { Container, Graphics, Sprite } from "pixi.js";
 
+import type { EyeType } from "./eye-types";
 import type { EyeInstance } from "./eye-state";
 import type { SharedContexts, SharedTextures } from "./eye-assets";
 import { SCLERA_RADIUS, DEFAULT_IRIS_COLOR, selectBucket } from "./eye-assets";
@@ -11,6 +12,13 @@ import {
 } from "./eye-config";
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
+
+const SIMPLE_EYE_MIX = 0.3;
+
+function resolveEyeType(index: number, count: number): EyeType {
+  const hash = hash01(index * 11.337 + count * 1.73);
+  return hash < SIMPLE_EYE_MIX ? "simple" : "human";
+}
 
 export function createEyeInstance(
   contexts: SharedContexts,
@@ -25,6 +33,9 @@ export function createEyeInstance(
   const bucket = selectBucket(radius);
   const bt = textures.buckets[bucket];
 
+  const eyeType = resolveEyeType(index, count);
+  const isSimple = eyeType === "simple";
+
   const root = new Container();
   const dropShadow = new Sprite(bt.dropShadowTexture);
   const eyeFill = new Sprite(bt.scleraFillTexture);
@@ -36,12 +47,16 @@ export function createEyeInstance(
   const irisGroup = new Container();
   const pupilGroup = new Container();
 
-  // Use Sprites with shared textures for performance (Phase 9 optimization)
   const iris = new Sprite(bt.irisFillTexture);
   const pupil = new Sprite(bt.roundPupilTexture);
   const highlight = new Sprite(bt.roundHighlightTexture);
 
-  iris.tint = DEFAULT_IRIS_COLOR;
+  if (isSimple) {
+    iris.tint = 0x0a0a0a;
+    pupil.tint = 0x050505;
+  } else {
+    iris.tint = DEFAULT_IRIS_COLOR;
+  }
   dropShadow.anchor.set(0.5);
   eyeFill.anchor.set(0.5);
   eyeOutline.anchor.set(0.5);
@@ -69,7 +84,7 @@ export function createEyeInstance(
   root.alpha = 1;
 
   return {
-    type: "human",
+    type: eyeType,
     root,
     dropShadow,
     eyeFill,

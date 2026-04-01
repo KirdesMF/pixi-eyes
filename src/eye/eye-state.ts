@@ -2,10 +2,10 @@
 
 import { Container, Graphics, Sprite } from "pixi.js";
 
-import type { LayoutShapeName, FocusEaseName } from "./eye-types";
+import type { EyeType, LayoutShapeName, FocusEaseName } from "./eye-types";
 
 export type EyeInstance = {
-  type: "human";
+  type: EyeType;
   root: Container;
   dropShadow: Sprite;
   eyeFill: Sprite;
