@@ -1,12 +1,8 @@
 // Eye floating behavior (parallax and repulsion)
 
-import { clamp, smoothstep, smoothTowards } from "../../shared/math";
+import { clamp, smoothTowards } from "../../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "../eye-state";
 import { clickWaveTarget } from "./eye-tracking";
-
-// Smoother parallax/repulsion constants
-const PARALLAX_SMOOTHING = 8; // Higher = smoother but more lag
-const REPULSION_SMOOTHING = 10; // Higher = smoother transition
 
 export function updateFloatingBehavior(
   eye: EyeInstance,
@@ -15,33 +11,27 @@ export function updateFloatingBehavior(
   isScrollFallLocked: boolean,
 ): void {
   if (isScrollFallLocked) {
-    // Smoothly return to center during scroll fall
-    const returnSpeed = runtime.pointerEaseSpeed * 0.5; // Slower return during fall
-    eye.parallaxX = smoothTowards(eye.parallaxX, 0, returnSpeed, dtSeconds);
-    eye.parallaxY = smoothTowards(eye.parallaxY, 0, returnSpeed, dtSeconds);
+    eye.parallaxX = smoothTowards(eye.parallaxX, 0, runtime.pointerEaseSpeed, dtSeconds);
+    eye.parallaxY = smoothTowards(eye.parallaxY, 0, runtime.pointerEaseSpeed, dtSeconds);
     eye.repelX = smoothTowards(eye.repelX, 0, runtime.repulsionReturnSpeed, dtSeconds);
     eye.repelY = smoothTowards(eye.repelY, 0, runtime.repulsionReturnSpeed, dtSeconds);
   } else {
-    // Smooth parallax interpolation
-    const targetParallax = calculateParallaxOffset(runtime, eye);
-    const parallaxSpeed = PARALLAX_SMOOTHING * eye.scale;
-    eye.parallaxX = smoothTowards(eye.parallaxX, targetParallax.x, parallaxSpeed, dtSeconds);
-    eye.parallaxY = smoothTowards(eye.parallaxY, targetParallax.y, parallaxSpeed, dtSeconds);
+    const parallax = calculateParallaxOffset(runtime, eye);
+    eye.parallaxX = parallax.x;
+    eye.parallaxY = parallax.y;
 
-    // Smooth repulsion with distance-based falloff
     const targetRepel = calculateRepulsionTarget(runtime, eye);
     const waveRepel = clickWaveTarget(runtime, eye);
-    const repelSpeed = REPULSION_SMOOTHING * eye.scale;
     eye.repelX = smoothTowards(
       eye.repelX,
       targetRepel.x + waveRepel.x,
-      repelSpeed,
+      runtime.repulsionReturnSpeed,
       dtSeconds,
     );
     eye.repelY = smoothTowards(
       eye.repelY,
       targetRepel.y + waveRepel.y,
-      repelSpeed,
+      runtime.repulsionReturnSpeed,
       dtSeconds,
     );
   }
@@ -85,7 +75,6 @@ function calculateRepulsionTarget(
   const distanceSquared = dx * dx + dy * dy;
   const reach = mouseRadius + eye.radius;
 
-  // Smooth distance-based falloff instead of hard cutoff
   if (distanceSquared >= reach * reach) {
     return { x: 0, y: 0 };
   }
@@ -98,14 +87,9 @@ function calculateRepulsionTarget(
   if (distanceSquared > 0.0001) {
     const distance = Math.sqrt(distanceSquared);
     const overlap = reach - distance;
-    
-    // Smooth falloff: stronger when closer, weaker at edge
-    const falloff = smoothstep(1 - distance / reach);
-    const push = overlap * pushStrength * weight * falloff;
-    
+    const push = overlap * pushStrength * weight;
     return { x: (dx / distance) * push, y: (dy / distance) * push };
   }
 
-  // Very close to mouse - maximum repulsion
   return { x: reach * pushStrength * weight, y: 0 };
 }
