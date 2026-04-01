@@ -27,6 +27,7 @@ export type EyeFieldConfig = {
   mouseIrisColor?: number;
   mouseIrisRadius?: number;
   mouseIrisBlend?: number;
+  mouseIrisDecay?: number;
   eyeShapeColor?: number;
   roundTranslateStrength?: number;
   roundHighlightScale?: number;

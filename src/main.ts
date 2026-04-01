@@ -216,6 +216,7 @@ function getSceneConfig() {
     initialMouseIrisColor: toHex(s["mouse-iris-color"]),
     initialMouseIrisRadius: toNum(s["mouse-iris-radius"]),
     initialMouseIrisBlend: toNum(s["mouse-iris-blend"]),
+    initialMouseIrisDecay: toNum(s["mouse-iris-decay"]),
     initialEyeShapeColor: toHex(s["eye-shape-color"]),
     initialRoundTranslateStrength: toNum(s["round-translate-strength"]),
     initialRoundHighlightScale: toNum(s["round-highlight-scale"]),

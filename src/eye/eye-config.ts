@@ -83,6 +83,7 @@ export const DEFAULT_IRIS_COLOR = 0x808080; // Gray iris
 export const DEFAULT_MOUSE_IRIS_COLOR = 0xff6b6b; // Coral red when mouse is close
 export const DEFAULT_MOUSE_IRIS_RADIUS = 100; // Radius of mouse proximity effect (px)
 export const DEFAULT_MOUSE_IRIS_BLEND = 0.5; // Blend factor for smooth transition
+export const DEFAULT_MOUSE_IRIS_DECAY = 0.1; // Return speed to base color (lower = slower)
 export const DEFAULT_EYE_SHAPE_COLOR = 0xffffff;
 export const DEFAULT_BACKGROUND_COLOR = 0xffffff;
 export const DEFAULT_ROUND_TRANSLATE_STRENGTH = 1;

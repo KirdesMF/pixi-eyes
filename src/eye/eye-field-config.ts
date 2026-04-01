@@ -143,6 +143,10 @@ export function updateConfig(
     runtime.mouseIrisBlend = Math.max(0, Math.min(1, config.mouseIrisBlend));
     result.shouldRefreshAppearance = true;
   }
+  if (config.mouseIrisDecay !== undefined) {
+    runtime.mouseIrisDecay = Math.max(0.01, Math.min(0.5, config.mouseIrisDecay));
+    result.shouldRefreshAppearance = true;
+  }
   if (config.eyeShapeColor !== undefined && Number.isFinite(config.eyeShapeColor)) {
     runtime.eyeShapeColor = config.eyeShapeColor;
     result.shouldRefreshAppearance = true;

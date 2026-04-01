@@ -110,6 +110,7 @@ export function createEyeInstance(
     currentScaleY: 1,
     currentAngle: 0,
     pupilScale: 1,
+    irisProximity: 0,
     fallDelayMix: hash01(index * 3.971 + count * 0.19),
     fallRotationMix: hash01(index * 5.317 + count * 0.43),
     fallDriftMix: hash01(index * 7.113 + count * 0.61),

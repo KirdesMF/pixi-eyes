@@ -42,6 +42,7 @@ import {
   DEFAULT_MOUSE_IRIS_COLOR,
   DEFAULT_MOUSE_IRIS_RADIUS,
   DEFAULT_MOUSE_IRIS_BLEND,
+  DEFAULT_MOUSE_IRIS_DECAY,
 } from "./eye-config";
 
 export function createRuntime(count: number): EyeFieldRuntime {
@@ -100,6 +101,7 @@ export function createRuntime(count: number): EyeFieldRuntime {
     mouseIrisColor: DEFAULT_MOUSE_IRIS_COLOR,
     mouseIrisRadius: DEFAULT_MOUSE_IRIS_RADIUS,
     mouseIrisBlend: DEFAULT_MOUSE_IRIS_BLEND,
+    mouseIrisDecay: DEFAULT_MOUSE_IRIS_DECAY,
     eyeShapeColor: 0xffffff,
     roundTranslateStrength: DEFAULT_ROUND_TRANSLATE_STRENGTH,
     roundHighlightScale: DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE,

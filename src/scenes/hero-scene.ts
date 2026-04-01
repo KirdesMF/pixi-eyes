@@ -31,6 +31,7 @@ interface HeroSceneOptions {
   initialMouseIrisColor: number;
   initialMouseIrisRadius: number;
   initialMouseIrisBlend: number;
+  initialMouseIrisDecay: number;
   initialEyeShapeColor: number;
   initialRoundTranslateStrength: number;
   initialRoundHighlightScale: number;
@@ -77,6 +78,7 @@ export const createHeroScene = async ({
   initialMouseIrisColor,
   initialMouseIrisRadius,
   initialMouseIrisBlend,
+  initialMouseIrisDecay,
   initialEyeShapeColor,
   initialRoundTranslateStrength,
   initialRoundHighlightScale,
@@ -133,6 +135,7 @@ export const createHeroScene = async ({
     mouseIrisColor: initialMouseIrisColor,
     mouseIrisRadius: initialMouseIrisRadius,
     mouseIrisBlend: initialMouseIrisBlend,
+    mouseIrisDecay: initialMouseIrisDecay,
     eyeShapeColor: initialEyeShapeColor,
     roundTranslateStrength: initialRoundTranslateStrength,
     roundHighlightScale: initialRoundHighlightScale,
@@ -261,6 +264,7 @@ export const createHeroScene = async ({
       mouseIrisColor?: number;
       mouseIrisRadius?: number;
       mouseIrisBlend?: number;
+      mouseIrisDecay?: number;
       eyeShapeColor?: number;
       roundTranslateStrength?: number;
       roundHighlightScale?: number;

@@ -46,6 +46,7 @@ export type EyeInstance = {
   currentScaleY: number;
   currentAngle: number;
   pupilScale: number;
+  irisProximity: number; // For smooth color transition (0 = base, 1 = mouse color)
   fallDelayMix: number;
   fallRotationMix: number;
   fallDriftMix: number;
@@ -122,6 +123,7 @@ export type EyeFieldRuntime = {
   mouseIrisColor: number;
   mouseIrisRadius: number;
   mouseIrisBlend: number;
+  mouseIrisDecay: number;
   eyeShapeColor: number;
   roundTranslateStrength: number;
   roundHighlightScale: number;

@@ -406,6 +406,17 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     section: "Appearance",
   },
   {
+    id: "mouse-iris-decay",
+    label: "Mouse Decay",
+    type: "number",
+    min: 0.01,
+    max: 0.5,
+    step: 0.01,
+    fractionDigits: 2,
+    default: 0.1,
+    section: "Appearance",
+  },
+  {
     id: "eye-shape-color",
     label: "Shape",
     type: "color",
