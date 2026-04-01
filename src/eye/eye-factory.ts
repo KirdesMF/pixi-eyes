@@ -1,6 +1,5 @@
 import { Container, Graphics, Sprite } from "pixi.js";
 
-import type { EyeType } from "./eye-types";
 import type { EyeInstance } from "./eye-state";
 import type { SharedContexts, SharedTextures } from "./eye-assets";
 import { SCLERA_RADIUS, DEFAULT_IRIS_COLOR, selectBucket } from "./eye-assets";
@@ -8,17 +7,10 @@ import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
   SCALE_IN_DURATION,
-  MICRO_SACCADE_FREQUENCY,
+  MICRO_SACCADE_DURATION,
 } from "./eye-config";
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
-
-const SIMPLE_EYE_MIX = 0.3;
-
-function resolveEyeType(index: number, count: number): EyeType {
-  const hash = hash01(index * 11.337 + count * 1.73);
-  return hash < SIMPLE_EYE_MIX ? "simple" : "human";
-}
 
 export function createEyeInstance(
   contexts: SharedContexts,
@@ -32,9 +24,6 @@ export function createEyeInstance(
 ): EyeInstance {
   const bucket = selectBucket(radius);
   const bt = textures.buckets[bucket];
-
-  const eyeType = resolveEyeType(index, count);
-  const isSimple = eyeType === "simple";
 
   const root = new Container();
   const dropShadow = new Sprite(bt.dropShadowTexture);
@@ -51,12 +40,7 @@ export function createEyeInstance(
   const pupil = new Sprite(bt.roundPupilTexture);
   const highlight = new Sprite(bt.roundHighlightTexture);
 
-  if (isSimple) {
-    iris.tint = 0x0a0a0a;
-    pupil.tint = 0x050505;
-  } else {
-    iris.tint = DEFAULT_IRIS_COLOR;
-  }
+  iris.tint = DEFAULT_IRIS_COLOR;
   dropShadow.anchor.set(0.5);
   eyeFill.anchor.set(0.5);
   eyeOutline.anchor.set(0.5);
@@ -70,12 +54,14 @@ export function createEyeInstance(
   irisGroup.addChild(iris, pupilGroup);
 
   root.addChild(
-    dropShadow, // dropShadowTexture - back layer
-    eyeFill, // scleraFillTexture - globe base
-    irisGroup, // iris + pupil + highlight (dynamic)
-    eyeShadow, // scleraShadowTexture - inner shadow ON TOP
-    globeHighlight, // globeHighlightTexture - specular
-    eyeOutline, // scleraOutlineTexture - front layer
+    dropShadow,
+    eyeFill,
+    irisClipMask,
+    irisGroup,
+    eyeShadow,
+    globeHighlight,
+    blinkGroup,
+    eyeOutline,
   );
 
   const scale = Math.max(radius / Math.max(maxRadius, 0.001), 0.001);
@@ -84,7 +70,7 @@ export function createEyeInstance(
   root.alpha = 1;
 
   return {
-    type: eyeType,
+    type: "human",
     root,
     dropShadow,
     eyeFill,
@@ -128,8 +114,7 @@ export function createEyeInstance(
     irisProximity: 0,
     focusDelayMix: hash01(index * 8.137 + count * 1.17),
     focusCycleOffset: hash01(index * 17.413 + count * 2.31),
-    // Micro-saccade initialization
-    microSaccadeTimer: hash01(index * 3.17) * MICRO_SACCADE_FREQUENCY,
+    microSaccadeTimer: hash01(index * 3.17) * MICRO_SACCADE_DURATION,
     microSaccadePhase: 0,
     microSaccadeX: 0,
     microSaccadeY: 0,

@@ -6,8 +6,7 @@ import {
   SCLERA_RADIUS,
   IRIS_RADIUS,
   PUPIL_RADIUS,
-  PUPIL_CLIP_MARGIN,
-  PUPIL_INNER_TRAVEL,
+  PUPIL_IRIS_RATIO,
   MAX_SQUASH,
   MAX_LOOK,
 } from "../eye-config";
@@ -15,8 +14,7 @@ import {
 export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRuntime): void {
   const variant = humanEyeVariantMetrics();
   const effectiveIrisRadius = IRIS_RADIUS * variant.irisScale;
-  const pupilRadius = PUPIL_RADIUS; // Fixed, no focusPulseScale
-  
+
   // Calculate raw iris position - iris should reach sclera boundary
   const rawIrisX = eye.lookX * runtime.roundTranslateStrength;
   const rawIrisY = eye.lookY * runtime.roundTranslateStrength;
@@ -34,34 +32,13 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   
   const irisX = rawIrisX * irisCompression;
   const irisY = rawIrisY * irisCompression;
-  
-  // Pupil MUST stay inside iris - clamp to iris boundary
-  // Max pupil offset from iris center = irisRadius - pupilRadius - margin
-  const maxPupilOffset = effectiveIrisRadius - pupilRadius - PUPIL_CLIP_MARGIN;
-  
-  // Calculate raw pupil offset from iris center
-  const rawPupilOffsetX = eye.lookX * PUPIL_INNER_TRAVEL;
-  const rawPupilOffsetY = eye.lookY * PUPIL_INNER_TRAVEL;
-  const rawPupilOffsetDist = Math.sqrt(
-    rawPupilOffsetX * rawPupilOffsetX +
-    rawPupilOffsetY * rawPupilOffsetY
-  );
-  
-  // Clamp pupil to stay inside iris
-  let pupilOffsetX: number;
-  let pupilOffsetY: number;
-  
-  if (rawPupilOffsetDist > maxPupilOffset) {
-    const scale = maxPupilOffset / rawPupilOffsetDist;
-    pupilOffsetX = rawPupilOffsetX * scale;
-    pupilOffsetY = rawPupilOffsetY * scale;
-  } else {
-    pupilOffsetX = rawPupilOffsetX;
-    pupilOffsetY = rawPupilOffsetY;
-  }
-  
-  const pupilX = irisX + pupilOffsetX;
-  const pupilY = irisY + pupilOffsetY;
+
+  // Pupil position relative to iris - travels proportionally with iris
+  // This ensures pupil reaches the edge when iris is at the edge
+  const pupilRelativeX = irisX * PUPIL_IRIS_RATIO;
+  const pupilRelativeY = irisY * PUPIL_IRIS_RATIO;
+  const pupilX = irisX + pupilRelativeX;
+  const pupilY = irisY + pupilRelativeY;
 
   eye.iris.position.set(irisX, irisY);
   // Note: iris.tint is set in eye-controller.ts for edge iris color effect

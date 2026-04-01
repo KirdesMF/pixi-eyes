@@ -18,10 +18,6 @@ import {
   updateHumanPupilScale,
   updateHumanEyeDeformation,
 } from "./render/human-eye-view";
-import {
-  applySimpleEyeAppearance,
-  updateSimpleEyeDeformation,
-} from "./render/simple-eye-view";
 
 export function updateLayoutTransition(
   eye: EyeInstance,
@@ -166,45 +162,40 @@ export function updateSingleEye(
   eye.lookX = smoothTowards(eye.lookX, desiredLook.x, lookSpeed, eyeSeconds);
   eye.lookY = smoothTowards(eye.lookY, desiredLook.y, lookSpeed, eyeSeconds);
 
-  if (eye.type === "simple") {
-    updateSimpleEyeDeformation(eye, eyeSeconds);
-    applySimpleEyeAppearance(eye, runtime);
-  } else {
-    updateHumanEyeDeformation(eye, eyeSeconds);
+  updateHumanEyeDeformation(eye, eyeSeconds);
 
-    const shouldThrottleAppearance = eye.lowDetail;
-    if (
-      shouldThrottleAppearance &&
-      eye.scaleInFinished &&
-      !eye.needsAppearanceRefresh &&
-      eye.appearanceAccumulator < eye.appearanceUpdateInterval
-    ) {
-      return;
-    }
-
-    eye.appearanceAccumulator = 0;
-
-    updateHumanPupilScale(eye, runtime, eyeSeconds);
-
-    const dx = eye.x - runtime.mouseX;
-    const dy = eye.y - runtime.mouseY;
-    const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
-
-    const maxDist = runtime.mouseIrisRadius;
-    const targetProximity = 1 - clamp(distanceToMouse / maxDist, 0, 1);
-
-    const decaySpeed = runtime.mouseIrisDecay;
-    if (targetProximity > eye.irisProximity) {
-      eye.irisProximity += (targetProximity - eye.irisProximity) * decaySpeed * 3;
-    } else {
-      eye.irisProximity += (targetProximity - eye.irisProximity) * decaySpeed;
-    }
-    eye.irisProximity = clamp(eye.irisProximity, 0, 1);
-
-    eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);
-
-    applyHumanPupilAppearance(eye, runtime);
+  const shouldThrottleAppearance = eye.lowDetail;
+  if (
+    shouldThrottleAppearance &&
+    eye.scaleInFinished &&
+    !eye.needsAppearanceRefresh &&
+    eye.appearanceAccumulator < eye.appearanceUpdateInterval
+  ) {
+    return;
   }
+
+  eye.appearanceAccumulator = 0;
+
+  updateHumanPupilScale(eye, runtime, eyeSeconds);
+
+  const dx = eye.x - runtime.mouseX;
+  const dy = eye.y - runtime.mouseY;
+  const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
+
+  const maxDist = runtime.mouseIrisRadius;
+  const targetProximity = 1 - clamp(distanceToMouse / maxDist, 0, 1);
+
+  const decaySpeed = runtime.mouseIrisDecay;
+  if (targetProximity > eye.irisProximity) {
+    eye.irisProximity += (targetProximity - eye.irisProximity) * decaySpeed * 3;
+  } else {
+    eye.irisProximity += (targetProximity - eye.irisProximity) * decaySpeed;
+  }
+  eye.irisProximity = clamp(eye.irisProximity, 0, 1);
+
+  eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);
+
+  applyHumanPupilAppearance(eye, runtime);
 }
 
 function clampMagnitude(x: number, y: number, maxLength: number): { x: number; y: number } {

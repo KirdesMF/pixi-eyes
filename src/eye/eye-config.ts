@@ -77,6 +77,7 @@ export const PUPIL_CLIP_MARGIN = 0.2;
 export const MAX_SQUASH = 0.2;
 export const SQUEEZE_SPEED = 12;
 export const PUPIL_INNER_TRAVEL = 6.5;
+export const PUPIL_IRIS_RATIO = 0.65; // Pupil travels 65% of iris distance for natural movement
 export const CIRCLE_KAPPA = 0.5522847498307936;
 
 // Micro-saccade constants for natural eye movement

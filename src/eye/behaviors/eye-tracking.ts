@@ -186,8 +186,8 @@ export function sampleEyeSharedAttentionLook(
     eye.y * 0.0023;
   const angleSpread = lerp(-Math.PI * 0.9, Math.PI * 0.9, hash01(eyeSeed));
   const angle = baseAngle + angleSpread;
-  // Use full MAX_LOOK range (0.75 to 1.0) to match cursor tracking range
-  const magnitude = MAX_LOOK * lerp(0.75, 1.0, hash01(eyeSeed * 2.137 + 0.41));
+  // Allow shared attention to reach edges (80-100% of MAX_LOOK)
+  const magnitude = MAX_LOOK * lerp(0.8, 1.0, smoothstep(hash01(eyeSeed * 2.137 + 0.41)));
 
   return {
     x: Math.cos(angle) * magnitude,
