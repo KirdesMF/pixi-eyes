@@ -190,7 +190,10 @@ function getSceneConfig() {
 
   return {
     initialCount: toNum(s["instance-count"]),
-    initialLayoutShape: String(s["layout-shape"]) as "circle" | "square" | "triangle",
+    initialLayoutShape: String(s["layout-shape"]) as "circle" | "ring" | "heart" | "cross" | "star",
+    initialRingInnerRatio: toNum(s["ring-inner-ratio"]),
+    initialCrossType: String(s["cross-type"]) as "x" | "plus",
+    initialStarBranches: toNum(s["star-branches"]),
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
     initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
       | "linear"

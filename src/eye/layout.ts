@@ -1,10 +1,4 @@
-import type { LayoutShapeName } from "../eye/eye-types";
-
-const TRIANGLE_LAYOUT_HALF_BASE_FACTOR = Math.sqrt(3) * 0.5;
-
-function cross2d(ax: number, ay: number, bx: number, by: number): number {
-  return ax * by - ay * bx;
-}
+import type { LayoutShapeName, CrossType } from "../eye/eye-types";
 
 function hash01(value: number): number {
   const hashed = Math.sin(value * 12.9898 + 78.233) * 43758.5453;
@@ -30,78 +24,53 @@ export function resolvePackedRadii(count: number, minRadius: number, maxRadius: 
   });
 }
 
-function triangleLayoutVertices(extent: number): readonly { x: number; y: number }[] {
-  const halfBase = extent * TRIANGLE_LAYOUT_HALF_BASE_FACTOR;
-  return [
-    { x: 0, y: -extent },
-    { x: halfBase, y: extent * 0.5 },
-    { x: -halfBase, y: extent * 0.5 },
-  ] as const;
-}
-
-function raySegmentDistance(
-  dx: number,
-  dy: number,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
+function shapeBoundaryDistance(
+  shape: LayoutShapeName,
+  angle: number,
+  extent: number,
+  _ringInnerRatio: number = 0.5,
+  crossType: CrossType = "x",
+  starBranches: number = 5,
 ): number {
-  const edgeX = bx - ax;
-  const edgeY = by - ay;
-  const denominator = cross2d(dx, dy, edgeX, edgeY);
-  if (Math.abs(denominator) <= 0.000001) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  const distance = cross2d(ax, ay, edgeX, edgeY) / denominator;
-  const edgeT = cross2d(ax, ay, dx, dy) / denominator;
-  if (distance >= 0 && edgeT >= 0 && edgeT <= 1) {
-    return distance;
-  }
-
-  return Number.POSITIVE_INFINITY;
-};
-
-function shapeBoundaryDistance(shape: LayoutShapeName, angle: number, extent: number): number {
   const safeExtent = Math.max(extent, 0.001);
   if (shape === "circle") {
     return safeExtent;
   }
 
-  const directionX = Math.cos(angle);
-  const directionY = Math.sin(angle);
-  if (shape === "square") {
-    return safeExtent / Math.max(Math.abs(directionX), Math.abs(directionY), 0.0001);
+  if (shape === "ring") {
+    // Ring uses same boundary as circle, but eyes near center are hidden in eye-field.ts
+    return safeExtent;
   }
 
-  if (shape === "infinity") {
-    // Lemniscate of Gerono (infinity symbol)
-    // r = a * sqrt(cos(2*angle)) / (sin(angle)^2 + 1)
-    // Scaled to fit within extent
-    const cos2Angle = Math.cos(2 * angle);
-    if (cos2Angle <= 0) {
-      return safeExtent * 0.1; // Very small in invalid regions
-    }
-    const sinAngle = Math.sin(angle);
-    const denominator = sinAngle * sinAngle + 1;
-    const radius = (safeExtent * 0.7 * Math.sqrt(cos2Angle)) / denominator;
-    return Math.max(radius, safeExtent * 0.15);
+  if (shape === "heart") {
+    // Heart shape: r = a * (1 - sin(angle)) * 0.7 for downward-pointing heart
+    return safeExtent * (1 - Math.sin(angle)) * 0.7;
   }
 
-  const vertices = triangleLayoutVertices(safeExtent);
-  let bestDistance = Number.POSITIVE_INFINITY;
-
-  for (let index = 0; index < vertices.length; index += 1) {
-    const start = vertices[index];
-    const end = vertices[(index + 1) % vertices.length];
-    const distance = raySegmentDistance(directionX, directionY, start.x, start.y, end.x, end.y);
-    if (distance < bestDistance) {
-      bestDistance = distance;
+  if (shape === "cross") {
+    // Cross: X or + shape
+    if (crossType === "plus") {
+      // Vertical/horizontal cross
+      const normalized = Math.abs(angle % (Math.PI / 2));
+      const t = Math.min(normalized, Math.PI / 2 - normalized) / (Math.PI / 4);
+      return safeExtent * (1 - t * 0.7);
+    } else {
+      // Diagonal cross (X)
+      const normalized = Math.abs((angle - Math.PI / 4) % (Math.PI / 2));
+      const t = Math.min(normalized, Math.PI / 2 - normalized) / (Math.PI / 4);
+      return safeExtent * (1 - t * 0.7);
     }
   }
 
-  return Number.isFinite(bestDistance) ? bestDistance : safeExtent;
+  if (shape === "star") {
+    // Star with n branches
+    const branches = Math.max(3, Math.min(starBranches, 12));
+    const starFactor = Math.cos(angle * branches) * 0.5 + 0.5;
+    return safeExtent * (0.35 + starFactor * 0.65);
+  }
+
+  // Default to circle
+  return safeExtent;
 };
 
 export type PackedPosition = {
@@ -119,6 +88,9 @@ export function packEyePositions(
   eyeSpiralOffset: number,
   shape: LayoutShapeName,
   jitter: number = 0, // 0 = perfect alignment, 1 = maximum organic disorder
+  ringInnerRatio: number = 0.5,
+  crossType: CrossType = "x",
+  starBranches: number = 5,
 ): PackedPosition[] {
   const placed: PackedPosition[] = [];
   const safeClusterRadius = Math.max(clusterRadius, 0);
@@ -137,7 +109,14 @@ export function packEyePositions(
     for (let attempt = 0; attempt <= maxAttempts; attempt += 1) {
       const t = attempt / maxAttempts;
       const angle = (i + 1) * eyeSpiralOffset + attempt * spiralStep;
-      const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
+      const boundaryDistance = shapeBoundaryDistance(
+        shape,
+        angle,
+        safeClusterRadius,
+        ringInnerRatio,
+        crossType,
+        starBranches,
+      );
       const maxDistance = Math.max(0, boundaryDistance - radius);
       const distance = maxDistance * t ** safeRadialExponent;
       

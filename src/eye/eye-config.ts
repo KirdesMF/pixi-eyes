@@ -1,6 +1,6 @@
 // Eye configuration and constants
 
-import type { EyeFieldConfig, LayoutShapeName, FocusEaseName } from "./eye-types";
+import type { EyeFieldConfig, LayoutShapeName, FocusEaseName, CrossType } from "./eye-types";
 
 export type { EyeFieldConfig };
 
@@ -18,6 +18,9 @@ export const DEFAULT_MAX_EYE_SIZE = 50;
 export const DEFAULT_LAYOUT_JITTER = 1; // 100% organic disorder
 export const DEFAULT_STAGGER_SECONDS = 0.005;
 export const DEFAULT_RANDOMIZE_STAGGER = false;
+export const DEFAULT_RING_INNER_RATIO = 0.5; // Ring hole size (0-1)
+export const DEFAULT_CROSS_TYPE: CrossType = "x";
+export const DEFAULT_STAR_BRANCHES = 5;
 
 // Scale in constants
 export const SCALE_IN_DURATION = 0.28;

@@ -1,5 +1,6 @@
 export type EyeType = "human";
-export type LayoutShapeName = "circle" | "square" | "triangle" | "infinity";
+export type LayoutShapeName = "circle" | "ring" | "heart" | "cross" | "star";
+export type CrossType = "x" | "plus";
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
 
 /**
@@ -8,6 +9,9 @@ export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
 export type EyeFieldConfig = {
   instanceCount?: number;
   layoutShape?: LayoutShapeName;
+  ringInnerRatio?: number;
+  crossType?: CrossType;
+  starBranches?: number;
   layoutTransitionDuration?: number;
   layoutTransitionEase?: FocusEaseName;
   layoutJitter?: number;

@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
 import { createEyeField } from "../eye/eye-field";
-import type { FocusEaseName, LayoutShapeName } from "../eye/eye-types";
+import type { FocusEaseName, LayoutShapeName, CrossType } from "../eye/eye-types";
 
 interface MetricsSnapshot {
   fps: number;
@@ -10,6 +10,9 @@ interface MetricsSnapshot {
 interface HeroSceneOptions {
   initialCount: number;
   initialLayoutShape: LayoutShapeName;
+  initialRingInnerRatio: number;
+  initialCrossType: CrossType;
+  initialStarBranches: number;
   initialLayoutTransitionDuration: number;
   initialLayoutTransitionEase: FocusEaseName;
   initialLayoutJitter: number;
@@ -55,6 +58,9 @@ const drawBackdrop = (
 export const createHeroScene = async ({
   initialCount,
   initialLayoutShape,
+  initialRingInnerRatio,
+  initialCrossType,
+  initialStarBranches,
   initialLayoutTransitionDuration,
   initialLayoutTransitionEase,
   initialLayoutJitter,
@@ -109,6 +115,9 @@ export const createHeroScene = async ({
 
   eyeField.setConfig({
     layoutShape: initialLayoutShape,
+    ringInnerRatio: initialRingInnerRatio,
+    crossType: initialCrossType,
+    starBranches: initialStarBranches,
     layoutTransitionDuration: initialLayoutTransitionDuration,
     layoutTransitionEase: initialLayoutTransitionEase,
     layoutJitter: initialLayoutJitter,
@@ -211,6 +220,9 @@ export const createHeroScene = async ({
     },
     setConfig: (config: {
       layoutShape?: LayoutShapeName;
+      ringInnerRatio?: number;
+      crossType?: CrossType;
+      starBranches?: number;
       layoutTransitionDuration?: number;
       layoutTransitionEase?: FocusEaseName;
       layoutJitter?: number;

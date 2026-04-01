@@ -34,6 +34,22 @@ export function updateConfig(
     runtime.layoutJitter = Math.max(0, Math.min(1, config.layoutJitter));
     result.shouldRelayout = true;
   }
+  if (config.layoutShape !== undefined && config.layoutShape !== runtime.layoutShape) {
+    runtime.layoutShape = config.layoutShape;
+    result.shouldRelayout = true;
+  }
+  if (config.ringInnerRatio !== undefined) {
+    runtime.ringInnerRatio = Math.max(0.2, Math.min(0.8, config.ringInnerRatio));
+    result.shouldRelayout = true;
+  }
+  if (config.crossType !== undefined && config.crossType !== runtime.crossType) {
+    runtime.crossType = config.crossType;
+    result.shouldRelayout = true;
+  }
+  if (config.starBranches !== undefined) {
+    runtime.starBranches = Math.max(3, Math.min(12, Math.floor(config.starBranches)));
+    result.shouldRelayout = true;
+  }
 
   // Eye count and sizes
   if (config.instanceCount !== undefined) {

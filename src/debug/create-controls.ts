@@ -5,6 +5,7 @@ import {
   sanitizeHexColor,
   sanitizeFocusEase,
   sanitizeLayoutShape,
+  sanitizeCrossType,
 } from "../controls";
 
 export type ControlBindings = {
@@ -131,6 +132,7 @@ export function createControlBindings(
 
   const SANITIZER_BY_ID: Record<string, (v: string) => string> = {
     "layout-shape": (v) => sanitizeLayoutShape(v, "circle"),
+    "cross-type": (v) => sanitizeCrossType(v, "x"),
   };
 
   for (const control of CONTROL_DEFINITIONS) {

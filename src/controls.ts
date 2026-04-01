@@ -1,4 +1,4 @@
-import type { FocusEaseName, LayoutShapeName } from "./eye/eye-types";
+import type { FocusEaseName, LayoutShapeName, CrossType } from "./eye/eye-types";
 
 export type ControlDefinition = {
   id: string;
@@ -22,9 +22,15 @@ export const EASE_OPTIONS: Array<{ label: string; value: FocusEaseName }> = [
 
 export const LAYOUT_SHAPE_OPTIONS: Array<{ label: string; value: LayoutShapeName }> = [
   { label: "Circle", value: "circle" },
-  { label: "Square", value: "square" },
-  { label: "Triangle", value: "triangle" },
-  { label: "Infinity ∞", value: "infinity" },
+  { label: "Ring", value: "ring" },
+  { label: "Heart", value: "heart" },
+  { label: "Cross", value: "cross" },
+  { label: "Star", value: "star" },
+];
+
+export const CROSS_TYPE_OPTIONS: Array<{ label: string; value: CrossType }> = [
+  { label: "X (Diagonal)", value: "x" },
+  { label: "+ (Vertical)", value: "plus" },
 ];
 
 export const CONTROL_DEFINITIONS: ControlDefinition[] = [
@@ -94,6 +100,36 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     type: "select",
     default: "circle",
     options: LAYOUT_SHAPE_OPTIONS,
+    section: "Field",
+  },
+  {
+    id: "ring-inner-ratio",
+    label: "Ring Hole",
+    type: "number",
+    min: 0.2,
+    max: 0.8,
+    step: 0.05,
+    fractionDigits: 2,
+    default: 0.5,
+    section: "Field",
+  },
+  {
+    id: "cross-type",
+    label: "Cross Type",
+    type: "select",
+    default: "x",
+    options: CROSS_TYPE_OPTIONS,
+    section: "Field",
+  },
+  {
+    id: "star-branches",
+    label: "Star Branches",
+    type: "number",
+    min: 3,
+    max: 12,
+    step: 1,
+    fractionDigits: 0,
+    default: 5,
     section: "Field",
   },
   {
@@ -505,5 +541,14 @@ export function sanitizeLayoutShape(
 ): LayoutShapeName {
   return LAYOUT_SHAPE_OPTIONS.some((option) => option.value === value)
     ? (value as LayoutShapeName)
+    : fallback;
+}
+
+export function sanitizeCrossType(
+  value: string | undefined,
+  fallback: CrossType,
+): CrossType {
+  return CROSS_TYPE_OPTIONS.some((option) => option.value === value)
+    ? (value as CrossType)
     : fallback;
 }

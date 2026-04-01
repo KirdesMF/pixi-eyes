@@ -2,7 +2,7 @@
 
 import { Container, Graphics, Sprite } from "pixi.js";
 
-import type { EyeType, LayoutShapeName, FocusEaseName } from "./eye-types";
+import type { EyeType, LayoutShapeName, FocusEaseName, CrossType } from "./eye-types";
 
 export type EyeInstance = {
   type: EyeType;
@@ -70,6 +70,9 @@ export type EyeFieldRuntime = {
   radialExponent: number;
   staggerSeconds: number;
   randomizeStagger: boolean;
+  ringInnerRatio: number;
+  crossType: CrossType;
+  starBranches: number;
   parallaxStrength: number;
   repulsionRadius: number;
   repulsionStrength: number;

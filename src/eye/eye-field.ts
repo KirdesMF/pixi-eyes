@@ -71,6 +71,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       0.73,
       runtime.layoutShape,
       runtime.layoutJitter,
+      runtime.ringInnerRatio,
+      runtime.crossType,
+      runtime.starBranches,
     );
 
     positions.forEach((position, index) => {
@@ -114,6 +117,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       0.73,
       runtime.layoutShape,
       runtime.layoutJitter,
+      runtime.ringInnerRatio,
+      runtime.crossType,
+      runtime.starBranches,
     );
 
     positions.forEach((position, index) => {
@@ -261,6 +267,14 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
 
     runtime.eyes.forEach((eye) => {
       updateSingleEye(eye, runtime, worldBounds, dtSeconds);
+      
+      // Filter eyes for ring shape - hide eyes near center
+      if (eye.root.visible && runtime.layoutShape === "ring") {
+        const minRadius = runtime.clusterRadius * runtime.ringInnerRatio;
+        const distanceFromCenter = Math.sqrt(eye.x * eye.x + eye.y * eye.y);
+        eye.root.visible = distanceFromCenter >= minRadius;
+      }
+      
       if (eye.root.visible) {
         visibleCount += 1;
       }
