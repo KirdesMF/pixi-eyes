@@ -2,7 +2,7 @@
 
 import { Rectangle } from "pixi.js";
 
-import { clamp, lerp, smoothstep, smoothTowards } from "../shared/math";
+import { clamp, lerp, smoothstep, smoothTowards, lerpColor } from "../shared/math";
 import type { EyeInstance, EyeFieldRuntime } from "./eye-state";
 import {
   SCLERA_RADIUS,
@@ -190,10 +190,25 @@ export function updateSingleEye(
   }
 
   eye.appearanceAccumulator = 0;
-  
+
   // Update pupil scale animation for human eyes
   updateHumanPupilScale(eye, runtime, eyeSeconds);
+
+  // Calculate edge iris color based on distance from center
+  const distanceFromCenter = Math.sqrt(eye.x * eye.x + eye.y * eye.y);
+  const maxDistance = runtime.clusterRadius;
+  const normalizedDistance = maxDistance > 0 ? distanceFromCenter / maxDistance : 0;
   
+  // Calculate edge factor (0 = center, 1 = edge)
+  const edgeThreshold = 1 - (runtime.edgeIrisWidth / maxDistance);
+  const edgeStart = edgeThreshold - runtime.edgeIrisBlend;
+  const edgeEnd = edgeThreshold + runtime.edgeIrisBlend;
+  const edgeT = clamp((normalizedDistance - edgeStart) / Math.max(edgeEnd - edgeStart, 0.001), 0, 1);
+  const edgeFactor = smoothstep(edgeT);
+  
+  // Interpolate iris color
+  eye.iris.tint = lerpColor(runtime.irisColor, runtime.edgeIrisColor, edgeFactor);
+
   applyHumanPupilAppearance(eye, runtime);
 }
 

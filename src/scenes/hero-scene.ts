@@ -28,6 +28,9 @@ interface HeroSceneOptions {
   initialDropShadowSpread: number;
   initialRoundInnerShadowColor: number;
   initialIrisColor: number;
+  initialEdgeIrisColor: number;
+  initialEdgeIrisWidth: number;
+  initialEdgeIrisBlend: number;
   initialEyeShapeColor: number;
   initialRoundTranslateStrength: number;
   initialRoundHighlightScale: number;
@@ -71,6 +74,9 @@ export const createHeroScene = async ({
   initialDropShadowSpread,
   initialRoundInnerShadowColor,
   initialIrisColor,
+  initialEdgeIrisColor,
+  initialEdgeIrisWidth,
+  initialEdgeIrisBlend,
   initialEyeShapeColor,
   initialRoundTranslateStrength,
   initialRoundHighlightScale,
@@ -124,6 +130,9 @@ export const createHeroScene = async ({
     dropShadowSpread: initialDropShadowSpread,
     roundInnerShadowColor: initialRoundInnerShadowColor,
     irisColor: initialIrisColor,
+    edgeIrisColor: initialEdgeIrisColor,
+    edgeIrisWidth: initialEdgeIrisWidth,
+    edgeIrisBlend: initialEdgeIrisBlend,
     eyeShapeColor: initialEyeShapeColor,
     roundTranslateStrength: initialRoundTranslateStrength,
     roundHighlightScale: initialRoundHighlightScale,
@@ -249,6 +258,9 @@ export const createHeroScene = async ({
       dropShadowSpread?: number;
       roundInnerShadowColor?: number;
       irisColor?: number;
+      edgeIrisColor?: number;
+      edgeIrisWidth?: number;
+      edgeIrisBlend?: number;
       eyeShapeColor?: number;
       roundTranslateStrength?: number;
       roundHighlightScale?: number;

@@ -38,8 +38,11 @@ import {
   DEFAULT_ROUND_GLOBE_HIGHLIGHT_OFFSET_Y,
   DEFAULT_ROUND_GLOBE_HIGHLIGHT_ROTATION_DEGREES,
   DEFAULT_ROUND_GLOBE_HIGHLIGHT_OPACITY,
+  DEFAULT_IRIS_COLOR,
+  DEFAULT_EDGE_IRIS_COLOR,
+  DEFAULT_EDGE_IRIS_WIDTH,
+  DEFAULT_EDGE_IRIS_BLEND,
 } from "./eye-config";
-import { DEFAULT_IRIS_COLOR } from "./eye-assets";
 
 export function createRuntime(count: number): EyeFieldRuntime {
   return {
@@ -94,6 +97,9 @@ export function createRuntime(count: number): EyeFieldRuntime {
     dropShadowSpread: DEFAULT_DROP_SHADOW_SPREAD,
     roundInnerShadowColor: DEFAULT_ROUND_INNER_SHADOW_COLOR,
     irisColor: DEFAULT_IRIS_COLOR,
+    edgeIrisColor: DEFAULT_EDGE_IRIS_COLOR,
+    edgeIrisWidth: DEFAULT_EDGE_IRIS_WIDTH,
+    edgeIrisBlend: DEFAULT_EDGE_IRIS_BLEND,
     eyeShapeColor: 0xffffff,
     roundTranslateStrength: DEFAULT_ROUND_TRANSLATE_STRENGTH,
     roundHighlightScale: DEFAULT_ROUND_GLOBE_HIGHLIGHT_SCALE,

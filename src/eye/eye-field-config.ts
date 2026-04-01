@@ -131,6 +131,18 @@ export function updateConfig(
     runtime.irisColor = config.irisColor;
     result.shouldRefreshAppearance = true;
   }
+  if (config.edgeIrisColor !== undefined && Number.isFinite(config.edgeIrisColor)) {
+    runtime.edgeIrisColor = config.edgeIrisColor;
+    result.shouldRefreshAppearance = true;
+  }
+  if (config.edgeIrisWidth !== undefined) {
+    runtime.edgeIrisWidth = Math.max(10, Math.min(50, config.edgeIrisWidth));
+    result.shouldRefreshAppearance = true;
+  }
+  if (config.edgeIrisBlend !== undefined) {
+    runtime.edgeIrisBlend = Math.max(0, Math.min(1, config.edgeIrisBlend));
+    result.shouldRefreshAppearance = true;
+  }
   if (config.eyeShapeColor !== undefined && Number.isFinite(config.eyeShapeColor)) {
     runtime.eyeShapeColor = config.eyeShapeColor;
     result.shouldRefreshAppearance = true;
