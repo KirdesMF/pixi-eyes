@@ -17,6 +17,8 @@ const DROP_SHADOW_TEXTURE_PADDING = 18;
 const IRIS_RADIUS = 16;
 const PUPIL_RADIUS = 11; // Slightly smaller pupil
 const HIGHLIGHT_RADIUS = 2.2;
+const HIGHLIGHT_ELLIPSE_RX = 12.5; // Ellipse semi-major axis (X)
+const HIGHLIGHT_ELLIPSE_RY = 7.64; // Ellipse semi-minor axis (Y)
 const CAT_PUPIL_HALF_WIDTH = PUPIL_RADIUS * 0.44;
 const CAT_PUPIL_HALF_HEIGHT = PUPIL_RADIUS * 1.84;
 const SHADOW_EDGE_OFFSET_DEGREES = 68;
@@ -158,21 +160,11 @@ export function createSharedContexts(): SharedContexts {
     .fill({ color: 0xffffff, alpha: 1 });
 
   const roundGlobeHighlightContext = new GraphicsContext()
-    .moveTo(0.69, -7.64)
-    .bezierCurveTo(7.59, -7.64, 12.5, -2.21, 12.5, 0)
-    .bezierCurveTo(11.61, 2.78, 6.59, -1.55, -0.31, -1.55)
-    .bezierCurveTo(-7.21, -1.55, -12.13, 2.65, -12.5, 0)
-    .bezierCurveTo(-12.5, -2.21, -6.21, -7.64, 0.69, -7.64)
-    .closePath()
+    .ellipse(0, 0, HIGHLIGHT_ELLIPSE_RX, HIGHLIGHT_ELLIPSE_RY)
     .fill({ color: 0xffffff, alpha: 1 });
 
   const catGlobeHighlightContext = new GraphicsContext()
-    .moveTo(0.69, -7.64)
-    .bezierCurveTo(7.59, -7.64, 12.5, -2.21, 12.5, 0)
-    .bezierCurveTo(11.61, 2.78, 6.59, -1.55, -0.31, -1.55)
-    .bezierCurveTo(-7.21, -1.55, -12.13, 2.65, -12.5, 0)
-    .bezierCurveTo(-12.5, -2.21, -6.21, -7.64, 0.69, -7.64)
-    .closePath()
+    .ellipse(0, 0, HIGHLIGHT_ELLIPSE_RX, HIGHLIGHT_ELLIPSE_RY)
     .fill({ color: 0xffffff, alpha: 1 });
 
   const irisContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);

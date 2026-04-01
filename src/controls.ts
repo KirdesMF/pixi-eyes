@@ -409,7 +409,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 2,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.45,
+    default: 0.58,
     section: "Round Light",
   },
   {
@@ -453,7 +453,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.7,
+    default: 0.9,
     section: "Round Light",
   },
   {
