@@ -35,7 +35,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     min: 24,
     max: 800,
     step: 8,
-    default: 400,
+    default: 800,
     section: "Field",
   },
   {
@@ -104,14 +104,14 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 2.5,
     step: 0.05,
     fractionDigits: 2,
-    default: 0.8,
+    default: 0.5,
     section: "Field",
   },
   {
     id: "layout-transition-ease",
     label: "Shape Ease",
     type: "select",
-    default: "out-cubic",
+    default: "linear",
     options: EASE_OPTIONS,
     section: "Field",
   },
@@ -123,7 +123,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.05,
     fractionDigits: 2,
-    default: 0.25,
+    default: 1,
     section: "Field",
   },
   {
@@ -145,7 +145,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 0.5,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.04,
+    default: 0.02,
     section: "Field",
   },
   {
@@ -286,7 +286,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 100,
     step: 1,
     fractionDigits: 0,
-    default: 50,
+    default: 10,
     section: "Motion",
   },
   {
@@ -297,7 +297,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 20,
     step: 0.5,
     fractionDigits: 1,
-    default: 3,
+    default: 1.5,
     section: "Motion",
   },
   {
@@ -308,7 +308,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 0.1,
     step: 0.001,
     fractionDigits: 3,
-    default: 0,
+    default: 0.005,
     section: "Field",
   },
   {
@@ -398,7 +398,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.9,
+    default: 1,
     section: "Motion",
   },
   {
@@ -409,7 +409,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 2,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.58,
+    default: 0.5,
     section: "Round Light",
   },
   {
@@ -442,7 +442,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 180,
     step: 1,
     fractionDigits: 2,
-    default: 41.25,
+    default: 40,
     section: "Round Light",
   },
   {
@@ -453,14 +453,14 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.01,
     fractionDigits: 2,
-    default: 0.9,
+    default: 0.4,
     section: "Round Light",
   },
   {
     id: "round-highlight-color",
     label: "Color",
     type: "color",
-    default: "#fffbf2",
+    default: "#ffffff",
     section: "Round Light",
   },
 ];
