@@ -303,7 +303,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 0.5,
     step: 0.05,
     fractionDigits: 2,
-    default: 0.2,
+    default: 0.4,
     section: "Motion",
   },
   {
@@ -314,7 +314,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 8,
     step: 1,
     fractionDigits: 0,
-    default: 4,
+    default: 3,
     section: "Motion",
   },
   {
