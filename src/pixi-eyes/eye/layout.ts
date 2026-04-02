@@ -71,7 +71,7 @@ function shapeBoundaryDistance(
 
   // Default to circle
   return safeExtent;
-};
+}
 
 export type PackedPosition = {
   x: number;
@@ -119,14 +119,14 @@ export function packEyePositions(
       );
       const maxDistance = Math.max(0, boundaryDistance - radius);
       const distance = maxDistance * t ** safeRadialExponent;
-      
+
       // Apply jitter to angle and distance for organic feel
       const jitterAngle = (hash01(i * 7.31) - 0.5) * jitterAmount * 0.4; // ±23° max
       const jitterDistance = (hash01(i * 13.7 + 5) - 0.5) * jitterAmount * 0.3; // ±15% max
-      
+
       const finalAngle = angle + jitterAngle;
       const finalDistance = distance * (1 + jitterDistance);
-      
+
       const candidateX = Math.cos(finalAngle) * finalDistance;
       const candidateY = Math.sin(finalAngle) * finalDistance;
 
@@ -168,11 +168,12 @@ export function packEyePositions(
         // Fallback: place on spiral anyway
         const angle = (i + 1) * eyeSpiralOffset;
         const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
-        const distance = Math.max(0, boundaryDistance - radius) * ((i / radii.length) ** safeRadialExponent);
-        placed.push({ 
-          x: Math.cos(angle) * distance, 
-          y: Math.sin(angle) * distance, 
-          r: radius 
+        const distance =
+          Math.max(0, boundaryDistance - radius) * (i / radii.length) ** safeRadialExponent;
+        placed.push({
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+          r: radius,
         });
       }
     }

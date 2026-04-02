@@ -15,13 +15,7 @@ function polygonArea(contour: Point[]): number {
   return area * 0.5;
 }
 
-function isEar(
-  contour: Point[],
-  a: number,
-  b: number,
-  c: number,
-  remaining: Set<number>,
-): boolean {
+function isEar(contour: Point[], a: number, b: number, c: number, remaining: Set<number>): boolean {
   const pa = contour[a];
   const pb = contour[b];
   const pc = contour[c];
@@ -103,9 +97,11 @@ export function triangulateEarClip(contour: Point[]): { indices: Uint32Array; co
   return { indices: new Uint32Array(indices), contour };
 }
 
-export function buildFanVerticesWithCenter(
-  contour: Point[],
-): { positions: Float32Array; indices: Uint32Array; vertexCount: number } {
+export function buildFanVerticesWithCenter(contour: Point[]): {
+  positions: Float32Array;
+  indices: Uint32Array;
+  vertexCount: number;
+} {
   const n = contour.length;
   const totalVerts = n + 1;
 

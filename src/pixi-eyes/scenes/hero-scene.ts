@@ -1,3 +1,5 @@
+// @env browser
+
 import { Application, Container, Graphics, Rectangle } from "pixi.js";
 import { createEyeField } from "../eye/eye-field";
 import type { FocusEaseName, LayoutShapeName, CrossType } from "../eye/eye-types";

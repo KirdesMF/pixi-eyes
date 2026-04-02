@@ -13,11 +13,7 @@ import {
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
 
-function resolveEyeType(
-  index: number,
-  count: number,
-  dotEyeMix: number,
-): EyeType {
+function resolveEyeType(index: number, count: number, dotEyeMix: number): EyeType {
   const hash = hash01(index * 11.337 + count * 1.73);
   return hash < dotEyeMix ? "dot" : "human";
 }
@@ -45,7 +41,7 @@ export function createEyeInstance(
   // For dot eyes: use custom texture for proper tinting
   const eyeFill = new Sprite(isDot ? bt.slitGlobeTexture : bt.scleraFillTexture);
   eyeFill.anchor.set(0.5);
-  
+
   const eyeOutline = new Sprite(bt.scleraOutlineTexture);
   const eyeShadow = new Sprite(bt.scleraShadowTexture);
   const globeHighlight = new Sprite(bt.roundGlobeHighlightTexture);

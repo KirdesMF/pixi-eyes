@@ -1,3 +1,5 @@
+// @env browser
+
 // HTML controls creation and binding
 
 import {

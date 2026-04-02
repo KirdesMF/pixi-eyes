@@ -19,7 +19,7 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   const rawIrisX = eye.lookX * runtime.roundTranslateStrength;
   const rawIrisY = eye.lookY * runtime.roundTranslateStrength;
   const rawIrisDist = Math.sqrt(rawIrisX * rawIrisX + rawIrisY * rawIrisY);
-  
+
   // Max travel: iris edge can reach sclera boundary
   const irisMaxTravel = SCLERA_RADIUS - effectiveIrisRadius - 0.5;
 
@@ -29,7 +29,7 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
     const t = (rawIrisDist - irisMaxTravel * 0.95) / (irisMaxTravel * 0.05);
     irisCompression = 1 - Math.min(t, 1) * 0.2;
   }
-  
+
   const irisX = rawIrisX * irisCompression;
   const irisY = rawIrisY * irisCompression;
 
@@ -56,19 +56,13 @@ export function applyHumanPupilAppearance(eye: EyeInstance, runtime: EyeFieldRun
   eye.pupil.position.set(pupilX, pupilY);
 
   // Apply pupil scale animation
-  eye.pupil.scale.set(
-    eye.currentScaleX * eye.pupilScale,
-    eye.currentScaleY * eye.pupilScale,
-  );
+  eye.pupil.scale.set(eye.currentScaleX * eye.pupilScale, eye.currentScaleY * eye.pupilScale);
   eye.pupil.rotation = (eye.currentAngle * Math.PI) / 180;
 
   // Highlight - small white circle on pupil (offset from pupil center)
   eye.highlight.visible = true;
   eye.highlight.scale.set(1);
-  eye.highlight.position.set(
-    pupilX - PUPIL_RADIUS * 0.3,
-    pupilY - PUPIL_RADIUS * 0.4,
-  );
+  eye.highlight.position.set(pupilX - PUPIL_RADIUS * 0.3, pupilY - PUPIL_RADIUS * 0.4);
 
   eye.needsAppearanceRefresh = false;
 }
@@ -105,12 +99,12 @@ export function updateHumanPupilScale(
     // Dipping down - smooth acceleration
     const t = (cycleTime - delay) / DIP_DURATION;
     const eased = smoothstep(t); // Smooth S-curve
-    eye.pupilScale = 1.0 - eased * 0.30; // 1.0 → 0.70
+    eye.pupilScale = 1.0 - eased * 0.3; // 1.0 → 0.70
   } else if (cycleTime < cycle) {
     // Returning up - smooth deceleration
     const t = (cycleTime - delay - DIP_DURATION) / RETURN_DURATION;
     const eased = smoothstep(t); // Smooth S-curve
-    eye.pupilScale = 0.70 + eased * 0.30; // 0.70 → 1.0
+    eye.pupilScale = 0.7 + eased * 0.3; // 0.70 → 1.0
   } else {
     eye.pupilScale = 1.0;
   }
@@ -120,17 +114,15 @@ export function updateHumanEyeDeformation(eye: EyeInstance, _eyeSeconds: number)
   // Calculate squeeze based on distance from center (radial)
   const lookDistance = Math.sqrt(eye.lookX * eye.lookX + eye.lookY * eye.lookY);
   const squeezeT = clamp(lookDistance / MAX_LOOK, 0, 1);
-  
+
   // Base squeeze: compress along X axis, expand along Y axis
   // The iris rotation will align this with the look direction
   eye.currentScaleX = 1 - squeezeT * MAX_SQUASH;
   eye.currentScaleY = 1 + squeezeT * MAX_SQUASH * 0.5;
-  
+
   // Calculate look angle for rotation (instant, no smoothing)
-  const lookAngle = eye.lookX !== 0 || eye.lookY !== 0
-    ? Math.atan2(eye.lookY, eye.lookX)
-    : 0;
-  
+  const lookAngle = eye.lookX !== 0 || eye.lookY !== 0 ? Math.atan2(eye.lookY, eye.lookX) : 0;
+
   // Store the rotation angle for the iris sprite
   eye.currentAngle = (lookAngle * 180) / Math.PI;
 }

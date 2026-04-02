@@ -594,10 +594,7 @@ export function sanitizeLayoutShape(
     : fallback;
 }
 
-export function sanitizeCrossType(
-  value: string | undefined,
-  fallback: CrossType,
-): CrossType {
+export function sanitizeCrossType(value: string | undefined, fallback: CrossType): CrossType {
   return CROSS_TYPE_OPTIONS.some((option) => option.value === value)
     ? (value as CrossType)
     : fallback;

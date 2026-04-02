@@ -32,10 +32,7 @@ function segmentLengthEstimate(seg: BezierSegment): number {
   );
 }
 
-export function sampleBezierSegment(
-  seg: BezierSegment,
-  segments: number,
-): Point[] {
+export function sampleBezierSegment(seg: BezierSegment, segments: number): Point[] {
   const points: Point[] = [];
   for (let i = 0; i <= segments; i++) {
     points.push(cubicBezierPoint(seg, i / segments));

@@ -34,12 +34,7 @@ const SHADOW_BOTTOM_Y = 1;
 export const DEFAULT_IRIS_COLOR = 0xab53ee;
 
 // Export radii constants
-export {
-  SCLERA_RADIUS,
-  IRIS_RADIUS,
-  PUPIL_RADIUS,
-  HIGHLIGHT_RADIUS,
-};
+export { SCLERA_RADIUS, IRIS_RADIUS, PUPIL_RADIUS, HIGHLIGHT_RADIUS };
 
 /**
  * Shared graphics contexts for eye rendering.
@@ -139,7 +134,6 @@ export function createSharedContexts(): SharedContexts {
   const roundGlobeHighlightContext = new GraphicsContext()
     .ellipse(0, 0, HIGHLIGHT_ELLIPSE_RX, HIGHLIGHT_ELLIPSE_RY)
     .fill({ color: 0xffffff, alpha: 1 });
-
 
   const irisContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
   const roundPupilContext = new GraphicsContext().circle(0, 0, PUPIL_RADIUS).fill(0x17110d);
@@ -272,9 +266,24 @@ export function createSharedTextures(
   dropShadowBlur: number,
 ): SharedTextures {
   const buckets: Record<TextureBucket, BucketTextures> = {
-    small: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.small.resolution),
-    medium: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.medium.resolution),
-    large: generateBucketTextures(renderer, contexts, dropShadowBlur, BUCKET_THRESHOLDS.large.resolution),
+    small: generateBucketTextures(
+      renderer,
+      contexts,
+      dropShadowBlur,
+      BUCKET_THRESHOLDS.small.resolution,
+    ),
+    medium: generateBucketTextures(
+      renderer,
+      contexts,
+      dropShadowBlur,
+      BUCKET_THRESHOLDS.medium.resolution,
+    ),
+    large: generateBucketTextures(
+      renderer,
+      contexts,
+      dropShadowBlur,
+      BUCKET_THRESHOLDS.large.resolution,
+    ),
   };
 
   return { buckets };
@@ -290,15 +299,34 @@ function generateBucketTextures(
   const pupilFrameSize = PUPIL_RADIUS + 2;
   return {
     dropShadowTexture: createDropShadowTexture(renderer, dropShadowBlur, resolution),
-    scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext, { resolution }),
-    scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext, { resolution }),
-    scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext, { resolution }),
-    roundGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.roundGlobeHighlightContext, { resolution }),
+    scleraFillTexture: generateTextureFromContext(renderer, contexts.scleraFillContext, {
+      resolution,
+    }),
+    scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext, {
+      resolution,
+    }),
+    scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext, {
+      resolution,
+    }),
+    roundGlobeHighlightTexture: generateTextureFromContext(
+      renderer,
+      contexts.roundGlobeHighlightContext,
+      { resolution },
+    ),
     // New static textures (replacing Graphics)
     irisFillTexture: generateTextureFromContext(renderer, contexts.irisContext, { resolution }),
-    roundPupilTexture: generateTextureFromContextWithFrame(renderer, contexts.roundPupilContext, pupilFrameSize, { resolution }),
-    slitGlobeTexture: generateTextureFromContext(renderer, contexts.slitGlobeContext, { resolution }),
-    roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, { resolution: resolution * 2 }), // Higher res for sharper cartoon highlights
+    roundPupilTexture: generateTextureFromContextWithFrame(
+      renderer,
+      contexts.roundPupilContext,
+      pupilFrameSize,
+      { resolution },
+    ),
+    slitGlobeTexture: generateTextureFromContext(renderer, contexts.slitGlobeContext, {
+      resolution,
+    }),
+    roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, {
+      resolution: resolution * 2,
+    }), // Higher res for sharper cartoon highlights
   };
 }
 
