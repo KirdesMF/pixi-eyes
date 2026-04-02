@@ -33,8 +33,9 @@ const TOGGLE_BUTTON_CLASS =
   "fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full border border-black/15 bg-white/95 cursor-pointer flex items-center justify-center text-2xl transition-all duration-200 shadow-md hover:bg-white hover:shadow-lg hover:scale-105";
 
 const SIDEBAR_CLASS =
-  "fixed top-0 right-0 bottom-0 w-[300px] bg-white z-[9998] translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[-4px_0_24px_rgba(0,0,0,0.1)] flex flex-col";
+  "fixed top-0 right-0 bottom-0 w-[300px] bg-white z-[9998] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[-4px_0_24px_rgba(0,0,0,0.1)] flex flex-col";
 
+const SIDEBAR_CLOSED_CLASS = "translate-x-full";
 const SIDEBAR_OPEN_CLASS = "translate-x-0";
 
 const HEADER_CLASS = "flex items-center justify-between px-5 py-4 border-b border-black/8";
@@ -306,7 +307,7 @@ export function createSidebar(
   toggleBtn.title = "Toggle settings (S)";
 
   const sidebar = document.createElement("aside");
-  sidebar.className = SIDEBAR_CLASS;
+  sidebar.className = `${SIDEBAR_CLASS} ${SIDEBAR_CLOSED_CLASS}`;
   sidebar.innerHTML = sidebarHtml;
 
   document.body.appendChild(toggleBtn);
@@ -338,9 +339,10 @@ export function createSidebar(
 
   const closeBtn = document.getElementById(`${SIDEBAR_ID}-close`);
   const toggle = () => {
-    sidebar.classList.toggle(SIDEBAR_OPEN_CLASS);
+    const isOpen = sidebar.classList.toggle(SIDEBAR_OPEN_CLASS);
+    sidebar.classList.toggle(SIDEBAR_CLOSED_CLASS, !isOpen);
     const chevron = sidebar.querySelector("[data-section-chevron]");
-    chevron?.classList.toggle(SECTION_CHEVRON_CLOSED_CLASS);
+    chevron?.classList.toggle(SECTION_CHEVRON_CLOSED_CLASS, !isOpen);
   };
 
   toggleBtn.addEventListener("click", toggle);
@@ -362,7 +364,13 @@ export function createSidebar(
       window.removeEventListener("keydown", handleKeyDown);
     },
     toggle,
-    open: () => sidebar.classList.add(SIDEBAR_OPEN_CLASS),
-    close: () => sidebar.classList.remove(SIDEBAR_OPEN_CLASS),
+    open: () => {
+      sidebar.classList.remove(SIDEBAR_CLOSED_CLASS);
+      sidebar.classList.add(SIDEBAR_OPEN_CLASS);
+    },
+    close: () => {
+      sidebar.classList.remove(SIDEBAR_OPEN_CLASS);
+      sidebar.classList.add(SIDEBAR_CLOSED_CLASS);
+    },
   };
 }
