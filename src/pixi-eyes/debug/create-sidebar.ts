@@ -148,9 +148,9 @@ function renderSection(section: string, stored: Record<string, number | string>)
   const controlsHtml = controls.map((c) => renderControl(c, stored[c.id] ?? c.default)).join("");
   return `
     <div class="${SECTION_CLASS}" data-section="${section}">
-      <div class="${SECTION_HEADER_CLASS}">
+      <div class="${SECTION_HEADER_CLASS}" data-section-toggle>
         <span class="${SECTION_TITLE_CLASS}">${section}</span>
-        <span class="${SECTION_CHEVRON_CLASS}">⌄</span>
+        <span class="${SECTION_CHEVRON_CLASS}" data-section-chevron>⌄</span>
       </div>
       <div class="${SECTION_CONTROLS_CLASS}">${controlsHtml}</div>
     </div>
@@ -259,10 +259,10 @@ function bindSelectInput(
 }
 
 function bindSectionToggle(): () => void {
-  const headers = document.querySelectorAll(`.${SECTION_HEADER_CLASS}`);
+  const headers = document.querySelectorAll("[data-section-toggle]");
   const toggle = (e: Event) => {
     const section = (e.target as Element).closest(`.${SECTION_CLASS}`);
-    const chevron = section?.querySelector(`.${SECTION_CHEVRON_CLASS}`);
+    const chevron = section?.querySelector("[data-section-chevron]");
     const controls = section?.querySelector(`.${SECTION_CONTROLS_CLASS}`);
     if (section && chevron && controls) {
       const isCollapsed = controls.classList.toggle("hidden");
@@ -339,7 +339,7 @@ export function createSidebar(
   const closeBtn = document.getElementById(`${SIDEBAR_ID}-close`);
   const toggle = () => {
     sidebar.classList.toggle(SIDEBAR_OPEN_CLASS);
-    const chevron = sidebar.querySelector(`.${SECTION_CHEVRON_CLASS}`);
+    const chevron = sidebar.querySelector("[data-section-chevron]");
     chevron?.classList.toggle(SECTION_CHEVRON_CLOSED_CLASS);
   };
 
