@@ -1,20 +1,25 @@
 import { Container, Sprite } from "pixi.js";
 
 import type { EyeInstance } from "./eye-state";
+import type { EyeType } from "./eye-types";
 import type { SharedTextures } from "./eye-assets";
 import { SCLERA_RADIUS, DEFAULT_IRIS_COLOR, selectBucket } from "./eye-assets";
 import {
   DEFAULT_RANDOMIZE_STAGGER,
   DEFAULT_LOW_DETAIL_SCALE_THRESHOLD,
   SCALE_IN_DURATION,
-  DEFAULT_SLIT_EYE_MIX,
+  DEFAULT_DOT_EYE_MIX,
 } from "./eye-config";
 import { hash01, smoothstep } from "../shared/math";
 import { staggerDelay } from "./layout";
 
-function resolveEyeType(index: number, count: number, slitEyeMix: number): "human" | "slit" {
+function resolveEyeType(
+  index: number,
+  count: number,
+  dotEyeMix: number,
+): EyeType {
   const hash = hash01(index * 11.337 + count * 1.73);
-  return hash < slitEyeMix ? "slit" : "human";
+  return hash < dotEyeMix ? "dot" : "human";
 }
 
 export function createEyeInstance(
@@ -25,20 +30,20 @@ export function createEyeInstance(
   maxRadius: number,
   count: number,
   index: number,
-  slitEyeMix: number = DEFAULT_SLIT_EYE_MIX,
+  dotEyeMix: number = DEFAULT_DOT_EYE_MIX,
 ): EyeInstance {
   const bucket = selectBucket(radius);
   const bt = textures.buckets[bucket];
 
-  const eyeType = resolveEyeType(index, count, slitEyeMix);
-  const isSlit = eyeType === "slit";
+  const eyeType = resolveEyeType(index, count, dotEyeMix);
+  const isDot = eyeType === "dot";
 
   const root = new Container();
   const dropShadow = new Sprite(bt.dropShadowTexture);
   const blinkGroup = new Container();
-  
-  // For slit eyes: use pure white texture for proper tinting
-  const eyeFill = new Sprite(isSlit ? bt.slitGlobeTexture : bt.scleraFillTexture);
+
+  // For dot eyes: use custom texture for proper tinting
+  const eyeFill = new Sprite(isDot ? bt.slitGlobeTexture : bt.scleraFillTexture);
   eyeFill.anchor.set(0.5);
   
   const eyeOutline = new Sprite(bt.scleraOutlineTexture);
@@ -47,32 +52,36 @@ export function createEyeInstance(
   const irisGroup = new Container();
   const pupilGroup = new Container();
 
-  // For slit eyes: no iris texture, just white globe + black slit pupil
+  // For dot eyes: no iris texture, just globe + small dot pupil
   const iris = new Sprite(bt.irisFillTexture);
-  const pupil = new Sprite(isSlit ? bt.slitPupilTexture : bt.roundPupilTexture);
+  const pupil = new Sprite(bt.roundPupilTexture);
   const highlight = new Sprite(bt.roundHighlightTexture);
+  const highlight2 = new Sprite(bt.roundHighlightTexture); // Second smaller highlight for cartoon effect
 
-  if (isSlit) {
-    // For slit eyes: no iris, just pupil + highlight directly
+  if (isDot) {
+    // For dot eyes: no iris, small dot pupil + cartoon highlights
     pupil.visible = true;
     highlight.visible = true;
+    highlight2.visible = true;
   } else {
     iris.tint = DEFAULT_IRIS_COLOR;
     iris.visible = true;
+    highlight2.visible = false; // Only one highlight for human eyes
   }
   dropShadow.anchor.set(0.5);
-  if (!isSlit) (eyeFill as Sprite).anchor.set(0.5); // Graphics doesn't have anchor
+  eyeFill.anchor.set(0.5);
   eyeOutline.anchor.set(0.5);
   eyeShadow.anchor.set(0.5);
   globeHighlight.anchor.set(0.5);
   iris.anchor.set(0.5);
   pupil.anchor.set(0.5);
   highlight.anchor.set(0.5);
+  highlight2.anchor.set(0.5);
 
-  pupilGroup.addChild(pupil, highlight);
-  
-  if (isSlit) {
-    // For slit eyes: no iris, pupil goes directly in root
+  pupilGroup.addChild(pupil, highlight, highlight2);
+
+  if (isDot) {
+    // For dot eyes: no iris, pupil goes directly in root
     root.addChild(
       dropShadow,
       eyeFill, // Globe color - behind everything
@@ -115,6 +124,7 @@ export function createEyeInstance(
     iris,
     pupil,
     highlight,
+    highlight2,
     x,
     y,
     layoutStartX: x,

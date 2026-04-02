@@ -1,4 +1,4 @@
-export type EyeType = "human" | "slit" | "dot";
+export type EyeType = "human" | "dot";
 export type LayoutShapeName = "circle" | "ring" | "heart" | "cross" | "star";
 export type CrossType = "x" | "plus";
 export type FocusEaseName = "linear" | "out-cubic" | "out-sine" | "in-out-sine";
@@ -43,8 +43,6 @@ export type EyeFieldConfig = {
   roundHighlightRotationDegrees?: number;
   roundHighlightOpacity?: number;
   roundHighlightColor?: number;
-  slitGlobeBaseColor?: number;
-  slitMouseColor?: number;
   dotEyeMix?: number;
   dotPupilRatio?: number;
   dotGlobeColor?: number;

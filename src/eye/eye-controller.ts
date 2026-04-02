@@ -18,9 +18,9 @@ import {
   updateHumanEyeDeformation,
 } from "./render/human-eye-view";
 import {
-  applySlitEyeAppearance,
-  updateSlitEyeDeformation,
-} from "./render/slit-eye-view";
+  applyDotEyeAppearance,
+  updateDotEyeDeformation,
+} from "./render/dot-eye-view";
 
 export function updateLayoutTransition(
   eye: EyeInstance,
@@ -166,8 +166,8 @@ export function updateSingleEye(
   eye.lookY = smoothTowards(eye.lookY, desiredLook.y, lookSpeed, eyeSeconds);
 
   // Update deformation based on eye type
-  if (eye.type === "slit") {
-    updateSlitEyeDeformation(eye, eyeSeconds);
+  if (eye.type === "dot") {
+    updateDotEyeDeformation(eye, eyeSeconds);
   } else {
     updateHumanEyeDeformation(eye, eyeSeconds);
   }
@@ -207,13 +207,11 @@ export function updateSingleEye(
   eye.irisProximity = clamp(eye.irisProximity, 0, 1);
 
   // Apply color to appropriate element based on eye type
-  if (eye.type === "slit") {
-    // Slit eye: white globe with different mouse proximity color
-    // Base color is runtime.slitGlobeBaseColor (default white), interpolate to slitMouseColor
-    const newTint = lerpColor(runtime.slitGlobeBaseColor, runtime.slitMouseColor, eye.irisProximity);
+  if (eye.type === "dot") {
+    // Dot eye: colored globe with small dot pupil, different mouse proximity color
+    const newTint = lerpColor(runtime.dotGlobeColor, runtime.dotMouseColor, eye.irisProximity);
     eye.eyeFill.tint = newTint;
-    console.log("SLIT GLOBE COLOR:", newTint.toString(16));
-    applySlitEyeAppearance(eye, runtime);
+    applyDotEyeAppearance(eye, runtime);
   } else {
     // Human eye: color the iris
     eye.iris.tint = lerpColor(runtime.irisColor, runtime.mouseIrisColor, eye.irisProximity);

@@ -50,18 +50,6 @@ export function updateConfig(
     runtime.starBranches = Math.max(3, Math.min(12, Math.floor(config.starBranches)));
     result.shouldRelayout = true;
   }
-  if (config.slitEyeMix !== undefined) {
-    runtime.slitEyeMix = Math.max(0, Math.min(1, config.slitEyeMix));
-    result.shouldRebuild = true;
-  }
-  if (config.slitPupilWidth !== undefined) {
-    runtime.slitPupilWidth = Math.max(0.01, Math.min(1.0, config.slitPupilWidth));
-    result.shouldRefreshAppearance = true;
-  }
-  if (config.slitPupilHeight !== undefined) {
-    runtime.slitPupilHeight = Math.max(0.1, Math.min(2.0, config.slitPupilHeight));
-    result.shouldRefreshAppearance = true;
-  }
 
   // Eye count and sizes
   if (config.instanceCount !== undefined) {
@@ -144,14 +132,6 @@ export function updateConfig(
   }
   if (config.roundHighlightColor !== undefined && Number.isFinite(config.roundHighlightColor)) {
     runtime.roundHighlightColor = config.roundHighlightColor;
-    result.shouldRefreshAppearance = true;
-  }
-  if (config.slitGlobeBaseColor !== undefined && Number.isFinite(config.slitGlobeBaseColor)) {
-    runtime.slitGlobeBaseColor = config.slitGlobeBaseColor;
-    result.shouldRefreshAppearance = true;
-  }
-  if (config.slitMouseColor !== undefined && Number.isFinite(config.slitMouseColor)) {
-    runtime.slitMouseColor = config.slitMouseColor;
     result.shouldRefreshAppearance = true;
   }
   if (config.dotEyeMix !== undefined) {

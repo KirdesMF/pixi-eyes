@@ -229,8 +229,10 @@ function getSceneConfig() {
     initialRoundHighlightRotationDegrees: toNum(s["round-highlight-rotation"]),
     initialRoundHighlightOpacity: toNum(s["round-highlight-opacity"]),
     initialRoundHighlightColor: toHex(s["round-highlight-color"]),
-    initialSlitGlobeBaseColor: toHex(s["slit-globe-base-color"]),
-    initialSlitMouseColor: toHex(s["slit-mouse-color"]),
+    initialDotEyeMix: toNum(s["dot-eye-mix"]),
+    initialDotPupilRatio: toNum(s["dot-pupil-ratio"]),
+    initialDotGlobeColor: toHex(s["dot-globe-color"]),
+    initialDotMouseColor: toHex(s["dot-mouse-color"]),
     initialBackgroundColor: toHex(s["background-color"]),
   };
 }

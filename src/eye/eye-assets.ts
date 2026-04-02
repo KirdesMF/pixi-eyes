@@ -9,12 +9,6 @@ import {
   type Renderer,
 } from "pixi.js";
 
-import {
-  SLIT_PUPIL_WIDTH_RATIO,
-  SLIT_PUPIL_HEIGHT_RATIO,
-  SLIT_PUPIL_CORNER_RADIUS,
-} from "./eye-config";
-
 // Constants
 const SCLERA_RADIUS = 24;
 const GLOBE_TEXTURE_PADDING = 4;
@@ -25,8 +19,6 @@ const PUPIL_RADIUS = 11; // Slightly smaller pupil
 const HIGHLIGHT_RADIUS = 2.2;
 const HIGHLIGHT_ELLIPSE_RX = 12.5; // Ellipse semi-major axis (X)
 const HIGHLIGHT_ELLIPSE_RY = 7.64; // Ellipse semi-minor axis (Y)
-const CAT_PUPIL_HALF_WIDTH = PUPIL_RADIUS * 0.44;
-const CAT_PUPIL_HALF_HEIGHT = PUPIL_RADIUS * 1.84;
 const SHADOW_EDGE_OFFSET_DEGREES = 68;
 const SHADOW_TOP_CONTROL_X_FACTOR = 0.42;
 const SHADOW_TOP_CONTROL_Y = 0.9;
@@ -40,17 +32,6 @@ const SHADOW_BOTTOM_Y = 1;
 
 // Default colors
 export const DEFAULT_IRIS_COLOR = 0xab53ee;
-export const DEFAULT_CAT_EYE_COLOR = 0x66e01a;
-
-// Cat eye constants
-export const CAT_IRIS_SCALE = 1.38;
-export const CAT_PUPIL_HALF_WIDTH_FACTOR = 0.44;
-export const CAT_PUPIL_HIGHLIGHT_SCALE = 0.56;
-export const CAT_PUPIL_MORPH_SPEED = 12;
-export const CAT_PUPIL_MORPH_RADIUS_FACTOR = 2.6;
-export const CAT_PUPIL_MORPH_RADIUS_MIN = 28;
-export const CAT_BLINK_RECT_WIDTH = SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + 6;
-export const CAT_BLINK_BOTTOM_HEIGHT = (SCLERA_RADIUS + GLOBE_TEXTURE_PADDING + 8) * 2;
 
 // Export radii constants
 export {
@@ -58,8 +39,6 @@ export {
   IRIS_RADIUS,
   PUPIL_RADIUS,
   HIGHLIGHT_RADIUS,
-  CAT_PUPIL_HALF_WIDTH,
-  CAT_PUPIL_HALF_HEIGHT,
 };
 
 /**
@@ -70,11 +49,8 @@ export type SharedContexts = {
   scleraOutlineContext: GraphicsContext;
   scleraShadowContext: GraphicsContext;
   roundGlobeHighlightContext: GraphicsContext;
-  catGlobeHighlightContext: GraphicsContext;
   irisContext: GraphicsContext;
   roundPupilContext: GraphicsContext;
-  catPupilContext: GraphicsContext;
-  slitPupilContext: GraphicsContext;
   slitGlobeContext: GraphicsContext;
   highlightContext: GraphicsContext;
 };
@@ -102,10 +78,8 @@ export type BucketTextures = {
   scleraOutlineTexture: ReturnType<Renderer["generateTexture"]>;
   scleraShadowTexture: ReturnType<Renderer["generateTexture"]>;
   roundGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
-  catGlobeHighlightTexture: ReturnType<Renderer["generateTexture"]>;
   irisFillTexture: ReturnType<Renderer["generateTexture"]>;
   roundPupilTexture: ReturnType<Renderer["generateTexture"]>;
-  slitPupilTexture: ReturnType<Renderer["generateTexture"]>;
   slitGlobeTexture: ReturnType<Renderer["generateTexture"]>;
   roundHighlightTexture: ReturnType<Renderer["generateTexture"]>;
 };
@@ -166,47 +140,11 @@ export function createSharedContexts(): SharedContexts {
     .ellipse(0, 0, HIGHLIGHT_ELLIPSE_RX, HIGHLIGHT_ELLIPSE_RY)
     .fill({ color: 0xffffff, alpha: 1 });
 
-  const catGlobeHighlightContext = new GraphicsContext()
-    .ellipse(0, 0, HIGHLIGHT_ELLIPSE_RX, HIGHLIGHT_ELLIPSE_RY)
-    .fill({ color: 0xffffff, alpha: 1 });
 
   const irisContext = new GraphicsContext().circle(0, 0, IRIS_RADIUS).fill(0xffffff);
   const roundPupilContext = new GraphicsContext().circle(0, 0, PUPIL_RADIUS).fill(0x17110d);
-  const catPupilContext = new GraphicsContext()
-    .moveTo(0, -PUPIL_RADIUS * 1.84)
-    .bezierCurveTo(
-      CAT_PUPIL_HALF_WIDTH,
-      -PUPIL_RADIUS * 0.92,
-      CAT_PUPIL_HALF_WIDTH,
-      PUPIL_RADIUS * 0.92,
-      0,
-      PUPIL_RADIUS * 1.84,
-    )
-    .bezierCurveTo(
-      -CAT_PUPIL_HALF_WIDTH,
-      PUPIL_RADIUS * 0.92,
-      -CAT_PUPIL_HALF_WIDTH,
-      -PUPIL_RADIUS * 0.92,
-      0,
-      -PUPIL_RADIUS * 1.84,
-    )
-    .closePath()
-    .fill(0x17110d);
-  // Slit pupil: vertical rounded rectangle with padding for better quality
-  const slitPupilWidth = IRIS_RADIUS * SLIT_PUPIL_WIDTH_RATIO;
-  const slitPupilHeight = IRIS_RADIUS * SLIT_PUPIL_HEIGHT_RATIO;
-  const slitPupilPadding = 4; // Extra padding for smooth corners
-  const slitPupilContext = new GraphicsContext()
-    .roundRect(
-      -slitPupilWidth / 2 - slitPupilPadding,
-      -slitPupilHeight / 2 - slitPupilPadding,
-      slitPupilWidth + slitPupilPadding * 2,
-      slitPupilHeight + slitPupilPadding * 2,
-      SLIT_PUPIL_CORNER_RADIUS + slitPupilPadding * 0.5,
-    )
-    .fill(0x000000);
   const highlightContext = new GraphicsContext().circle(0, 0, HIGHLIGHT_RADIUS).fill(0xfffbf2);
-  // White globe texture for slit eyes (pure white for proper tinting)
+  // White globe texture for dot eyes (pure white for proper tinting)
   const slitGlobeContext = new GraphicsContext().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
 
   return {
@@ -214,11 +152,8 @@ export function createSharedContexts(): SharedContexts {
     scleraOutlineContext,
     scleraShadowContext,
     roundGlobeHighlightContext,
-    catGlobeHighlightContext,
     irisContext,
     roundPupilContext,
-    catPupilContext,
-    slitPupilContext,
     slitGlobeContext,
     highlightContext,
   };
@@ -359,13 +294,11 @@ function generateBucketTextures(
     scleraOutlineTexture: generateTextureFromContext(renderer, contexts.scleraOutlineContext, { resolution }),
     scleraShadowTexture: generateTextureFromContext(renderer, contexts.scleraShadowContext, { resolution }),
     roundGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.roundGlobeHighlightContext, { resolution }),
-    catGlobeHighlightTexture: generateTextureFromContext(renderer, contexts.catGlobeHighlightContext, { resolution }),
     // New static textures (replacing Graphics)
     irisFillTexture: generateTextureFromContext(renderer, contexts.irisContext, { resolution }),
     roundPupilTexture: generateTextureFromContextWithFrame(renderer, contexts.roundPupilContext, pupilFrameSize, { resolution }),
-    slitPupilTexture: generateTextureFromContext(renderer, contexts.slitPupilContext, { resolution: resolution * 2 }), // Higher res for smooth corners
     slitGlobeTexture: generateTextureFromContext(renderer, contexts.slitGlobeContext, { resolution }),
-    roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, { resolution }),
+    roundHighlightTexture: generateTextureFromContext(renderer, contexts.highlightContext, { resolution: resolution * 2 }), // Higher res for sharper cartoon highlights
   };
 }
 
@@ -377,11 +310,8 @@ export function destroySharedContexts(contexts: SharedContexts): void {
   contexts.scleraOutlineContext.destroy();
   contexts.scleraShadowContext.destroy();
   contexts.roundGlobeHighlightContext.destroy();
-  contexts.catGlobeHighlightContext.destroy();
   contexts.irisContext.destroy();
   contexts.roundPupilContext.destroy();
-  contexts.catPupilContext.destroy();
-  contexts.slitPupilContext.destroy();
   contexts.slitGlobeContext.destroy();
   contexts.highlightContext.destroy();
 }
@@ -396,10 +326,8 @@ export function destroySharedTextures(textures: SharedTextures): void {
     bucket.scleraOutlineTexture.destroy(true);
     bucket.scleraShadowTexture.destroy(true);
     bucket.roundGlobeHighlightTexture.destroy(true);
-    bucket.catGlobeHighlightTexture.destroy(true);
     bucket.irisFillTexture.destroy(true);
     bucket.roundPupilTexture.destroy(true);
-    bucket.slitPupilTexture.destroy(true);
     bucket.slitGlobeTexture.destroy(true);
     bucket.roundHighlightTexture.destroy(true);
   }

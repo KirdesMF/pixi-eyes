@@ -44,8 +44,10 @@ interface HeroSceneOptions {
   initialRoundHighlightRotationDegrees: number;
   initialRoundHighlightOpacity: number;
   initialRoundHighlightColor: number;
-  initialSlitGlobeBaseColor: number;
-  initialSlitMouseColor: number;
+  initialDotEyeMix: number;
+  initialDotPupilRatio: number;
+  initialDotGlobeColor: number;
+  initialDotMouseColor: number;
   initialBackgroundColor: number;
   mountNode: HTMLElement;
   onMetrics: (metrics: MetricsSnapshot) => void;
@@ -97,8 +99,10 @@ export const createHeroScene = async ({
   initialRoundHighlightRotationDegrees,
   initialRoundHighlightOpacity,
   initialRoundHighlightColor,
-  initialSlitGlobeBaseColor,
-  initialSlitMouseColor,
+  initialDotEyeMix,
+  initialDotPupilRatio,
+  initialDotGlobeColor,
+  initialDotMouseColor,
   initialBackgroundColor,
   mountNode,
   onMetrics,
@@ -159,8 +163,10 @@ export const createHeroScene = async ({
     roundHighlightRotationDegrees: initialRoundHighlightRotationDegrees,
     roundHighlightOpacity: initialRoundHighlightOpacity,
     roundHighlightColor: initialRoundHighlightColor,
-    slitGlobeBaseColor: initialSlitGlobeBaseColor,
-    slitMouseColor: initialSlitMouseColor,
+    dotEyeMix: initialDotEyeMix,
+    dotPupilRatio: initialDotPupilRatio,
+    dotGlobeColor: initialDotGlobeColor,
+    dotMouseColor: initialDotMouseColor,
   });
   let pointerX = worldBounds.width * 0.5;
   let pointerY = worldBounds.height * 0.5;
@@ -269,8 +275,10 @@ export const createHeroScene = async ({
       roundHighlightRotationDegrees?: number;
       roundHighlightOpacity?: number;
       roundHighlightColor?: number;
-      slitGlobeBaseColor?: number;
-      slitMouseColor?: number;
+      dotEyeMix?: number;
+      dotPupilRatio?: number;
+      dotGlobeColor?: number;
+      dotMouseColor?: number;
       backgroundColor?: number;
     }) => {
       if (typeof config.backgroundColor === "number") {

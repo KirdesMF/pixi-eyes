@@ -18,6 +18,7 @@ export type EyeInstance = {
   iris: Sprite;
   pupil: Sprite;
   highlight: Sprite;
+  highlight2: Sprite;
   x: number;
   y: number;
   layoutStartX: number;
@@ -67,9 +68,6 @@ export type EyeFieldRuntime = {
   ringInnerRatio: number;
   crossType: CrossType;
   starBranches: number;
-  slitEyeMix: number;
-  slitPupilWidth: number;
-  slitPupilHeight: number;
   parallaxStrength: number;
   repulsionRadius: number;
   repulsionStrength: number;
@@ -114,8 +112,6 @@ export type EyeFieldRuntime = {
   roundHighlightRotationDegrees: number;
   roundHighlightOpacity: number;
   roundHighlightColor: number;
-  slitGlobeBaseColor: number;
-  slitMouseColor: number;
   dotEyeMix: number;
   dotPupilRatio: number;
   dotGlobeColor: number;
