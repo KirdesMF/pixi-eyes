@@ -195,7 +195,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.05,
     fractionDigits: 2,
-    default: 1,
+    default: 0,
     section: "Field",
   },
   {
@@ -594,10 +594,7 @@ export function sanitizeLayoutShape(
     : fallback;
 }
 
-export function sanitizeCrossType(
-  value: string | undefined,
-  fallback: CrossType,
-): CrossType {
+export function sanitizeCrossType(value: string | undefined, fallback: CrossType): CrossType {
   return CROSS_TYPE_OPTIONS.some((option) => option.value === value)
     ? (value as CrossType)
     : fallback;

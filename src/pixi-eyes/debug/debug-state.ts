@@ -1,3 +1,5 @@
+// @env browser
+
 // Debug state for HTML controls
 
 import type { ControlDefinition } from "../controls";

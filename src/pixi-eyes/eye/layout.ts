@@ -5,22 +5,13 @@ function hash01(value: number): number {
   return hashed - Math.floor(hashed);
 }
 
-export function resolveRadiusMix(value: number): number {
-  return value < 0.34
-    ? 0.14 + value * 0.55
-    : value < 0.72
-      ? 0.48 + (value - 0.34) * 0.35
-      : 0.78 + (value - 0.72) * 0.78;
-}
-
 export function resolvePackedRadii(count: number, minRadius: number, maxRadius: number): number[] {
   const safeMinRadius = Math.max(Math.min(minRadius, maxRadius), 0);
   const safeMaxRadius = Math.max(Math.max(minRadius, maxRadius), 0);
 
   return Array.from({ length: count }, (_, index) => {
-    const tierMix = count <= 1 ? 1 : index / Math.max(count - 1, 1);
-    const radiusT = resolveRadiusMix(tierMix);
-    return safeMinRadius + (safeMaxRadius - safeMinRadius) * Math.max(0, Math.min(radiusT, 1));
+    const radiusMix = count <= 1 ? 0 : index / Math.max(count - 1, 1);
+    return safeMinRadius + (safeMaxRadius - safeMinRadius) * radiusMix;
   });
 }
 
@@ -71,7 +62,7 @@ function shapeBoundaryDistance(
 
   // Default to circle
   return safeExtent;
-};
+}
 
 export type PackedPosition = {
   x: number;
@@ -119,14 +110,19 @@ export function packEyePositions(
       );
       const maxDistance = Math.max(0, boundaryDistance - radius);
       const distance = maxDistance * t ** safeRadialExponent;
-      
-      // Apply jitter to angle and distance for organic feel
-      const jitterAngle = (hash01(i * 7.31) - 0.5) * jitterAmount * 0.4; // ±23° max
-      const jitterDistance = (hash01(i * 13.7 + 5) - 0.5) * jitterAmount * 0.3; // ±15% max
-      
-      const finalAngle = angle + jitterAngle;
-      const finalDistance = distance * (1 + jitterDistance);
-      
+
+      // Apply stronger deterministic jitter for a more visibly organic placement.
+      // Blend a per-eye bias with a per-attempt wobble so dense layouts still show variation.
+      const eyeJitterAngle = (hash01(i * 7.31) - 0.5) * jitterAmount * 0.75;
+      const attemptJitterAngle =
+        (hash01(i * 31.17 + attempt * 0.73) - 0.5) * jitterAmount * 0.45;
+      const eyeJitterDistance = (hash01(i * 13.7 + 5) - 0.5) * jitterAmount * 0.45;
+      const attemptJitterDistance =
+        (hash01(i * 19.41 + attempt * 1.11 + 9) - 0.5) * jitterAmount * 0.35;
+
+      const finalAngle = angle + eyeJitterAngle + attemptJitterAngle;
+      const finalDistance = distance * (1 + eyeJitterDistance + attemptJitterDistance);
+
       const candidateX = Math.cos(finalAngle) * finalDistance;
       const candidateY = Math.sin(finalAngle) * finalDistance;
 
@@ -168,11 +164,12 @@ export function packEyePositions(
         // Fallback: place on spiral anyway
         const angle = (i + 1) * eyeSpiralOffset;
         const boundaryDistance = shapeBoundaryDistance(shape, angle, safeClusterRadius);
-        const distance = Math.max(0, boundaryDistance - radius) * ((i / radii.length) ** safeRadialExponent);
-        placed.push({ 
-          x: Math.cos(angle) * distance, 
-          y: Math.sin(angle) * distance, 
-          r: radius 
+        const distance =
+          Math.max(0, boundaryDistance - radius) * (i / radii.length) ** safeRadialExponent;
+        placed.push({
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+          r: radius,
         });
       }
     }

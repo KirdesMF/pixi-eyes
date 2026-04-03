@@ -28,15 +28,15 @@
 
 ~3600+ object allocations per frame at 400 eyes = 216,000+ allocations/second:
 
-| Source | File | Allocations/frame |
-|---|---|---|
-| `totalOffset()` | `eye-tracking.ts:125-130` | 400 |
-| IIFE cursor look | `eye-controller.ts:151-163` | 400 |
-| `clampMagnitude()` (3+ calls/eye) | Multiple files | 1200+ |
-| `calculateParallaxOffset()` | `eye-floating.ts:40-55` | 400 |
-| `calculateRepulsionTarget()` | `eye-floating.ts:57-95` | 400 |
-| `sampleEyeSharedAttentionLook()` | `eye-tracking.ts:165-198` | 400 |
-| `desiredLook` literal | `eye-controller.ts:170-173` | 400 |
+| Source                            | File                        | Allocations/frame |
+| --------------------------------- | --------------------------- | ----------------- |
+| `totalOffset()`                   | `eye-tracking.ts:125-130`   | 400               |
+| IIFE cursor look                  | `eye-controller.ts:151-163` | 400               |
+| `clampMagnitude()` (3+ calls/eye) | Multiple files              | 1200+             |
+| `calculateParallaxOffset()`       | `eye-floating.ts:40-55`     | 400               |
+| `calculateRepulsionTarget()`      | `eye-floating.ts:57-95`     | 400               |
+| `sampleEyeSharedAttentionLook()`  | `eye-tracking.ts:165-198`   | 400               |
+| `desiredLook` literal             | `eye-controller.ts:170-173` | 400               |
 
 ## Proposed Fixes
 
@@ -191,7 +191,7 @@ eye.parallaxY = parallax.y;
 const targetRepel = calculateRepulsionTarget(runtime, eye);
 
 // After:
-updateParallaxOffset(runtime, eye);  // writes directly to eye.parallaxX/Y
+updateParallaxOffset(runtime, eye); // writes directly to eye.parallaxX/Y
 const targetRepelX = calculateRepulsionTargetX(runtime, eye);
 const targetRepelY = calculateRepulsionTargetY(runtime, eye);
 ```
@@ -211,13 +211,13 @@ let sharedAttentionLookX = 0;
 let sharedAttentionLookY = 0;
 if (runtime.sharedAttentionBlend > 0.0001) {
   const mode = runtime.pointerActive ? "scattered" : "unified";
-  computeSharedAttentionLook(runtime, eye, mode);  // writes to lookX/Y vars
+  computeSharedAttentionLook(runtime, eye, mode); // writes to lookX/Y vars
 }
 ```
 
 ### 4. Remove duplicate code (`eye-floating.ts`)
 
-The `calculateParallaxOffset` and `calculateRepulsionTarget` functions in `eye-floating.ts` are near-identical copies of `parallaxOffset` and `repulsionTarget` in `eye-tracking.ts`. 
+The `calculateParallaxOffset` and `calculateRepulsionTarget` functions in `eye-floating.ts` are near-identical copies of `parallaxOffset` and `repulsionTarget` in `eye-tracking.ts`.
 
 **Fix**: Import from `eye-tracking.ts` and use the inline versions, or remove the duplicates entirely.
 

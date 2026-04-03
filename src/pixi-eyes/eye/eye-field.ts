@@ -10,9 +10,11 @@ import {
   createDropShadowTexture,
   destroySharedTextures,
   destroySharedContexts,
+  resolveTextureResolutionProfile,
   selectBucket,
 } from "./eye-assets";
 import { packEyePositions, resolvePackedRadii, staggerDelay } from "./layout";
+import { DEFAULT_EYE_SPIRAL_OFFSET } from "./eye-config";
 import { createEyeInstance } from "./eye-factory";
 import { startLayoutTransition, applyStaticEyeSettings, updateSingleEye } from "./eye-controller";
 import { sampleSharedAttentionTarget, sampleSharedAttentionDelay } from "./behaviors/eye-tracking";
@@ -42,12 +44,28 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
   const root = new Container();
   const runtime = createRuntime(count);
   const contexts = createSharedContexts();
-  let textures = createSharedTextures(renderer, contexts, runtime.dropShadowBlur);
+  const getMaxEyeRadius = () => Math.max(runtime.maxEyeSize * 0.5, 1);
+  let textures = createSharedTextures(renderer, contexts, runtime.dropShadowBlur, getMaxEyeRadius());
 
-  function refreshDropShadowTexture(): void {
-    for (const bucket of Object.values(textures.buckets)) {
+  function refreshDynamicTextures(): void {
+    const nextProfile = resolveTextureResolutionProfile(renderer.resolution, getMaxEyeRadius());
+    const shouldRebuildTextures = Object.entries(nextProfile).some(
+      ([bucket, resolution]) => textures.profile[bucket as keyof typeof nextProfile] !== resolution,
+    );
+
+    if (shouldRebuildTextures) {
+      destroySharedTextures(textures);
+      textures = createSharedTextures(renderer, contexts, runtime.dropShadowBlur, getMaxEyeRadius());
+      return;
+    }
+
+    for (const [bucketName, bucket] of Object.entries(textures.buckets)) {
       bucket.dropShadowTexture.destroy(true);
-      bucket.dropShadowTexture = createDropShadowTexture(renderer, runtime.dropShadowBlur);
+      bucket.dropShadowTexture = createDropShadowTexture(
+        renderer,
+        runtime.dropShadowBlur,
+        textures.profile[bucketName as keyof typeof textures.profile],
+      );
     }
     runtime.eyes.forEach((eye) => {
       eye.dropShadow.texture = textures.buckets[selectBucket(eye.radius)].dropShadowTexture;
@@ -60,7 +78,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     root.removeChildren();
     const minEyeRadius = runtime.minEyeSize * 0.5;
     const maxEyeRadius = runtime.maxEyeSize * 0.5;
+    refreshDynamicTextures();
     const radii = resolvePackedRadii(runtime.count, minEyeRadius, maxEyeRadius);
+    const layoutJitter = runtime.layoutJitter;
 
     const positions = packEyePositions(
       radii,
@@ -68,9 +88,9 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       runtime.packAttempts,
       runtime.spiralStepDegrees,
       runtime.radialExponent,
-      0.73,
+      DEFAULT_EYE_SPIRAL_OFFSET,
       runtime.layoutShape,
-      runtime.layoutJitter,
+      layoutJitter,
       runtime.ringInnerRatio,
       runtime.crossType,
       runtime.starBranches,
@@ -108,15 +128,16 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
       return;
     }
 
+    const layoutJitter = runtime.layoutJitter;
     const positions = packEyePositions(
       runtime.eyes.map((eye) => eye.radius),
       runtime.clusterRadius,
       runtime.packAttempts,
       runtime.spiralStepDegrees,
       runtime.radialExponent,
-      0.73,
+      DEFAULT_EYE_SPIRAL_OFFSET,
       runtime.layoutShape,
-      runtime.layoutJitter,
+      layoutJitter,
       runtime.ringInnerRatio,
       runtime.crossType,
       runtime.starBranches,
@@ -152,7 +173,7 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
     const result = updateConfig(runtime, config);
 
     if (result.shouldRefreshDropShadowTexture) {
-      refreshDropShadowTexture();
+      refreshDynamicTextures();
     }
 
     if (result.shouldRebuild) {
@@ -267,14 +288,14 @@ export function createEyeField({ count, renderer, worldBounds }: EyeFieldOptions
 
     runtime.eyes.forEach((eye) => {
       updateSingleEye(eye, runtime, worldBounds, dtSeconds);
-      
+
       // Filter eyes for ring shape - hide eyes near center
       if (eye.root.visible && runtime.layoutShape === "ring") {
         const minRadius = runtime.clusterRadius * runtime.ringInnerRatio;
         const distanceFromCenter = Math.sqrt(eye.x * eye.x + eye.y * eye.y);
         eye.root.visible = distanceFromCenter >= minRadius;
       }
-      
+
       if (eye.root.visible) {
         visibleCount += 1;
       }

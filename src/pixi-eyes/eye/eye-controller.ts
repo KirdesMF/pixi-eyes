@@ -17,10 +17,7 @@ import {
   updateHumanPupilScale,
   updateHumanEyeDeformation,
 } from "./render/human-eye-view";
-import {
-  applyDotEyeAppearance,
-  updateDotEyeDeformation,
-} from "./render/dot-eye-view";
+import { applyDotEyeAppearance, updateDotEyeDeformation } from "./render/dot-eye-view";
 
 export function updateLayoutTransition(
   eye: EyeInstance,
