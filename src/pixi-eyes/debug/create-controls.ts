@@ -47,22 +47,39 @@ export function bindNumberInput(
   const input = document.querySelector<HTMLInputElement>(`#${id}`);
   if (!input) return () => {};
 
-  const commit = () => {
-    const value = clampInput(input, min, max, fractionDigits);
+  const applyValue = (value: number) => {
     updateStoredSettings({ [id]: value });
     scene.setConfig({ [id.replace(/-([a-z])/g, (_, c) => c.toUpperCase())]: value });
   };
 
+  const commit = () => {
+    const value = clampInput(input, min, max, fractionDigits);
+    applyValue(value);
+  };
+
+  const onInput = () => {
+    if (!Number.isFinite(input.valueAsNumber)) {
+      return;
+    }
+
+    const value = Math.min(Math.max(input.valueAsNumber, min), max);
+    applyValue(value);
+  };
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter") commit();
+  };
+
+  input.addEventListener("input", onInput);
   input.addEventListener("change", commit);
   input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") commit();
-  });
+  input.addEventListener("keydown", onKeyDown);
 
   return () => {
+    input.removeEventListener("input", onInput);
     input.removeEventListener("change", commit);
     input.removeEventListener("blur", commit);
-    input.removeEventListener("keydown", commit);
+    input.removeEventListener("keydown", onKeyDown);
   };
 }
 

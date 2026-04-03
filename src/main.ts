@@ -8,7 +8,12 @@ import {
   writeStoredSettings,
 } from "./pixi-eyes/debug/debug-state";
 import { createHeroScene } from "./pixi-eyes/scenes/hero-scene";
-import { CONTROL_DEFINITIONS } from "./pixi-eyes/controls";
+import {
+  CONTROL_DEFINITIONS,
+  sanitizeCrossType,
+  sanitizeFocusEase,
+  sanitizeLayoutShape,
+} from "./pixi-eyes/controls";
 
 const appNode = document.querySelector<HTMLDivElement>("#app");
 if (!appNode) throw new Error("Missing #app mount node");
@@ -24,7 +29,8 @@ function getRequiredInput<T extends Element>(id: string): T {
 }
 
 function updateStoredSettings(patch: Record<string, number | string>): void {
-  writeStoredSettings({ ...settingsState, ...patch });
+  Object.assign(settingsState, patch);
+  writeStoredSettings(settingsState);
 }
 
 function hexToNumber(value: string): number {
@@ -38,19 +44,26 @@ function getSceneConfig() {
 
   return {
     initialCount: toNum(s["instance-count"]),
-    initialLayoutShape: String(s["layout-shape"]) as "circle" | "ring" | "heart" | "cross" | "star",
+    initialLayoutShape: sanitizeLayoutShape(
+      typeof s["layout-shape"] === "string" ? s["layout-shape"] : undefined,
+      "circle",
+    ),
     initialRingInnerRatio: toNum(s["ring-inner-ratio"]),
-    initialCrossType: String(s["cross-type"]) as "x" | "plus",
+    initialCrossType: sanitizeCrossType(
+      typeof s["cross-type"] === "string" ? s["cross-type"] : undefined,
+      "x",
+    ),
     initialStarBranches: toNum(s["star-branches"]),
     initialSlitEyeMix: toNum(s["slit-eye-mix"]),
     initialSlitPupilWidth: toNum(s["slit-pupil-width"]),
     initialSlitPupilHeight: toNum(s["slit-pupil-height"]),
     initialLayoutTransitionDuration: toNum(s["layout-transition-duration"]),
-    initialLayoutTransitionEase: String(s["layout-transition-ease"]) as
-      | "linear"
-      | "out-cubic"
-      | "out-sine"
-      | "in-out-sine",
+    initialLayoutTransitionEase: sanitizeFocusEase(
+      typeof s["layout-transition-ease"] === "string"
+        ? s["layout-transition-ease"]
+        : undefined,
+      "linear",
+    ),
     initialLayoutJitter: toNum(s["layout-jitter"]),
     initialMinEyeSize: toNum(s["min-eye-size"]),
     initialMaxEyeSize: toNum(s["max-eye-size"]),

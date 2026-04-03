@@ -53,18 +53,20 @@ export type SharedContexts = {
 /**
  * Shared textures for eye rendering.
  */
-export type TextureBucket = "small" | "medium" | "large";
+export type TextureBucket = "small" | "medium" | "large" | "xlarge";
 
 export const BUCKET_THRESHOLDS = {
-  small: { maxRadius: 20, resolution: 1 },
-  medium: { maxRadius: 45, resolution: 2 },
-  large: { maxRadius: Infinity, resolution: 4 },
-};
+  small: { maxRadius: 20 },
+  medium: { maxRadius: 45 },
+  large: { maxRadius: 75 },
+  xlarge: { maxRadius: Infinity },
+} as const;
 
 export function selectBucket(radius: number): TextureBucket {
   if (radius <= BUCKET_THRESHOLDS.small.maxRadius) return "small";
   if (radius <= BUCKET_THRESHOLDS.medium.maxRadius) return "medium";
-  return "large";
+  if (radius <= BUCKET_THRESHOLDS.large.maxRadius) return "large";
+  return "xlarge";
 }
 
 export type BucketTextures = {
@@ -79,9 +81,44 @@ export type BucketTextures = {
   roundHighlightTexture: ReturnType<Renderer["generateTexture"]>;
 };
 
+export type TextureResolutionProfile = Record<TextureBucket, number>;
+
 export type SharedTextures = {
   buckets: Record<TextureBucket, BucketTextures>;
+  profile: TextureResolutionProfile;
 };
+
+function quantizeResolution(value: number): number {
+  const levels = [2, 3, 4, 5, 6, 8, 10];
+  for (const level of levels) {
+    if (value <= level) {
+      return level;
+    }
+  }
+  return levels.at(-1) ?? 10;
+}
+
+export function resolveTextureResolutionProfile(
+  rendererResolution: number,
+  maxRadius: number,
+): TextureResolutionProfile {
+  const safeRendererResolution = Math.max(rendererResolution, 1);
+  const safeMaxRadius = Math.max(maxRadius, 1);
+  const relativeScale = safeMaxRadius / SCLERA_RADIUS;
+  const largeResolution = quantizeResolution(
+    Math.max(safeRendererResolution * 2, relativeScale * 2),
+  );
+  const mediumResolution = quantizeResolution(Math.max(2, largeResolution * 0.67));
+  const smallResolution = quantizeResolution(Math.max(2, largeResolution * 0.4));
+  const xlargeResolution = quantizeResolution(Math.max(largeResolution, largeResolution * 1.25));
+
+  return {
+    small: smallResolution,
+    medium: mediumResolution,
+    large: largeResolution,
+    xlarge: xlargeResolution,
+  };
+}
 
 function shadowEdgePoint(sign: number): { x: number; y: number } {
   const offset = (SHADOW_EDGE_OFFSET_DEGREES * Math.PI) / 180;
@@ -220,7 +257,7 @@ function generateTextureFromContextWithFrame(
 export function createDropShadowTexture(renderer: Renderer, blur: number, resolution?: number) {
   const blurStrength = Math.max(blur, 0);
   const padding = Math.max(DROP_SHADOW_TEXTURE_PADDING, blurStrength * 3 + 12);
-  const res = resolution ?? Math.max(renderer.resolution, GLOBE_TEXTURE_RESOLUTION);
+  const res = resolution ?? Math.max(renderer.resolution * 2, GLOBE_TEXTURE_RESOLUTION);
   const target = new Container();
   const source = new Graphics().circle(0, 0, SCLERA_RADIUS).fill(0xffffff);
 
@@ -264,29 +301,17 @@ export function createSharedTextures(
   renderer: Renderer,
   contexts: SharedContexts,
   dropShadowBlur: number,
+  maxRadius: number,
 ): SharedTextures {
+  const profile = resolveTextureResolutionProfile(renderer.resolution, maxRadius);
   const buckets: Record<TextureBucket, BucketTextures> = {
-    small: generateBucketTextures(
-      renderer,
-      contexts,
-      dropShadowBlur,
-      BUCKET_THRESHOLDS.small.resolution,
-    ),
-    medium: generateBucketTextures(
-      renderer,
-      contexts,
-      dropShadowBlur,
-      BUCKET_THRESHOLDS.medium.resolution,
-    ),
-    large: generateBucketTextures(
-      renderer,
-      contexts,
-      dropShadowBlur,
-      BUCKET_THRESHOLDS.large.resolution,
-    ),
+    small: generateBucketTextures(renderer, contexts, dropShadowBlur, profile.small),
+    medium: generateBucketTextures(renderer, contexts, dropShadowBlur, profile.medium),
+    large: generateBucketTextures(renderer, contexts, dropShadowBlur, profile.large),
+    xlarge: generateBucketTextures(renderer, contexts, dropShadowBlur, profile.xlarge),
   };
 
-  return { buckets };
+  return { buckets, profile };
 }
 
 function generateBucketTextures(

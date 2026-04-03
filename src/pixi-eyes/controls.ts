@@ -195,7 +195,7 @@ export const CONTROL_DEFINITIONS: ControlDefinition[] = [
     max: 1,
     step: 0.05,
     fractionDigits: 2,
-    default: 1,
+    default: 0,
     section: "Field",
   },
   {
